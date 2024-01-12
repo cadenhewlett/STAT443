@@ -1,0 +1,42 @@
+---
+title: 'STAT 443: Lab 1'
+author: 'Student Name (Student #)'
+date: "xx January, 2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+## Question 1
+
+
+```{r, echo=TRUE}
+# this is where your R code goes
+```
+
+
+## Question 2
+
+```{r, echo=TRUE}
+# this is where your R code goes
+```
+
+
+## Question 3
+
+```{r, echo=TRUE}
+# this is where your R code goes
+```
+
+
+## Question 4
+
+
+
