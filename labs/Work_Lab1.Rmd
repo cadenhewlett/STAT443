@@ -43,15 +43,33 @@ This plot is different from what we want for a time series because the value on 
 
 ## Question 2
 
+Now, we can test if this is a time series object.
 ```{r, echo=TRUE}
-# this is where your R code goes
+is.ts(dat)
 ```
+
+Since it isn't, we'll convert it.
+```{r becomets}
+# convert to ts
+x <- ts(dat$LakeLevel, 
+        start = c(2007, 1), 
+        end = c(2012, 1), # note: (2011, 12) omitted December
+        frequency = 365)
+
+# check that we haven't lost any data
+length(x) == nrow(dat)
+```
+
 
 
 ## Question 3
 
 ```{r, echo=TRUE}
-# this is where your R code goes
+plot(x, 
+     main = "Daily Depths of Lake (Metres) from 2007 to 2011 (inclusive)",
+     ylab = "Lake Depth (m)",
+     xlab = "Date (Primary Axis: Year)"
+     )
 ```
 
 
