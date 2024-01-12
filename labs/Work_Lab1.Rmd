@@ -1,7 +1,7 @@
 ---
 title: 'STAT 443: Lab 1'
-author: 'Student Name (Student #)'
-date: "xx January, 2024"
+author: 'Caden Hewlett (Student #40404246)'
+date: "12 January, 2024"
 output:
   pdf_document: default
   html_document: default
