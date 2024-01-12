@@ -1,0 +1,89 @@
+---
+title: 'STAT 443: Lab 1'
+author: 'Caden Hewlett (Student #40404246)'
+date: "12 January, 2024"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+library(ggplot2)
+```
+
+## Question 1
+
+
+```{r, echo=TRUE}
+# read in data to an object called dat
+dat <- read.csv("LakeLevels.csv")
+head(dat, 10)
+```
+
+Then, we can check the `names` of this data frame.
+```{r whatsiscalled}
+names(dat)
+```
+
+Now, we create a plot of the `LakeLevel` variable.
+```{r lakeplot_v1}
+ggplot(dat, aes(x = 1:nrow(dat), y = LakeLevel)) +
+  geom_point(shape = 1, col = "darkblue") +  
+  xlab("Index") +  
+  ylab("Lake Level (Depth, metres)") +
+  ggtitle("Plot of \"LakeLevel\" Variable") + 
+  theme_bw()
+```
+This plot is different from what we want for a time series because the value on the $x$-axis is the `Index` of the Lake Level data points in the `dat` dataframe rather than time. Hence, this is not a time series (yet!)
+
+
+## Question 2
+
+Now, we can test if this is a time series object.
+```{r, echo=TRUE}
+is.ts(dat)
+```
+
+Since it isn't, we'll convert it.
+```{r becomets}
+# convert to ts
+x <- ts(dat$LakeLevel, 
+        start = c(2007, 1), 
+        end = c(2012, 1), # note: (2011, 12) omitted December
+        frequency = 365)
+
+# check that we haven't lost any data
+length(x) == nrow(dat)
+```
+
+
+
+## Question 3
+
+```{r, echo=TRUE}
+plot(x, 
+     main = "Daily Depths of Lake (Metres) from 2007 to 2011 (inclusive)",
+     ylab = "Lake Depth (m)",
+     xlab = "Date (Primary Axis: Year)"
+     )
+```
+
+We see a few key differences in this plot compared to the one in Question 1. Firstly, it automatically forms a continuous line graph rather than a discrete scatter plot, which is better for interpretation in the context of time series. Secondly, we see that the date (with year as the primary axis label) is now on the $x$-axis, rather than simply the `Index` we saw before. 
+
+
+## Question 4
+
+Comment on the main features of this time series and provide physical justification(s) for what you observe.
+
+- Firstly, we see that there is a noticeable seasonal component to this time series. Simply from observation, it seems as if the depths follow a yearly period, peaking at about mid-year. This makes sense based on the longer-term cycle of Earth's seasons. 
+
+- As a physical justification, if we're in the Northern Hemisphere, we can expect more snow melt in the Spring/Summer, which may result in higher water levels. This is reflected in the changing amplitude of the lake depth over the course of the year - specifically, the "peaks" at around mid-year. 
+
+- Further, we see in the colder months that the lake depth tends to decrease. This could be due to the formation of ice on the surface of the water, decreasing the amount of water in the lake (and hence the depth overall.)
+
+- Secondly, there doesn't appear to be a significant trend component to this time series. If there were a trend component, we would see the data increasing or decreasing overall over time. From rudimentary observation, such a trend doesn't seem present. However, it would be interesting to observe more data on this particular lake beyond the time frame we've been provided, to inspect if there is a climate-change based larger trend to the water levels. Unfortunately, we don't have a large enough time frame to observe such a gradual effect. 
+
