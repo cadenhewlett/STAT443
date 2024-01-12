@@ -12,14 +12,33 @@ knitr::opts_chunk$set(echo = TRUE)
 #if you do not have the package, type install.packages("name_of_the_package")
 library(knitr)
 library(tseries)
+library(ggplot2)
 ```
 
 ## Question 1
 
 
 ```{r, echo=TRUE}
-# this is where your R code goes
+# read in data to an object called dat
+dat <- read.csv("LakeLevels.csv")
+head(dat, 10)
 ```
+
+Then, we can check the `names` of this data frame.
+```{r whatsiscalled}
+names(dat)
+```
+
+Now, we create a plot of the `LakeLevel` variable.
+```{r lakeplot_v1}
+ggplot(dat, aes(x = 1:nrow(dat), y = LakeLevel)) +
+  geom_point(shape = 1, col = "darkblue") +  
+  xlab("Index") +  
+  ylab("Lake Level (Depth, metres)") +
+  ggtitle("Plot of \"LakeLevel\" Variable") + 
+  theme_bw()
+```
+This plot is different from what we want for a time series because the value on the $x$-axis is the `Index` of the Lake Level data points in the `dat` dataframe rather than time. Hence, this is not a time series (yet!)
 
 
 ## Question 2
