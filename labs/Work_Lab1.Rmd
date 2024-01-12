@@ -77,11 +77,13 @@ We see a few key differences in this plot compared to the one in Question 1. Fir
 
 ## Question 4
 
-Comment on the main features of this time series and provide physical justification(s) for what you observe.7
+Comment on the main features of this time series and provide physical justification(s) for what you observe.
 
-- Firstly, we see that there is a noticeable seasonal component to this time series. Simply from observation, it seems as if the depths follow a yearly period, peaking at about mid-year. 
-<!-- Interestingly, there may be some larger-scale pattern at work here, too, with the periodicity. From our initial observation, we see that the amplitudes of the lake levels are greatest for the 2007-2008 yearspan, and are lowest in the "middle" of the 6-year series. -->
+- Firstly, we see that there is a noticeable seasonal component to this time series. Simply from observation, it seems as if the depths follow a yearly period, peaking at about mid-year. This makes sense based on the longer-term cycle of Earth's seasons. 
 
+- As a physical justification, if we're in the Northern Hemisphere, we can expect more snow melt in the Spring/Summer, which may result in higher water levels. This is reflected in the changing amplitude of the lake depth over the course of the year - specifically, the "peaks" at around mid-year. 
 
-- Secondly, there doesn't appear to be a significant trend component to this time series. If there were a trend component, we would see the data increasing or decreasing overall over time. From rudimentary observation, such a trend doesn't seem present.
+- Further, we see in the colder months that the lake depth tends to decrease. This could be due to the formation of ice on the surface of the water, decreasing the amount of water in the lake (and hence the depth overall.)
+
+- Secondly, there doesn't appear to be a significant trend component to this time series. If there were a trend component, we would see the data increasing or decreasing overall over time. From rudimentary observation, such a trend doesn't seem present. However, it would be interesting to observe more data on this particular lake beyond the time frame we've been provided, to inspect if there is a climate-change based larger trend to the water levels. Unfortunately, we don't have a large enough time frame to observe such a gradual effect. 
 
