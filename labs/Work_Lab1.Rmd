@@ -72,8 +72,16 @@ plot(x,
      )
 ```
 
+We see a few key differences in this plot compared to the one in Question 1. Firstly, it automatically forms a continuous line graph rather than a discrete scatter plot, which is better for interpretation in the context of time series. Secondly, we see that the date (with year as the primary axis label) is now on the $x$-axis, rather than simply the `Index` we saw before. 
+
 
 ## Question 4
 
+Comment on the main features of this time series and provide physical justification(s) for what you observe.7
 
+- Firstly, we see that there is a noticeable seasonal component to this time series. Simply from observation, it seems as if the depths follow a yearly period, peaking at about mid-year. 
+<!-- Interestingly, there may be some larger-scale pattern at work here, too, with the periodicity. From our initial observation, we see that the amplitudes of the lake levels are greatest for the 2007-2008 yearspan, and are lowest in the "middle" of the 6-year series. -->
+
+
+- Secondly, there doesn't appear to be a significant trend component to this time series. If there were a trend component, we would see the data increasing or decreasing overall over time. From rudimentary observation, such a trend doesn't seem present.
 
