@@ -11,3 +11,6 @@ plot(series, ylab = "Seattle Home Prices")
 ?rollmean
 
 rollmean(series, k = 4)
+
+
+########### QUESTION 3 ON PAPER ###########
