@@ -1,24 +1,21 @@
-my_acf <- function(df, h){
-  #
+my_acf <- function(vec, h){
+  
+  xbar = mean(vec)
+  difh <- sum ( (vec[1:(n - h)] - xbar)*(vec[(h+1):n] - xbar) )
+  sumsq <- sum( ( vec - xbar ) ^ 2 )
+  
+  rh <- difh/sumsq
+  return(rh)
 }
-year <- c(2004, 2005, 2006, 2007, "Total")
-q1 <- c(-9.1, -9.6, -7.8, -7.3, -33.8)
-q2 <- c(0.2, 0.7, -1.5, -0.4, -1)
-q3 <- c(9.2, 8.3, 8.2, 8.0, 33.7)
-q4 <- c(0.3, 0.3, -2.3, 0.3, -1.4)
+
 
 q <- c(-9.1, 0.2, 9.2, 0.3, 
        -9.6, 0.7, 8.3, 0.3, 
        -7.8, -1.5, 8.2, -2.3,
         -7.3, -0.4, 8.0, 0.3)
 
-round(sd(q), 1)
+plotDF <- data.frame(
+  h = 1:15,
+  rh = sapply(1:15, my_acf, vec = q)
+)
 
-h = 4
-n = length(q)
-
-xbar = round(mean(q), 1)
-sum ( (q[1:(n - h)] - xbar)*(q[(h+1):n] - xbar) )
-
-q[1]
-q[5]
