@@ -1,17 +1,13 @@
 library(zoo)
 library(tseries)
-library(ggplot2)
+
+# read in data and transform into a time series
 df <- read.csv("webwork/file1d174cf8d84.csv")
-
-
 # get df info so that we can make the tseries
 series <- ts(df$Value, 
         start = c(1972, 1), 
         #  end = c(2014, 9),
         frequency = 12)
-length(series)
-nrow(df)
-plot(series)
 
 ###### QUESTION 2.1 #########
 par(mfrow = c(1, 3))
