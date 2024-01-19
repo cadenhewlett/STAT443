@@ -56,3 +56,62 @@ p2 <- ggplot(p2data, aes(x = h, y = rh)) +
   theme_bw()
 print(p2)
 acf(summer_series, plot = TRUE)
+
+
+subset = window(summer_series, start = 1968, end = 2008)
+p3data <- fortify.zoo(subset)
+
+p3 <- ggplot(p3data, aes(x = Index, y = subset)) +
+  geom_line(color = "#cc7a00", linewidth = 0.65) +
+  labs(
+    title = "Recent Summer Temperatures at Prince George, BC",
+    subtitle = "Measured in homogenized daily minimum temperatures (C)",
+    x = "Mean Temperatures (Celsius)",
+    y = "Year"
+  ) + theme_bw() 
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p3)
+df_roll_mean = data.frame(RollingMean = rollmean(subset, k = 5, fill = NA),
+                          Time = p3data$Index)
+p3 = p3 + geom_line(
+  data = df_roll_mean,
+  aes(x = Time, y = RollingMean),
+  color = "#665200",
+  na.rm = TRUE
+)
+print(p3)
+
+p4df = data.frame(
+  subset = p3data$subset,
+  rollmea = rollmean(subset, k = 5, fill = NA),
+  Index = p3data$Index
+)
+p4df_long <- melt(p4df, id.vars = "Index", variable.name = "LineType", value.name = "Value")
+
+p4 <- ggplot(p4df_long, aes(x = Index, y = Value, color = LineType)) +
+  geom_line(linewidth = 0.65) +
+  labs(
+    title = "Recent Summer Temperatures at Prince George, BC",
+    subtitle = "Measured in homogenized daily minimum temperatures (C)",
+    x = "Year",
+    y = "Mean Temperatures (Celsius)"
+  ) + 
+  theme_bw() +
+  scale_color_manual(
+    values = c("subset" = "#cc7a00", "rollmea" = "#665200"),
+    labels = c("Temperature", "5-Year Rolling Mean")
+  ) +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+
+print(p4)
+
+
+########### PART 2 ##########

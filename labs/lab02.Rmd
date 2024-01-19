@@ -9,13 +9,14 @@ knitr::opts_chunk$set(echo = TRUE)
 library(zoo)
 library(tseries)
 library(ggplot2)
+library(reshape2)
 ```
 
 ## Questions
 
-### Dataset "dataTempPG.csv"
+# Question 1
 
-1. **Features of the data**
+## Features of the data
 
 
 Read the data into R using `read.csv()`.
@@ -59,10 +60,11 @@ Comment on the main features of this series (e.g., seasonality, trend).
 There doesn't appear to be much seasonality in the data. This makes sense, considering we are already isolating for a season (summer.) However, there does seem to be an increasing (positive) trend to the data. 
 
 
-2. **Sample Autocorrelation**
-    - Use `acf()` to create the autocorrelation function for the mean summer temperature data.
+## Sample Autocorrelation
+Use `acf()` to create the autocorrelation function for the mean summer temperature data.
 
-here, we calculate and plot the ACF.
+
+Here, we calculate and plot the ACF.
 ```{r autocorrelation, warning=FALSE}
 
 p2data = data.frame(
@@ -74,13 +76,6 @@ p2 <- ggplot(p2data, aes(x = h, y = rh)) +
   geom_segment(aes(xend = h, yend = 0),
                color = "#eb5e28",
                linewidth = 1) +
-  # geom_point(
-  #   col = "#f6bd60",
-  #   fill = "#f7ede2",
-  #   stroke = 1,
-  #   size = 3,
-  #   shape = 21
-  # ) +
   geom_hline(yintercept = 0.2, linetype = "dashed", col = "#ffbd00")+
   geom_hline(yintercept = -0.2, linetype = "dashed", col = "#ffbd00")+
   ylim(-0.2, 1)+
@@ -95,33 +90,103 @@ print(p2)
 
 Comment on the behavior of the sample autocorrelation function.
 
+We can see from the sample acf that there appears to be positive serial correlation between the data points, declining slightly over time as a function of lag. As was discussed in lecture, this is likely indicative of a positive trend in the time series as a whole. 
 
 
 
-3. **Smoothing**
+## Smoothing
 
 
 
- Use `window()` to extract the portion of the time series between 1968 and 2008.
+Use `window()` to extract the portion of the time series between 1968 and 2008.
  
+ ```{r subset_making}
+ subset = window(summer_series, start = 1968, end = 2008)
+ ```
  
- 
- Plot this recent record of the data.
- 
+Plot this recent record of the data.
+
+```{r recent_data}
+p3data <- fortify.zoo(subset)
+p3 <- ggplot(p3data, aes(x = Index, y = subset)) +
+  geom_line(color = "#cc7a00", linewidth = 0.65) +
+  labs(
+    title = "Recent Summer Temperatures at Prince George, BC",
+    subtitle = "Measured in homogenized daily minimum temperatures (C)",
+    x = "Mean Temperatures (Celsius)",
+    y = "Year"
+  ) + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p3)
+```
  
  
  
  Use `rollmean()` with a moving average parameter of k=5 to add the smoothed series to the plot.
   
+```{r rollmean, warning = FALSE}
+df_roll_mean = data.frame(RollingMean = rollmean(subset, k = 5, fill = NA),
+                          Time = p3data$Index)
+p3 = p3 + geom_line(
+  data = df_roll_mean,
+  aes(x = Time, y = RollingMean),
+  color = "#665200",
+  na.rm = TRUE
+)
+print(p3)
+
+```
   
-  Add a legend to your plot.
+Add a legend to your plot.
 
-### Dataset "LakeLevels.csv"
+```{r legendary, warning=FALSE}
 
-1. **Sample Autocorrelation Function**
-    - Read the data into R and convert it into a time series.
-    - Use `acf()` to create the sample autocorrelation function for the lake levels.
-    - Comment on the behavior of this autocorrelation function.
+p4df = data.frame(
+  subset = p3data$subset,
+  rollmea = rollmean(subset, k = 5, fill = NA),
+  Index = p3data$Index
+)
+p4df_long <- melt(p4df, id.vars = "Index", variable.name = "LineType", value.name = "Value")
+
+p4 <- ggplot(p4df_long, aes(x = Index, y = Value, color = LineType)) +
+  geom_line(linewidth = 0.65) +
+  labs(
+    title = "Recent Summer Temperatures at Prince George, BC",
+    subtitle = "Measured in homogenized daily minimum temperatures (C)",
+    x = "Year",
+    y = "Mean Temperatures (Celsius)"
+  ) + 
+  theme_bw() +
+  scale_color_manual(
+    values = c("subset" = "#cc7a00", "rollmea" = "#665200"),
+    labels = c("Temperature", "5-Year Rolling Mean")
+  ) +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+
+print(p4)
+```
+
+# Question 2
+
+
+## Sample Autocorrelation Function
+
+
+Read the data into R and convert it into a time series.
+
+
+Use `acf()` to create the sample autocorrelation function for the lake levels.
+
+
+Comment on the behavior of this autocorrelation function.
 
 2. **Decomposition (Additive Model)**
     - Use `decompose()` to decompose the time series into trend, seasonal component, and error (additive model).
