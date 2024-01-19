@@ -115,3 +115,34 @@ print(p4)
 
 
 ########### PART 2 ##########
+
+df2 = read.csv("labs//LakeLevels.csv")
+
+nrow(df2)
+
+lakeseries = ts(df2$LakeLevel, 
+                start = c(2007, 1),
+                frequency = 365)
+acf(lakeseries, lag.max = nrow(df2))
+
+plot(lakeseries)
+
+p5data = data.frame(
+  h = 0:(nrow(df2)-1),
+  rh = acf(lakeseries, lag.max = nrow(df2))$acf
+)
+
+p5 <- ggplot(p5data, aes(x = h, y = rh)) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "grey60",
+               size = 1) +
+  geom_hline(yintercept = 0.2, linetype = "dashed", col = "grey20")+
+  geom_hline(yintercept = -0.2, linetype = "dashed", col = "grey20")+
+  ylim(-0.75, 1)+
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag", y = "Autocorrelation", 
+       title = "Correlogram of Summer Temperature Data") +
+  theme_bw()
+print(p5)

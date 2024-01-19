@@ -182,14 +182,48 @@ print(p4)
 
 Read the data into R and convert it into a time series.
 
+```{r readnconvert}
+df2 = read.csv("LakeLevels.csv")
 
+lakeseries = ts(df2$LakeLevel, 
+                start = c(2007, 1),
+                frequency = 365)
+```
 Use `acf()` to create the sample autocorrelation function for the lake levels.
 
+```{r acfplot}
+# acf(lakeseries, lag.max = nrow(df2))
+
+p5data = data.frame(
+  h = 0:(nrow(df2)-1),
+  rh = acf(lakeseries, lag.max = nrow(df2))$acf
+)
+
+p5 <- ggplot(p5data, aes(x = h, y = rh)) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "grey60",
+               size = 1) +
+  geom_hline(yintercept = 0.2, linetype = "dashed", col = "grey20")+
+  geom_hline(yintercept = -0.2, linetype = "dashed", col = "grey20")+
+  ylim(-0.75, 1)+
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag", y = "Autocorrelation", 
+       title = "Correlogram of Summer Temperature Data") +
+  theme_bw()
+print(p5)
+```
 
 Comment on the behavior of this autocorrelation function.
 
+
+There is an obvious periodic pattern in the acf, that is declining over time. This makes sense considering that the original `lakeLevels` data has seasonality. We see this reflected in the autocorrelation function.
+
+
 2. **Decomposition (Additive Model)**
     - Use `decompose()` to decompose the time series into trend, seasonal component, and error (additive model).
+    
     - Plot the trend, seasonal component, and error.
 
 3. **Decomposition (Loess Method)**
