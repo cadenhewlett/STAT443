@@ -1,6 +1,7 @@
 
 ---
 title: "Lab 2: Trend Seasonality and Sample Autocorrelation"
+author: Caden Hewlett
 output: pdf_document
 ---
 
@@ -191,12 +192,11 @@ lakeseries = ts(df2$LakeLevel,
 ```
 Use `acf()` to create the sample autocorrelation function for the lake levels.
 
-```{r acfplot}
-# acf(lakeseries, lag.max = nrow(df2))
+```{r acfplot, warning = FALSE}
 
 p5data = data.frame(
   h = 0:(nrow(df2)-1),
-  rh = acf(lakeseries, lag.max = nrow(df2))$acf
+  rh = acf(lakeseries, lag.max = nrow(df2), plot = FALSE)$acf
 )
 
 p5 <- ggplot(p5data, aes(x = h, y = rh)) +
@@ -221,11 +221,32 @@ Comment on the behavior of this autocorrelation function.
 There is an obvious periodic pattern in the acf, that is declining over time. This makes sense considering that the original `lakeLevels` data has seasonality. We see this reflected in the autocorrelation function.
 
 
-2. **Decomposition (Additive Model)**
-    - Use `decompose()` to decompose the time series into trend, seasonal component, and error (additive model).
-    
-    - Plot the trend, seasonal component, and error.
+## Decomposition (Additive Model)
 
-3. **Decomposition (Loess Method)**
-    - Use `stl()` with `s.window` set to "periodic" for decomposition.
-    - Plot the trend, seasonal component, and error using the loess method.
+Use `decompose()` to decompose the time series into trend, seasonal component, and error (additive model).
+
+```{r decompose}
+decomp = decompose(lakeseries, "additive")
+```
+
+Plot the trend, seasonal component, and error. 
+
+**NOTE**: By the default `plot` method, the original data is also included.
+```{r decomplot}
+plot(decomp)
+```
+
+## Decomposition (Loess Method)
+
+Use `stl()` with `s.window` set to "periodic" for decomposition.
+
+```{r loessdecomp}
+decomp_loess = stl(lakeseries, s.window = "periodic")
+```
+
+Plot the trend, seasonal component, and error using the loess method.
+
+**NOTE**: By the default `plot` method, the original data is also included.
+```{r plot_loess}
+plot(decomp_loess)
+```

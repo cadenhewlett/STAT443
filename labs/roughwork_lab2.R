@@ -146,3 +146,12 @@ p5 <- ggplot(p5data, aes(x = h, y = rh)) +
        title = "Correlogram of Summer Temperature Data") +
   theme_bw()
 print(p5)
+
+
+## next q
+decomp = decompose(lakeseries, "additive")
+
+plot(decomp)
+
+decomp_loess = stl(lakeseries, s.window = "periodic")
+plot(decomp_loess)
