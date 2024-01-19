@@ -26,3 +26,33 @@ p1 <- ggplot(p1data, aes(x = Index, y = summer_series)) +
     linewidth = 0.5
   ))
 print(p1)
+
+# get autocorrelation
+
+p2data = data.frame(
+  h = 0:19,
+  rh = acf(summer_series, plot = FALSE)$acf
+)
+
+p2 <- ggplot(p2data, aes(x = h, y = rh)) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#eb5e28",
+               size = 1) +
+  geom_point(
+    col = "#f6bd60",
+    fill = "#f7ede2",
+    stroke = 1,
+    size = 3,
+    shape = 21
+  ) +
+  geom_hline(yintercept = 0.2, linetype = "dashed", col = "#ffbd00")+
+  geom_hline(yintercept = -0.2, linetype = "dashed", col = "#ffbd00")+
+  ylim(-0.2, 1)+
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag", y = "Autocorrelation", 
+       title = "Correlogram of Summer Temperature Data") +
+  theme_bw()
+print(p2)
+acf(summer_series, plot = TRUE)

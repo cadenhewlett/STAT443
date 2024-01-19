@@ -61,13 +61,60 @@ There doesn't appear to be much seasonality in the data. This makes sense, consi
 
 2. **Sample Autocorrelation**
     - Use `acf()` to create the autocorrelation function for the mean summer temperature data.
-    - Comment on the behavior of the sample autocorrelation function.
+
+here, we calculate and plot the ACF.
+```{r autocorrelation, warning=FALSE}
+
+p2data = data.frame(
+  h = 0:19,
+  rh = acf(summer_series, plot = FALSE)$acf
+)
+
+p2 <- ggplot(p2data, aes(x = h, y = rh)) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#eb5e28",
+               linewidth = 1) +
+  # geom_point(
+  #   col = "#f6bd60",
+  #   fill = "#f7ede2",
+  #   stroke = 1,
+  #   size = 3,
+  #   shape = 21
+  # ) +
+  geom_hline(yintercept = 0.2, linetype = "dashed", col = "#ffbd00")+
+  geom_hline(yintercept = -0.2, linetype = "dashed", col = "#ffbd00")+
+  ylim(-0.2, 1)+
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag", y = "Autocorrelation", 
+       title = "Correlogram of Summer Temperature Data") +
+  theme_bw()
+print(p2)
+```
+
+Comment on the behavior of the sample autocorrelation function.
+
+
+
 
 3. **Smoothing**
-    - Use `window()` to extract the portion of the time series between 1968 and 2008.
-    - Plot this recent record of the data.
-    - Use `rollmean()` with a moving average parameter of k=5 to add the smoothed series to the plot.
-    - Add a legend to your plot.
+
+
+
+ Use `window()` to extract the portion of the time series between 1968 and 2008.
+ 
+ 
+ 
+ Plot this recent record of the data.
+ 
+ 
+ 
+ 
+ Use `rollmean()` with a moving average parameter of k=5 to add the smoothed series to the plot.
+  
+  
+  Add a legend to your plot.
 
 ### Dataset "LakeLevels.csv"
 
