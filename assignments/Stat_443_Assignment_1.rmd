@@ -15,23 +15,106 @@ library(reshape2)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
 
-### a) Read in the data and create a time-series object. Plot the series and comment on any features of the data that you observe. In particular address the following points:
-- Does the series have a trend?
-- Is there seasonal variation and if so would an additive or multiplicative model be suitable? Explain your reasoning.
-- Is the series stationary? Justify referring to the definition of a weakly stationary stochastic process.
+### a) Part (a)
+
+Read in the data and create a time-series object. Plot the series and comment on any features of the data that you observe. In particular address the following points:
+
 
 ```{r}
-# Code block for Task 1a
+df <- read.csv("usual_hours_worked_ca.csv")
+
+jobseries = ts(data = df$Hours, start = c(1987, 1),  frequency = 12)
+
+p1data = fortify.zoo(jobseries)
+p1 <- ggplot(p1data, aes(x = Index, y = jobseries)) +
+  geom_line(color = "#52b69a", linewidth = 0.65) +
+  labs(
+    title = "Monthly Average of Usual Hours Worked in Canada",
+    subtitle = "Across all Industries from January 1987 to December 2023",
+    x = "Monthly Mean Working Time (Hours)",
+    y = "Year"
+  ) + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p1)
 ```
+
+
+- Does the series have a trend?
+
+Yes. It seems that there is a downward (negative) trend to the data, with the mean monthly average hours worked decreasing as a function of time. We would anticipate $m_t < 0$.
+
+
+
+- Is there seasonal variation and if so would an additive or multiplicative model be suitable? Explain your reasoning.
+
+
+Yes. There appears to be seasonal variation. Visually, we see this as as sinusoidal pattern to the time series. This seasonality is likely caused by months of the year. 
+
+Further, we would anticipate a multiplicative model, i.e. $\{X_t\} = m_t s_t Z_t$. Visually, we can notice this by the changing amplitude of the seasonal periods over time.
+
+To give an example of this, consider the following noise-less toy examples of Additive ($X_t = m_t + s_t$) Model and Multiplicative Model ($X_t = m_ts_t$)
+
+```{r example}
+st = 2*seq(from = 0, to = 8*pi, length.out = 1000)
+mt = seq(from = 10, to = 0, length.out = 1000)
+par(mfrow = c(1,2))
+plot( mt + sin( st ), type = 'l',
+      ylab = "Value of Xt", xlab = "Time (t)",
+      main = "Additive Seasonal Effect Model")
+plot( mt*sin(st), type = 'l',
+      ylab = "Value of Xt", xlab = "Time (t)",
+      main = "Multiplicative Seasonal Effect Model")
+```
+
+We see in the additive model, that the seasonal "amplitude" (i.e. the height of each peak/trough) does not change as a function of $t$, whereas in the multiplicative model the amplitude is changing to due the product with $m_t$. This is a key delineation of additive vs. multiplicative models. Hence, from our observation of the time series of the data, it is safe to assume that it is likely that the true $\{X_t\}$ takes a multiplicative model.
+
+
+
+- Is the series stationary? Justify referring to the definition of a weakly stationary stochastic process.
+
+
+This series is non-stationary. We can confirm this by the first property of a weakly stationary stochastic process, that $\exists \mu \in \mathbb{R} \text{ s.t. } \forall t \in \mathbb{N} \cup\{0\}, \mathbb{E}(X_t) = \mu$. By the presence of both seasonality and trend, we know that there cannot exist a real constant $\mu$ such that for all discrete time the expected value of the stochastic process is constant $\mu$. This is because, by definition, $m_t$ and $s_t$ are functions of time. Therefore,  $\mathbb{E}(t) = f(t)$ for some real-valued function $f$, and, since  $\mathbb{E}(X_t)$ is a function of time, it cannot concurrently be some real-valued constant $\mu$.
+
+In more formal terms, for $m_t$ and $s_t$ being the trend and seasonal components of $X_t$ respectively:
+
+$$
+\big((\exists m_t \in \mathbb{R}) \lor (\exists s_t \in \mathbb{R}) \big) \implies \not\exists \mu  \in \mathbb{R} \text{ s.t. } \forall t \in \mathbb{N} \cup\{0\}, \mathbb{E}(X_t) = \mu
+$$
+Thus, the existence of either $s_t$ or $m_t$ denies the existence of $\mu$. So, we know by the first property of weakly stochastic processes that this time series is non-stationary. 
+
+
 
 ### b) Create training and test datasets. 
 
 
 The training dataset should include all observations up to and including December 2021; this dataset will be used to fit (”train”) the model. The test dataset should include all observations from January 2022 to December 2023; this dataset will be used to assess forecast accuracy. You can use the command `window()` on a ts object to split the data. Using a suitable decomposition model and the loess method (R function `stl()`) decompose the training series into trend, seasonal, and error components. Plot the resulting decomposition.
 
+
+We'll start by splitting the data into train and test, then verifying our work. The verification process involves assuring that the sum of train and test is equal to the size of the series and also equal to the number of rows in the original data.
 ```{r}
-# Code block for Task 1b
+train <- window(jobseries, 
+           # starting at the beginning of 1987
+           start = 1987, 
+           # ending at the end of 2021
+           end = c(2021, 12), 
+           # monthly
+           frequency = 12)
+
+# get test data
+test <- window(jobseries,
+               start = c(2022, 1),
+               end = c(2023, 12),
+               frequency = 12)
+# verify we've done things correctly
+all.equal(length(test) + length(train),
+          length(jobseries),
+          nrow(df))
 ```
+
 
 ### c) Fit a linear model to the trend component (you can use R function `lm()`).
 - Write down the fitted model for the trend component.
