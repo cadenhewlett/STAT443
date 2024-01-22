@@ -279,10 +279,11 @@ lines(preds, col = 'red')
 
 `... attempt nonlinear functions of $\log(\hat{m}_t)$, use cross-validation to fit the model, `
 
+`... inspect the possibility of Complex /multiple seasonality` 
 
 - As a statistician, what other information would you like to add to your forecasts in addition to the point forecasts you produced above?
 
-`... confidence bounds `
+`... confidence bounds / prediction error `
 
 
 ## Task 2: Analyzing New York Temperature Data
