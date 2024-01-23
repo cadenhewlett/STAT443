@@ -1,3 +1,10 @@
+library(zoo)
+library(tseries)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(forecast)
+
 df <- read.csv("assignments/usual_hours_worked_ca.csv")
 
 jobseries = ts(data = df$Hours,
@@ -190,3 +197,8 @@ lines(x = as.numeric(pr_df$t), y  = pr_df$p, col = 'blue')
 lines(preds, col = 'red')
 # lines(x = as.numeric(pp_df$t), y  = pp_df$p, col = 'green')
 lines(x = as.numeric(pg_df$t), y = pg_df$p, col = "purple")
+
+
+####### resids
+
+
