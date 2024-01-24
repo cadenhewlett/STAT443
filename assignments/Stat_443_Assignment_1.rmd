@@ -285,7 +285,7 @@ plot(test - preds)
 The residual plot shows a clear pattern, and the fact that the residuals are wholly positive implies that our model is consistently under-estimating the truth. The pattern to the residual plot is quite interesting, and may suggest that part of the reason the predictions are off is that there is some additional pattern in the data that we are not capturing with our current model.
 
 This can be exemplified in the plot below, where we are roughly able to fit a sinusoid to the residuals. (*NOTE*: this is purely to exemplify a pattern in the residuals, and is not calculated through OLS or otherwise.)
-
+ 
 ```{r resid_pattern}
 xtest = seq(from = 0, to = pi, length.out = 1000 )
 plot(test - preds, main = "Residual Plot with Sinusoid")
