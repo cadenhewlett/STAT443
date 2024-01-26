@@ -323,7 +323,7 @@ plot(test - preds)
 The residual plot shows a clear pattern, and the fact that the residuals are wholly positive implies that our model is consistently under-estimating the truth. The pattern to the residual plot is quite interesting, and may suggest that part of the reason the predictions are off is that there is some additional pattern in the data that we are not capturing with our current model.
 
 This can be exemplified in the plot below, where we are roughly able to fit a sinusoid to the residuals. (*NOTE*: this is purely to exemplify a pattern in the residuals, and is not calculated through OLS or otherwise.)
-
+ 
 ```{r resid_pattern}
 xtest = seq(from = 0, to = pi, length.out = 1000 )
 plot(test - preds, main = "Residual Plot with Sinusoid")
@@ -335,15 +335,14 @@ It's difficult to say exactly what this "additional component" could be; however
 
 - How could the prediction method be improved?
 
-`went decently well, because I think that our methodology captured the seasonal component quite well (see: peaks in the right location), however a better estimation of the trend component could have been very beneficial`
+It could be improved in many ways. The first thing that comes to mind is the addition of error bounds, or any measure of uncertainty whatsoever. Having point estimate predictions isn't the greatest idea. Further, I think the precision of the method could be improved by attempting to implement non-linear functions of $\log(\hat{m}_t)$ and trying to use cross-validation methods (such as Lasso or GAMs) to better fit the trend component of the decomposition, ideally to improve both in-sample and out-of-sample performance. Finally, due to the pattern in the residual plot, I think there is some reason to suggest we should investigate more complex multi-seasonal models. It is plausible that there is some significant additional seasonality that we are not currently capturing with our decomposition that would improve the prediction method. 
 
-`... attempt nonlinear functions of $\log(\hat{m}_t)$, use cross-validation to fit the model, `
-
-`... inspect the possibility of Complex /multiple seasonality` 
 
 - As a statistician, what other information would you like to add to your forecasts in addition to the point forecasts you produced above?
 
-`... confidence bounds / prediction error `
+As was mentioned in the previous question, it would be *extremely* wise to add confidence bounds / margins of error to our point forecasts. These would help quantify the uncertainty in our predictions and provide a much stronger model overall. Certain additional error quantification methods could also be helpful, such as mean squared prediction error. But certainly without a doubt we need to quantify the uncertainty in out predictions somehow.  
+
+
 
 
 ## Task 2: Analyzing New York Temperature Data
