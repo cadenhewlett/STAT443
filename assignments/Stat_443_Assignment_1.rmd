@@ -14,7 +14,7 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(forecast)
-library(mgcv)
+# library(mgcv)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
 
@@ -177,7 +177,7 @@ grid.arrange(sp2, mp2, zp2, nrow = 3)
 
 - Write down the fitted model for the trend component.
 
-Let $\hat{\beta}_0, \hat{\beta}_1 \in \mathbb{R}$ be the real-valued least squares estimator of the true intercept slope terms $\beta_0, \beta_1 \in \mathbb{R}$ respectively. Recalling that we are taking $\log(m_t)$, the fitted model is of the form.
+Let $\hat{\beta}_0, \hat{\beta}_1 \in \mathbb{R}$ be the real-valued coefficient estimates  of the true intercept and slope terms $\beta_0, \beta_1 \in \mathbb{R}$ respectively. Recalling that we are taking $\log(m_t)$, the fitted model is of the form.
 
 $$
 \log(\hat{m}_t) = \hat{\beta}_0 + \hat{\beta}_1 t
@@ -353,25 +353,49 @@ As was mentioned in the previous question, it would be *extremely* wise to add c
 
 ## Task 2: Analyzing New York Temperature Data
 
-### a) Read the data into R and create an R object called dat for the data.
+### Question (a) 
 
-```{r}
-# Code block for Task 2a
+**Part 1:** : First, we read the data into R and create an R object called `dat`.
+
+```{r q2p11}
+dat = read.csv("NY_Temperature_Data.csv")
 ```
 
-### b) Create zoo objects for daily Max Temperature. Create monthly maxima time series. Plot the monthly maximum temperature series and comment on any features you observe.
 
-```{r}
-# Code block for Task 2b
+**Part 2:** Now, we create a zoo object for daily Max Temperature. 
+
+
+*NOTE*: Our object is called `x`, but the input to `zoo()` is the daily maxima column from `dat`.
+```{r q2p12}
+x = zoo(dat$TMAX, zoo::as.Date(dat$Date))
 ```
 
-### c) Fit a suitable seasonal decomposition model to the monthly data using the moving average smoothing (R function decompose) and plot the estimates of the trend, seasonal, and error components.
+**Part 3:** Now, we make the monthly maxima time series, in an object called `monthly_max`.
+```{r q2p13}
+monthly_max = aggregate(x, as.yearmon, FUN=max)
+```
+
+**Part 4:** Now, we plot the monthly maximum temperature series.
+
+```{r q2p14}
+plot(monthly_max)
+```
+
+**Part 5:** Finally some comments on the observed features.
+
+
+
+### Question (c)
+
+Fit a suitable seasonal decomposition model to the monthly data using the moving average smoothing (R function decompose) and plot the estimates of the trend, seasonal, and error components.
 
 ```{r}
 # Code block for Task 2c
 ```
 
-### d) Plot the correlogram for the deseasonalized series of monthly temperature maxima using the seasonal decomposition model you fit in part (c). Comment on the serial dependence of this series.
+### Question (d) 
+
+Plot the correlogram for the deseasonalized series of monthly temperature maxima using the seasonal decomposition model you fit in part (c). Comment on the serial dependence of this series.
 
 ```{r}
 # Code block for Task 2d
