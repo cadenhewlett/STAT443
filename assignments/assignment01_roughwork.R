@@ -177,7 +177,7 @@ date_strings <- unlist(lapply(2022:2023, function(year) {
 date_strings[1] = "1/2022"
 low_ylim = 34.5; up_ylim = 36.5
 # create plot
-p3<-ggplot(p3df) +
+p3 <- ggplot(p3df) +
   geom_line(aes(x = Time, y = Actual, color = "Actual")) +
   geom_line(aes(x = Time, y = Predicted, color = "Forecast")) +
   scale_color_manual(values = c("Actual" = "#373d20", "Forecast" = "#a98467"),
@@ -204,4 +204,20 @@ p3<-ggplot(p3df) +
   ))
 print(p3)
 
+# resid plot
 
+p4df <- data.frame(
+  Time = as.numeric(time(test)),
+  Residual = as.numeric(test - preds)
+)
+p4 <- ggplot(p4df) +
+  geom_line(aes(x = Time, y = Residual),color = "#780000") +
+  labs(
+    title = "Residual Plot of Actual Values against Forecast",
+    subtitle = "Hours Worked Dataset (January 2022 to December 2023)",
+    y = "Observed Residual",
+    x = "Year"
+  ) + theme_bw() + ylim(-0.05, 0.6) +
+  geom_hline(yintercept = 0, lty = "dashed") +
+  scale_x_continuous(breaks = p3df$Time, labels = date_strings)
+p4
