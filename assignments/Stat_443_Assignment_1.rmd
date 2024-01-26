@@ -14,6 +14,7 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(forecast)
+library(ggfortify)
 # library(mgcv)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
@@ -375,15 +376,27 @@ x = zoo(dat$TMAX, zoo::as.Date(dat$Date))
 monthly_max = aggregate(x, as.yearmon, FUN=max)
 ```
 
-**Part 4:** Now, we plot the monthly maximum temperature series.
+**Part 4:** Now, we plot the monthly maximum temperature series. Since we're using `ggplot2` to create the plot, we'll use `fortify.zoo` that works alongside the `ggfortify` package to convert the `monthly_max` object to be `ggplot2` compliant. 
 
 ```{r q2p14}
-plot(monthly_max)
+p2df <- fortify.zoo(monthly_max)
+p21 <- ggplot(p2df, aes(x = Index, y = monthly_max)) +
+  geom_line(color = "#f48c06") + theme_bw() +
+  labs(
+    x = "Year",
+    y =  expression(paste("Monthly Maximum (", degree, "C)")),
+    title = expression(paste(
+      "Monthly Maximum Temperature (", degree, "C) in New York"
+    )),
+    subtitle = "Measured From 1990-2024, Sourced from NOAA"
+  ) +
+  coord_fixed(ratio = 0.275) 
+print(p21)
 ```
 
-**Part 5:** Finally some comments on the observed features.
+**Part 5:** Comments on the observed features.
 
-
+There are a few features we can observe. Firstly, the time series appears to be very high-frequency; that is, the period $p$ is relatively short with respect to the overall time scale. However, there doesn't seem to be a change in amplitude over time, which, as discussed in the previous question, indicates the potential of using an additive model ($X_t = s_t + m_t + Z_t$) to describe this process. Finally, there doesn't immediately seem to be a high-magnitude trend component to this model; importantly, this doesn't imply that one doesn't exist. For example, we can see that the "troughs" (or lowest points) in the monthly maximum temperature seems to be decreasing slightly over time, implying that temperatures may be getting colder. There isn't conclusive evidence of a trend component simply from an initial observation; however, seeing if $m_t$ is significant in this model certainly warrants investigation.
 
 ### Question (c)
 
