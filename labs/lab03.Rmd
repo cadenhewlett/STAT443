@@ -233,9 +233,17 @@ acf(alpha_plus)
 acf(alpha_minus)
 ```
 
-**Comments** As we change the sign of $\alpha$ to be positive, we no longer see the alternating pattern in the sign of the acf, merely a consistent decline in serial dependence as a function of lag.
+**Comments** As we change the sign of $\alpha$ to be positive, we no longer see the alternating pattern in the sign of the acf, merely a consistent decline in serial dependence as a function of lag. 
 
 
-To explain this change, let's use some dummy variables. For simplicity, $Z_t = 0$, and our $X_t = 1$.
+To explain this change, let's use some dummy variables. For simplicity, $Z_t = 0$, and our $X_{t-1} = 1$.
 
-From this setup, for $\alpha = 0.8$, we'd hve
+From this setup, for $\alpha = 0.8$, we'd have:
+
+$$
+X_t = \alpha X_{t-1} + Z_t = (0.8)(1) + 0 = 0.8
+$$
+
+Continuing this process (assuming zero noise), we'd have $X_t$ values of $\{0.8, 0.64, 0.512, .. \}$ so then auto-correlation (for time $t$) would be found by comparing pairs $\{0.8, 0.64\}$ for $h = 1$, $\{0.8, 0.512\}$ for $h = 2$ and so forth. As you can see, the correlation will be decreasing over time, but never changing signs. 
+
+Conversely, if $\alpha$ was negative we'd have $X_t$ values of $\{0.8, -0.64, 0.512, -0.4096, \dots \}$ so then auto-correlation (for time $t$) would be found by comparing pairs $\{0.8, -0.64\}$ for $h = 1$, $\{0.8, 0.512\}$ for $h = 2$, $\{0.8, -0.4096\}$ for $h = 3$  and so forth. As you can see, the correlation will both be decreasing over time, and changing signs for odd powers, which is reflected in the corresponding acf plot. 
