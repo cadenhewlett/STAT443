@@ -34,8 +34,8 @@ p1 <- ggplot(p1data, aes(x = Index, y = jobseries)) +
   labs(
     title = "Monthly Average of Usual Hours Worked in Canada",
     subtitle = "Across all Industries from January 1987 to December 2023",
-    x = "Monthly Mean Working Time (Hours)",
-    y = "Year"
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
   ) + theme_bw() +
   theme(panel.grid.minor = element_line(
     color = "grey90",
@@ -264,12 +264,50 @@ mt_pred = beta_1*time(test) + beta_0
 st_pred = (rep(period, 2))
 # then the predicted value is undoing the log transform
 preds = exp(mt_pred + st_pred)
-# rough plot for now
-par(mfrow = c(1,1))
-plot(test, ylim = c(34, 37))
-lines(preds, col = 'red')
+p3df <- data.frame(
+          Time = as.numeric(time(test)),
+          Actual = as.numeric(test), 
+          Predicted = preds)
+# create custom-spaced month/date strings
+date_strings <- unlist(lapply(2022:2023, function(year) {
+  sapply(1:12, function(month) {
+    if (month %% 6 == 0) paste(month, "/", year, sep = "")
+    else ""
+  })
+}))
+# specify additional parameters
+date_strings[1] = "1/2022"
+low_ylim = 34.5; up_ylim = 36.5
 ```
-
+Now, we create a plot of the forecast vs. actual values. 
+```{r makedaplot}
+p3 <- ggplot(p3df) +
+  geom_line(aes(x = Time, y = Actual, color = "Actual")) +
+  geom_line(aes(x = Time, y = Predicted, color = "Forecast")) +
+  scale_color_manual(values = c("Actual" = "#373d20", "Forecast" = "#a98467"),
+                     name = "Type", labels = c("Actual", "Forecast")) +
+  labs(
+    title = "Monthly Average of Usual Hours Worked in Canada, with Forecast",
+    subtitle = "Across all Industries from January 2022 to December 2023",
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
+  ) + theme_bw() + 
+  scale_x_continuous(breaks = p3df$Time, labels = date_strings) +
+  scale_y_continuous(limits = c(low_ylim, up_ylim),
+                     breaks = seq(low_ylim, up_ylim, by = 0.5),
+                     labels = seq(low_ylim, up_ylim, by = 0.5)) +
+  theme(panel.grid.major = element_line(
+    color = "grey95",
+    linetype = "solid",
+    linewidth = 0.5
+  ), 
+  panel.grid.minor.y = element_line(
+    color = "grey95",
+    linetype = "solid",
+    linewidth = 0.5
+  ))
+print(p3)
+```
 
 - Comment on the performance of your prediction method, explaining why or why not the method worked well for this data.
 
