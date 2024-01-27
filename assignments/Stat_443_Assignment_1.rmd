@@ -15,6 +15,7 @@ library(gridExtra)
 library(reshape2)
 library(forecast)
 library(ggfortify)
+library(grid)
 # library(mgcv)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
@@ -400,19 +401,78 @@ There are a few features we can observe. Firstly, the time series appears to be 
 
 ### Question (c)
 
-Fit a suitable seasonal decomposition model to the monthly data using the moving average smoothing (R function decompose) and plot the estimates of the trend, seasonal, and error components.
+Fit a suitable seasonal decomposition model to the monthly data using the moving average smoothing (R function `decompose`) and plot the estimates of the trend, seasonal, and error components.
+
+We start by using `zooreg` to convert to a time series.
+```{r}
+month_ts <- ts(zooreg(monthly_max), 
+               start = c(1990, 1),
+               end = c(2024, 1),
+               frequency = 12)
+```
+
+From our preliminary analytics in the previous part, we will decompose this time series as an additive model, i.e. $X_{t} = m_t + s_t + Z_t$, where $Z_t \sim \text{WN}(0, \sigma^2)$ for $t \in \mathbb{Z}$.
 
 ```{r}
-# Code block for Task 2c
+month_decomp <- decompose(month_ts)
+mseasonal = month_decomp$seasonal
+mtrend = month_decomp$trend
+mnoise = month_decomp$random
 ```
+
+For organization and ease of visualization, we de-contextualized the plot titles, simply mentioning it is for the Additive Model. However, it should be clarified that each plot title could be further specified to be "Component of Additive Model for Monthly Max Temperature in New York (1990-2024)."
+
+```{r plots, warning=FALSE}
+sp2c <- ggplot(data = fortify.zoo(mseasonal, na.fill = 0), aes(x = Index, y = mseasonal)) +
+  geom_line(color = "#9d0208", linewidth = 0.5) +
+  theme_bw() +
+  labs(
+    title = "Seasonal Component of Additive Model",
+    y = "st",
+    x = NULL
+  ) +  xlim(1990, 2024)
+
+mp2c <- ggplot(data = fortify.zoo(mtrend, na.fill = 0), aes(x = Index, y = mtrend)) +
+  geom_line(color = "#dc2f02", linewidth = 0.5) +
+  theme_bw() +
+  labs(
+    title = "Trend Component of Additive Model",
+    y = "mt",
+    x = NULL
+  )  +  xlim(1990, 2024)
+
+zp2c <- ggplot(data = fortify.zoo(mnoise, na.fill = 0), aes(x = Index, y = mnoise)) +
+  geom_line(color = "#e85d04", linewidth = 0.5) +
+  theme_bw() +
+  labs(
+    title = "Random Component of Additive Model",
+    y = "Zt",
+    x = "Year"
+  )  +  xlim(1990, 2024)
+
+grid.arrange(sp2c, mp2c, zp2c)
+```
+
 
 ### Question (d) 
 
 Plot the correlogram for the deseasonalized series of monthly temperature maxima using the seasonal decomposition model you fit in part (c). Comment on the serial dependence of this series.
 
+
+To de-seasonalize the data, we have to subtract the $s_t$ component found in the previous section from the overall time series $X_t$ found via aggregation. In terms of our `R` objects, the seasonal component is `mseasonal` and the time series observed (as a `ts` object) is `month_ts`. We compute their difference below:
+
 ```{r}
-# Code block for Task 2d
+deseasonalized = month_ts - mtrend
 ```
+
+Then, we plot the $\text{ACF} = \rho(h)$, using `na.pass` to compensate for the NA components of the `mtrend` object.
+
+```{r}
+acf(deseasonalized, na.action = na.pass)
+```
+
+**Comments**
+
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient
 
