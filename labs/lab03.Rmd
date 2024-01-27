@@ -141,6 +141,8 @@ Repeat multiple times. What do you notice?
 
 Despite the magnitude of the time series being vastly different for the two simulation groups, the correlogram (acf plots) reflect similar autocorrelation coefficients for the initial lag $h = 1$ component, and both decline into noise. It's interesting that despite the difference in magnitude the two simulations have extremely similar acfs. 
 
+Why is this happening? It largely has to do with the coefficients. Letting $0.25$ = $4^{-1}$, we compare the patterns of ${X}_t = Z_t + 4Z_{t-1}$ and  $X_t = Z_t + 4^{-1}Z_{t-1}$. In each time step, regardless of the series, there is only largely serial dependence between $\{Z_t, Z_{t+1}\}$. In the case of the fist series, this dependence is between $\{Z_t, 4Z_{t-1}\}$, while in the second series it is $\{Z_t, 4^{-1}Z_{t-1}\}$ Which can be manipulated to be the pair $\{4Z_t, Z_{t-1}\}$. As we saw in the covariance review, $\text{cov}(X, Y) = \text{cov}(Y, X)$. Recalling the definition of correlation, we know by this same reasoning that it should be the case that the autocorrelation between $\{Z_t, 4Z_{t-1}\}$ and $\{4Z_t, Z_{t-1}\}$ are the same. We see this fact reflected in the two plots. 
+
 
 # Question 3
 
