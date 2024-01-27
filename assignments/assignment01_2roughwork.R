@@ -67,7 +67,25 @@ grid.arrange(sp2c, mp2c, zp2c)
 
 ##### part d
 
-deseasonalized = month_ts - mtrend
-acf(deseasonalized, na.action = na.pass)
-?acf
+deseasonalized = month_ts - mseasonal
+time(deseasonalized)
+# lag on 1 year : evidence of perhaps un-accounted for serial dependence dependent
+# on the month of the year. cyclical seasonal dependence
+acf(deseasonalized, na.action = na.pass, lag.max = 12)
+
+# lag on many years: this pattern repeats on a consistent cycle. 
+# although, declines over time
+acf(deseasonalized, na.action = na.pass, lag.max = 408)
+
+# calculating what's one year in the TS
+delta = time(deseasonalized)[2] - time(deseasonalized)[1]
+# calculating what's the entire TS
+(2024-1990)/delta
+
+
+#2024-1990
 #time(month_ts)
+
+####### fuckin around
+#  theoretical ACF for an MA(2) process
+# plot(ARMAacf(ma = c(-1, -1, -1, 1), lag.max = 12))

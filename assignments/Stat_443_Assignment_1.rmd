@@ -462,17 +462,34 @@ Plot the correlogram for the deseasonalized series of monthly temperature maxima
 To de-seasonalize the data, we have to subtract the $s_t$ component found in the previous section from the overall time series $X_t$ found via aggregation. In terms of our `R` objects, the seasonal component is `mseasonal` and the time series observed (as a `ts` object) is `month_ts`. We compute their difference below:
 
 ```{r}
-deseasonalized = month_ts - mtrend
+deseasonalized = month_ts - mseasonal
 ```
 
 Then, we plot the $\text{ACF} = \rho(h)$, using `na.pass` to compensate for the NA components of the `mtrend` object.
 
 ```{r}
 acf(deseasonalized, na.action = na.pass)
+
+# lag on 1 year : doesn't look like there's much serial dependence (we'd see a more obvious pattern to the correlogram), this mostly appears to be white noise
+acf(deseasonalized, na.action = na.pass, lag.max = 12)
+
+# lag on many years: the acf appears to still basically be white noise, the magnitude of which seems to be declining over time, as we'd expect
+acf(deseasonalized, na.action = na.pass, lag.max = 408)
+
+# calculating what's one year in the TS
+delta = time(deseasonalized)[2] - time(deseasonalized)[1]
+# calculating what's the entire TS
+(2024-1990)/delta
 ```
 
 **Comments**
 
+IID noise: the sample acf tends to be within $\pm 2 / \sqrt{n}$ bounds.
+```{r noisytest}
+n = length(deseasonalized)
+n
+2/sqrt(n)
+```
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient
 
