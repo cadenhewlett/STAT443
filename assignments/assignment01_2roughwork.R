@@ -82,10 +82,27 @@ delta = time(deseasonalized)[2] - time(deseasonalized)[1]
 # calculating what's the entire TS
 (2024-1990)/delta
 
+d_acf <- acf(deseasonalized, 
+             na.action = na.pass, 
+             lag.max = 408, plot = FALSE)
 
-#2024-1990
-#time(month_ts)
 
-####### fuckin around
-#  theoretical ACF for an MA(2) process
-# plot(ARMAacf(ma = c(-1, -1, -1, 1), lag.max = 12))
+p2data = data.frame(
+  h = 0:19,
+  rh = acf(summer_series, plot = FALSE)$acf
+)
+
+p2 <- ggplot(p2data, aes(x = h, y = rh)) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#eb5e28",
+               linewidth = 1) +
+  geom_hline(yintercept = 0.2, linetype = "dashed", col = "#ffbd00")+
+  geom_hline(yintercept = -0.2, linetype = "dashed", col = "#ffbd00")+
+  ylim(-0.2, 1)+
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag", y = "Autocorrelation", 
+       title = "Correlogram of Summer Temperature Data") +
+  theme_bw()
+print(p2)

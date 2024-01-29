@@ -2,6 +2,8 @@
 ---
 title: "Stat 443 Assignment 1: Exploratory Data Analysis"
 author: Caden Hewlett
+header-includes:
+   - \usepackage{bbm}
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
@@ -467,29 +469,50 @@ deseasonalized = month_ts - mseasonal
 
 Then, we plot the $\text{ACF} = \rho(h)$, using `na.pass` to compensate for the NA components of the `mtrend` object.
 
-```{r}
-acf(deseasonalized, na.action = na.pass)
+To informatively plot the sample acf, we need to determine how many time steps exist in our monthly data set so that we can accurately set the `lag.max` parameter. To do this, we let $\Delta t = t_{2} - t_{1}$ be the time step between entries. For our data, $p = 12$, thus, $\Delta t = 1/12$ as calculated below.
 
-# lag on 1 year : doesn't look like there's much serial dependence (we'd see a more obvious pattern to the correlogram), this mostly appears to be white noise
-acf(deseasonalized, na.action = na.pass, lag.max = 12)
-
-# lag on many years: the acf appears to still basically be white noise, the magnitude of which seems to be declining over time, as we'd expect
-acf(deseasonalized, na.action = na.pass, lag.max = 408)
-
+```{r deltat}
 # calculating what's one year in the TS
 delta = time(deseasonalized)[2] - time(deseasonalized)[1]
-# calculating what's the entire TS
-(2024-1990)/delta
+```
+
+Then, to determine the maximum lag value, we divide the total elapsed number of years in the time series by the time step size to find $h_{\text{max}}$.
+
+$$
+h_{\text{max}} = \dfrac{(t{}_{\text{max}} - t_{\text{min}})}{\Delta t} =  \dfrac{(2024 - 1990)}{(1 /12)} = 408
+$$
+```{r hmax}
+# calculating what's the entire TS size (for max lag)
+hmax = (2024-1990)/delta
+```
+
+Then, we can create the entire correlogram for our data.
+
+```{r}
+d_acf <- acf(deseasonalized, 
+             na.action = na.pass, 
+             lag.max = hmax, plot = FALSE)
+
 ```
 
 **Comments**
 
-IID noise: the sample acf tends to be within $\pm 2 / \sqrt{n}$ bounds.
+The serial dependence of the de-seasonalzied data seems to be predominantly white noise. 
+We know that if the sample acf values tend to be withing $\pm 2 / \sqrt{n}$, this is indicative of serial dependence that is simply *iid* noise.
+
 ```{r noisytest}
 n = length(deseasonalized)
-n
 2/sqrt(n)
 ```
+
+$$
+\sum_{i = 0}^{h_\text{max}} \mathbbm{1}(|\rho(h_i)| \geq 2/\sqrt{n})
+$$
+
+<!-- If the series has a trend, the acf will have a very slow decay due to high -->
+<!-- correlation of the consecutive values (which tend to lie on the same -->
+<!-- side of the mean) -->
+
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient
 
