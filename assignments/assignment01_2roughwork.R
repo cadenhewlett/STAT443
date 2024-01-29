@@ -85,24 +85,34 @@ delta = time(deseasonalized)[2] - time(deseasonalized)[1]
 d_acf <- acf(deseasonalized, 
              na.action = na.pass, 
              lag.max = 408, plot = FALSE)
+# calculating what's one year in the TS
+delta = time(deseasonalized)[2] - time(deseasonalized)[1]
 
+hmax = (2024-1990)/delta
 
-p2data = data.frame(
-  h = 0:19,
-  rh = acf(summer_series, plot = FALSE)$acf
+# create plotting dataframe
+p2ddata = data.frame(
+  h = 0:hmax,
+  rh = d_acf$acf
 )
+# determine n
+n = length(deseasonalized)
+# determine significance bars for iid noise serial dependence
+bars = c(-2, 2)/sqrt(n)
+# create plot
+p2d <- ggplot(p2ddata, aes(x = h, y = rh)) +
+    geom_segment(aes(xend = h, yend = 0),
+                 color = "#606c38",
+                 linewidth = 0.5) +
+    geom_hline(yintercept = bars[1], linetype = "dashed", col = "#283618")+
+    geom_hline(yintercept = bars[2], linetype = "dashed", col = "#283618")+
+    ylim(-0.2, 1)+
+    geom_hline(yintercept = 0,
+               linetype = "dashed",
+               color = "darkgray") +
+    labs(x = "Lag", y = "Autocorrelation", 
+         title = "Correlogram of Monthly Max Temperature Data",
+         subtitle = "In New York 1990-2024, Data Sourced from NOAA") +
+    theme_bw()
+print(p2d)
 
-p2 <- ggplot(p2data, aes(x = h, y = rh)) +
-  geom_segment(aes(xend = h, yend = 0),
-               color = "#eb5e28",
-               linewidth = 1) +
-  geom_hline(yintercept = 0.2, linetype = "dashed", col = "#ffbd00")+
-  geom_hline(yintercept = -0.2, linetype = "dashed", col = "#ffbd00")+
-  ylim(-0.2, 1)+
-  geom_hline(yintercept = 0,
-             linetype = "dashed",
-             color = "darkgray") +
-  labs(x = "Lag", y = "Autocorrelation", 
-       title = "Correlogram of Summer Temperature Data") +
-  theme_bw()
-print(p2)

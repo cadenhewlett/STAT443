@@ -495,19 +495,59 @@ d_acf <- acf(deseasonalized,
 
 ```
 
-**Comments**
 
-The serial dependence of the de-seasonalzied data seems to be predominantly white noise. 
-We know that if the sample acf values tend to be withing $\pm 2 / \sqrt{n}$, this is indicative of serial dependence that is simply *iid* noise.
+We know that if the sample acf values tend to be withing $\pm 2 / \sqrt{n}$, this is indicative of no serial dependence (i.e. simply *iid* noise.) These values are plotted below as horizontal dotted lines alongside the sample acf. 
 
-```{r noisytest}
+```{r sampleacf}
+# create plotting dataframe
+p2ddata = data.frame(
+  h = 0:hmax,
+  rh = d_acf$acf
+)
+# determine n
 n = length(deseasonalized)
-2/sqrt(n)
+# determine significance bars for iid noise serial dependence
+bars = c(-2, 2)/sqrt(n)
+# create plot
+p2d <- ggplot(p2ddata, aes(x = h, y = rh)) +
+    geom_segment(aes(xend = h, yend = 0),
+                 color = "#606c38",
+                 linewidth = 0.5) +
+    geom_hline(yintercept = bars[1], linetype = "dashed", col = "#283618")+
+    geom_hline(yintercept = bars[2], linetype = "dashed", col = "#283618")+
+    ylim(-0.2, 1)+
+    geom_hline(yintercept = 0,
+               linetype = "dashed",
+               color = "darkgray") +
+    labs(x = "Lag", y = "Autocorrelation", 
+         title = "Correlogram of Monthly Max Temperature Data",
+         subtitle = "In New York 1990-2024, Data Sourced from NOAA") +
+    theme_bw()
+print(p2d)
 ```
 
+
+**Comments**
+
+Visually, it appears that the de-seasonalized data seem to be predominantly white noise (i.e. no serial dependence) that is decaying very slowly over time (as we'd expect.) Further, the majority of the observations fall below the $\pm 2 / \sqrt{n}$ bars. 
+
+To verify this observation, we'll let $\Upsilon$ be the proportion of $\rho(h)$ values greater than the $\pm 2 / \sqrt{n}$ threshold.
+
+We'll compute the proportion as follows:
 $$
-\sum_{i = 0}^{h_\text{max}} \mathbbm{1}(|\rho(h_i)| \geq 2/\sqrt{n})
+\Upsilon = \frac{1}{(h_{\text{max}} + 1)}\sum_{i = 0}^{h_\text{max}} \mathbbm{1}\Big(|\rho(h_i)| \geq \dfrac{2}{\sqrt{n}}\Big)
 $$
+In our `R` code, we compute the value below:
+```{r pgreater}
+# same as mean( abs(d_acf$acf) >  bars[2] )
+p_greater = sum( abs(d_acf$acf) >  bars[2] ) / (hmax + 1)
+# show as percent
+(p_greater * 100)
+```
+
+It appears that approximately $0.98 \%$ the sample acf values lie above the random noise threshold (noting that this include $\rho(0) = 1$ that is always above this threshold.) It seems overwhelmingly likely that there is no serial dependence to the de-seasonalized data.
+
+In addition to the computation from the threshold above, we don't see any periodicity to the correlogram that would indicate seasonality, nor do we see a slow decay of high-magnitude autocorrelation values on the same side of the mean that would indicate a trend. Hence, we can conclude that it is likely that there is no serial dependence present in the de-seasonalized data. 
 
 <!-- If the series has a trend, the acf will have a very slow decay due to high -->
 <!-- correlation of the consecutive values (which tend to lie on the same -->
