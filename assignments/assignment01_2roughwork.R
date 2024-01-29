@@ -169,11 +169,51 @@ gt_table <- gt(tableDF) %>%
 
 (gt_table)
 
-?chisq.test
-chisq.test(x = results$R2, 5e-4)
-t.test(x = results$R2, mu = -5e-4)
-t.test(x = results$R1, mu = -5e-4)
-
+?t.test
 alpha = 0.05
-var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = T)
-var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = F)
+alpha_prime = alpha/2
+cis = data.frame( apply(results, MARGIN = 2, 
+      function(r){
+        rbar = mean(r)
+        se_i = sd(r) / sqrt(m)
+        moe =  qt(alpha_prime/2, df = m-1)*se_i
+        return(rbar + c(moe, -moe))
+        }))
+rownames(cis) = c("Lower", "Upper")
+signif(cis, 3)
+
+# 
+# chisq.test(x = results$R2, 5e-4)
+# sum( (cis[1, ] <= -1/n) & (cis[2, ] >= -1/n) ) == 2
+# 
+# t.test(x = results$R2, mu = -5e-4, conf.level = 1-(alpha/2))
+# t.test(x = results$R1, mu = -5e-4, conf.level = 1-(alpha/2))
+# se_1 = sd(results$R1) / sqrt(m)
+# moe = qt(alpha_prime/2, df = m-1) * se_1
+# mean(results$R1) + moe
+# mean(results$R1) - moe
+
+civs = data.frame( apply(results, MARGIN = 2, 
+                  function(r){
+                    numer = var(r)*(m-1)
+                    ci_v = c( numer / qchisq(1-alpha_prime/2, df = (m - 1)),
+                              numer / qchisq(alpha_prime/2, df = (m - 1)))
+                    return(ci_v)
+                  }))
+rownames(civs) = c("Lower", "Upper")
+signif(civs, 3)
+
+# create sequence of x-variables
+x <- seq(from = -0.05, to = 0.05, length.out = m)
+# calculate density for R1
+density_R1 <- density(results$R1)
+density_R1 <- data.frame(x = density_R1$x, y = density_R1$y)
+hist(results$R1)
+ggplot() +
+  geom_line(data = density_df, aes(x = x, y = y, color = "Observed")) +
+  geom_line(data = normal_curve, aes(x = x, y = y, color = "Theorized")) +
+  # geom_histogram(data = results, inherit.aes = FALSE, aes(x = results$R1, y = after_stat(results$R1)), 
+  # fill = "blue", alpha = 0.5) +
+  labs(x = "X-axis Label", y = "Y-axis Label") +
+  scale_color_manual(values = c("Observed" = "blue", "Theorized" = "red")) +
+  theme_minimal()

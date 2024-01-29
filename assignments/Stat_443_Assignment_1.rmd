@@ -687,22 +687,73 @@ gt_table <- gt(tableDF) %>%
 
 
 
-- Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag h and their theoretical approximation.
+- Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag $h$ and their theoretical approximation.
 
-Theoretical:
+
+Visually, it appears that 
+
+
+We know that the theoretical approximation should obey the following distribution:
 
 $$
 \forall h, \; r_h \sim N\Big(\mu = -\frac{1}{n}, \sigma^2 = \frac{1}{n} \Big)
 $$
+From our empirical observations based on the plots in the previous question, it seems likely that both the true $r_1$ and $r_2$ values follow the theoretical approximation.
+
+To analytically verify these claims, we will construct confidence intervals for the mean and variances at $\alpha = 0.05$, i.e. $95\%$. We will begin by constructing pairwise confidence intervals for the means of $r_1$ and $r_2$ to determine if $-1/n$ is in these intervals. To adjust for family-wise error rate, we'll apply the Bonferroni correction and use $\alpha' = 0.05/2$, in other words constructing $97.5\%$ intervals. 
+
+
+We'll construct the $CI$s for $r_1$ and $r_2$ by the following methodology, using sample size $N = m$ and a $t$-Distribution with $m-1$ degrees of freedom (noting for values of $N$ this large, the $t$ distribution is approximately standard normal):
+
+$$
+\text{For } h \in [1,2], \hspace{0.25cm}\text{CI}_h(\alpha) =  \bigg({\mathbb{E}(\mathcal{R}_h)} \pm t_{\alpha/2\,; \,(m-1)}\frac{\text{se}(\mathcal{R}_h)}{\sqrt{m}}\bigg)
+$$
+
+
+
+The code to compute the two simultaneous intervals is below
+
 ```{r}
-t.test(x = results$R2, mu = -5e-4)
-t.test(x = results$R1, mu = -5e-4)
+alpha = 0.05
+alpha_prime = alpha/2
+cis = data.frame( apply(results, MARGIN = 2, 
+      function(r){
+        rbar = mean(r)
+        se_i = sd(r) / sqrt(m)
+        moe =  qt(alpha_prime/2, df = m-1)*se_i
+        return(rbar + c(moe, -moe))
+        }))
+rownames(cis) = c("Lower", "Upper")
+signif(cis, 3)
 ```
 
-then variances
+As the intervals show, the value of $-1/n = -5\times10^{-4}$ lies within both the $r_1$ and $r_2$ intervals. Hence, we know that the corresponding hypotheses for equality of means would fail to reject $H_0$ at the $95\%$ level. In other words, there is statistically significant evidence (at $\alpha = 0.05$) to suggest that the means of the simulated values follow the theoretical approximations, for this particular seed. Further, from the results of this hypothesis test, we can conclude that there is not statistically significant evidence at $\alpha = 0.05$ to suggest that either lag $h = 1$ or $h = 2$ have bias relative to their theoretical distributions.
+
+$$\forall h \in [1, 2], \;\text{bias}(r_h) = \mathbb{E}(\mathcal{R}_h) - \Big(-\frac{1}{n}\Big) \approx 0$$
+
+
+
+We can follow a similar methodology to determine whether or not our simulations follow the theorized variance of $\sigma^2 = 1/n$. Again, we will construct two simultaneous confidence intervals adjusting for FWER, noting that for variance the intervals are constructed as follows (where $m$, $\alpha$, $\mathcal{R}$ and $h$ are as previously declared):
+
+
+$$
+\text{For } h \in [1,2], \hspace{0.25cm}\text{CI}_h(\alpha) =  \bigg(\dfrac{\text{var}(\mathcal{R}_h)(m-1)}{\chi^2_{1-(\alpha/2)\,; \,(m-1)}}, \dfrac{\text{var}(\mathcal{R}_h)(m-1)}{\chi^2_{\alpha/2\,; \,(m-1)}}\bigg)
+$$
+
 ```{r}
-N = m 
-alpha = 0.05
-var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = T)
-var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = F)
+civs = data.frame( apply(results, MARGIN = 2, 
+                  function(r){
+                    numer = var(r)*(m-1)
+                    ci_v = c( numer / qchisq(1-alpha_prime/2, df = (m - 1)),
+                              numer / qchisq(alpha_prime/2, df = (m - 1)))
+                    return(ci_v)
+                  }))
+rownames(civs) = c("Lower", "Upper")
+signif(civs, 3)
 ```
+
+
+As the intervals show, the value of $1/n = 5\times10^{-4}$ lies within both the $r_1$ and $r_2$ variance confidence intervals. Hence, we know that the corresponding hypotheses for equality of variances would fail to reject $H_0$ at the $95\%$ level. In other words, there is statistically significant evidence (at $\alpha = 0.05$) to suggest that the variance of the simulated values follow the theoretical approximations, for this particular seed. 
+
+
+Putting all this together, the consistency of the confidence intervals with the theoretical approximations give us some important analytical credence to our initial empirical observations. We can conclude that it is overwhelmingly likely true that the simulated 
