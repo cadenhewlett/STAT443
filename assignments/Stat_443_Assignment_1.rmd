@@ -619,8 +619,8 @@ Repeat the following $\forall i \in [1, m]$ (assuming *iid* white noise $Z_t$):
 
 This algorithm is implemented directly in the code below:
 
-```{r big_simlation}
-set.seed(443)
+```{r big_simulation}
+set.seed(11292023)
 m = 8000; n = 2000
 simulation = sapply(1:m, 
               # Algorithm
@@ -690,5 +690,6 @@ gt_table <- gt(tableDF) %>%
 - Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag h and their theoretical approximation.
 
 ```{r}
-#mean()
+t.test(x = results$R2, mu = -5e-4)
+t.test(x = results$R1, mu = -5e-4)
 ```

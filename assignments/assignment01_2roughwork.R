@@ -1,8 +1,9 @@
 dat = read.csv("assignments/NY_Temperature_Data.csv")
-
+set.seed(11292023)
 library(zoo)
 library(gridExtra)
 library(grid)
+library(ggplot2)
 x = zoo(dat$TMAX, zoo::as.Date(dat$Date))
 
 monthly_max = aggregate(x, as.yearmon, FUN=max)
@@ -167,3 +168,10 @@ gt_table <- gt(tableDF) %>%
   gt_add_divider(columns = "Lag", style = "solid", col = 'grey70')
 
 (gt_table)
+-1/n
+1/n
+?t.test
+mean(results$R2)
+
+t.test(x = results$R2, mu = -5e-4)
+t.test(x = results$R1, mu = -5e-4)
