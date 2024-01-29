@@ -116,3 +116,54 @@ p2d <- ggplot(p2ddata, aes(x = h, y = rh)) +
     theme_bw()
 print(p2d)
 
+
+# same as mean( abs(d_acf$acf) >  bars[2] )
+p_greater = sum( abs(d_acf$acf) >  bars[2] ) / (hmax + 1)
+p_greater*100
+
+
+z_1 = rnorm(n = 2000, mean = 0, sd = 1)
+
+acf(z_1, plot = FALSE)$acf[2]
+
+######## part 3
+
+m = 8000; n = 2000
+simulation = sapply(1:m, 
+             function(i){
+               z_i = rnorm(n)
+               rho_i = acf(z_i, plot = FALSE)
+               r_i1 = rho_i$acf[2]
+               r_i2 = rho_i$acf[3]
+               c(r_i1, r_i2)
+             })
+results = data.frame(t(simulation))
+colnames(results) = c("R1", "R2")
+head(results)
+
+mean(results$R1)
+mean(results$R2)
+var(results$R1)
+var(results$R2)
+
+library(gt)
+library(gtExtras)
+tableDF <- data.frame(names =colnames(results),
+                      means =sapply(results, function(r) {sprintf("%.2e", mean(r))}),
+                      vars  =sapply(results, function(r) {sprintf("%.2e", var(r))})
+)
+colnames(tableDF) = c("Lag", "Mean", "Variance")
+
+gt_table <- gt(tableDF) %>%
+  tab_header(title = "Simulation Results",
+             subtitle = md("From `m = 8000` Iterations")) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+  ) %>% tab_options(
+    stub.border.width = px(2),
+    stub.border.color = "black"
+  ) %>%
+  gt_add_divider(columns = "Lag", style = "solid", col = 'grey70')
+
+(gt_table)

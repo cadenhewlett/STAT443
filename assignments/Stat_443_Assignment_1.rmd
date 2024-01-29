@@ -18,6 +18,8 @@ library(reshape2)
 library(forecast)
 library(ggfortify)
 library(grid)
+library(gt)
+library(gtExtras)
 # library(mgcv)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
@@ -520,7 +522,7 @@ p2d <- ggplot(p2ddata, aes(x = h, y = rh)) +
                linetype = "dashed",
                color = "darkgray") +
     labs(x = "Lag", y = "Autocorrelation", 
-         title = "Correlogram of Monthly Max Temperature Data",
+         title = "Correlogram of De-Seasonalized Monthly Max Temperature Data",
          subtitle = "In New York 1990-2024, Data Sourced from NOAA") +
     theme_bw()
 print(p2d)
@@ -556,41 +558,135 @@ In addition to the computation from the threshold above, we don't see any period
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient
 
-### i) 
+### Part (i) 
 
 Simulate a time series of length $n = 2000$ from a white noise process with $Z_t \sim N(0, 1)$ (function `rnorm()`).
 
-```{r}
-# Code block for Task 3i
-```
-
-### ii) Evaluate the sample autocorrelation coefficient.
-
-At lag $h$ for $h = 1$ and $h = 2$. Store these values.
+Below, we compute $n = 2000$ realizations of a $N(0,1)$ random variable. We will let $\mathcal{Z}_1 = \{z_{1,1} \,, z_{1,2} , \dots, z_{1,n} \}$ be this set of realizations where $z_{i, j}$ is the $j$-th realization from the $i$-the vector of simulated values, for $i \in [1,m]$ and $j \in [1,n]$.
 
 ```{r}
-# Code block for Task 3ii
+z_1 = rnorm(n = 2000, mean = 0, sd = 1)
 ```
 
-### iii) Repeat steps (i) and (ii) m = 8000 times; 
+### Part (ii) 
 
-i.e. generate 8000 time series of length n and for each of them compute r1 and r2. You should now have two vectors of length m with estimates r1 and r2.
+Evaluate the sample autocorrelation coefficient $r_h$ at lag $h$ for $h = 1$ and $h = 2$. Store these values.
+
+We note that in this case we slice the vector of observed $\rho(h)$ values at index $h + 1$, since `R` language vectors begin at index `1`. Hence, `$acf[1]` would give $\rho(0) = 1$ which isn't what we want here.
 
 ```{r}
-# Code block for Task 3iii
+r_1 = acf(z_1, plot = FALSE)$acf[2]
+r_2 = acf(z_1, plot = FALSE)$acf[3]
 ```
 
-### To summarize the results of the simulation study:
+### Part (iii) 
+
+Repeat steps (i) and (ii) $m = 8000$ times; 
+
+Generate 8000 time series of length $n$ and for each of them compute $r_1$ and $r_2$. You should now have two vectors of length $m$ with estimates $r_1$ and $r_2$.
+
+The code below uses the following algorithm:
+
+\textbf{\underline{Algorithm}}
+
+Repeat the following $\forall i \in [1, m]$ (assuming *iid* white noise $Z_t$):
 
 
-- Compute the mean and variance of r1 and r2 values from your simulation study.
+
+1.) Let $\mathcal{Z}_i = \{z_{i,1} \,, z_{i,2} , \dots, z_{i,n} \}$ be $n$ realizations from an $N(0,1)$ random variable. 
+
+
+
+2.) Let $\rho_i(h)$ be the sample acf from $\mathcal{Z}_i$.
+
+
+
+3.) Let $r_{i,1} = \rho_i(1)$ be the auto-correlation of lag $h = 1$ from this iteration. 
+
+
+
+4.) Let $r_{i,2} = \rho_i(2)$ be the auto-correlation of lag $h = 2$ from this iteration.
+
+
+
+5.) Append $r_{i,1}$ to vector $\mathcal{R}_1$ and append $r_{i,2}$ to vector $\mathcal{R}_2$. 
+
+
+
+\textbf{\underline{Result}}: After $m$ iterations, we will have $\mathcal{R}_1 = \{r_{1,1}, r_{2,1}, \dots r_{m,1}\}$ and $\mathcal{R}_2 = \{r_{1,2}, r_{2,2}, \dots r_{m,2}\}$ such that $|\mathcal{R}_1|=|\mathcal{R}_2| = m,$ as required.
+
+\newpage
+
+This algorithm is implemented directly in the code below:
+
+```{r big_simlation}
+m = 8000; n = 2000
+simulation = sapply(1:m, 
+              # Algorithm
+             function(i){
+               z_i = rnorm(n)
+               rho_i = acf(z_i, plot = FALSE)
+               r_i1 = rho_i$acf[2]
+               r_i2 = rho_i$acf[3]
+               c(r_i1, r_i2)
+             })
+# Results
+results = data.frame(t(simulation))
+colnames(results) = c("R1", "R2")
+head(results)
+```
+
+### Part (iv)
+
+Now, we summarize the results of the simulation study in the following three sections.
+
+
+#### Part (iv.1.) 
+
+
+We will let $\mathbb{E}(\mathcal{R}_1)$ and $\mathbb{E}(\mathcal{R}_2)$ be the mean of the simulated $r_1$ and $r_2$ values from the study, respectively. Similarly, we let $\text{var}(\mathcal{R}_1)$ and $\text{var}(\mathcal{R}_2)$ be the variance of the $r_1$ and $r_2$ values from the study, respectively. 
+
+
+These values are computed and summarized in the table below.
+
+```{r tbltime}
+tableDF <- data.frame(names =colnames(results),
+                      means =sapply(results, function(r) {sprintf("%.2e", mean(r))}),
+                      vars  =sapply(results, function(r) {sprintf("%.2e", var(r))}),
+                      theory=c(1/n, -1/n)
+)
+colnames(tableDF) = c("Lag", "Mean", "Variance", "Theorized Value")
+
+gt_table <- gt(tableDF) %>%
+  tab_header(title = "Simulation Results",
+             subtitle = md("From `m = 8000` Iterations")) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+  ) %>% tab_options(
+    stub.border.width = px(2),
+    stub.border.color = "black"
+  ) %>%
+  gt_add_divider(columns = "Lag", style = "solid", col = 'grey70')
+
+(gt_table)
+```
+
+
+#### Part (iv.2.) 
+
 
 
 - In two separate figures plot the two histograms for the sample of r1 and r2 values from the simulation study (function hist()) add the smoothed version of the histogram (function density()) and the theoretical asymptotic normal density (function dnorm()). Make sure your plots are well-presented including a suitable title, axes labels, curves of different type or colour, and a legend.
 
 
+
+#### Part (iv.3.) 
+
+
+
 - Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag h and their theoretical approximation.
 
 ```{r}
-# Code block for summarizing the simulation study results
+#mean()
 ```
