@@ -14,7 +14,9 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(forecast)
-library(mgcv)
+library(ggfortify)
+library(grid)
+# library(mgcv)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
 
@@ -34,8 +36,8 @@ p1 <- ggplot(p1data, aes(x = Index, y = jobseries)) +
   labs(
     title = "Monthly Average of Usual Hours Worked in Canada",
     subtitle = "Across all Industries from January 1987 to December 2023",
-    x = "Monthly Mean Working Time (Hours)",
-    y = "Year"
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
   ) + theme_bw() +
   theme(panel.grid.minor = element_line(
     color = "grey90",
@@ -177,7 +179,7 @@ grid.arrange(sp2, mp2, zp2, nrow = 3)
 
 - Write down the fitted model for the trend component.
 
-Let $\hat{\beta}_0, \hat{\beta}_1 \in \mathbb{R}$ be the real-valued least squares estimator of the true intercept slope terms $\beta_0, \beta_1 \in \mathbb{R}$ respectively. Recalling that we are taking $\log(m_t)$, the fitted model is of the form.
+Let $\hat{\beta}_0, \hat{\beta}_1 \in \mathbb{R}$ be the real-valued coefficient estimates  of the true intercept and slope terms $\beta_0, \beta_1 \in \mathbb{R}$ respectively. Recalling that we are taking $\log(m_t)$, the fitted model is of the form.
 
 $$
 \log(\hat{m}_t) = \hat{\beta}_0 + \hat{\beta}_1 t
@@ -264,12 +266,50 @@ mt_pred = beta_1*time(test) + beta_0
 st_pred = (rep(period, 2))
 # then the predicted value is undoing the log transform
 preds = exp(mt_pred + st_pred)
-# rough plot for now
-par(mfrow = c(1,1))
-plot(test, ylim = c(34, 37))
-lines(preds, col = 'red')
+p3df <- data.frame(
+          Time = as.numeric(time(test)),
+          Actual = as.numeric(test), 
+          Predicted = preds)
+# create custom-spaced month/date strings
+date_strings <- unlist(lapply(2022:2023, function(year) {
+  sapply(1:12, function(month) {
+    if (month %% 6 == 0) paste(month, "/", year, sep = "")
+    else ""
+  })
+}))
+# specify additional parameters
+date_strings[1] = "1/2022"
+low_ylim = 34.5; up_ylim = 36.5
 ```
-
+Now, we create a plot of the forecast vs. actual values. 
+```{r makedaplot}
+p3 <- ggplot(p3df) +
+  geom_line(aes(x = Time, y = Actual, color = "Actual")) +
+  geom_line(aes(x = Time, y = Predicted, color = "Forecast")) +
+  scale_color_manual(values = c("Actual" = "#373d20", "Forecast" = "#a98467"),
+                     name = "Type", labels = c("Actual", "Forecast")) +
+  labs(
+    title = "Monthly Average of Usual Hours Worked in Canada, with Forecast",
+    subtitle = "Across all Industries from January 2022 to December 2023",
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
+  ) + theme_bw() + 
+  scale_x_continuous(breaks = p3df$Time, labels = date_strings) +
+  scale_y_continuous(limits = c(low_ylim, up_ylim),
+                     breaks = seq(low_ylim, up_ylim, by = 0.5),
+                     labels = seq(low_ylim, up_ylim, by = 0.5)) +
+  theme(panel.grid.major = element_line(
+    color = "grey95",
+    linetype = "solid",
+    linewidth = 0.5
+  ), 
+  panel.grid.minor.y = element_line(
+    color = "grey95",
+    linetype = "solid",
+    linewidth = 0.5
+  ))
+print(p3)
+```
 
 - Comment on the performance of your prediction method, explaining why or why not the method worked well for this data.
 
@@ -279,18 +319,24 @@ The prediction method seemed to perform decently well; specifically, in the capt
 However, there is certainly room for improvement. Consider the residual plot below:
 
 ```{r resid_plot}
-plot(test - preds)
+p4df <- data.frame(
+  Time = as.numeric(time(test)),
+  Residual = as.numeric(test - preds)
+)
+p4 <- ggplot(p4df) +
+  geom_line(aes(x = Time, y = Residual),color = "#780000") +
+  labs(
+    title = "Residual Plot of Actual Values against Forecast",
+    subtitle = "Hours Worked Dataset (January 2022 to December 2023)",
+    y = "Observed Residual",
+    x = "Year"
+  ) + theme_bw() + ylim(-0.05, 0.6) +
+  geom_hline(yintercept = 0, lty = "dashed") +
+  scale_x_continuous(breaks = p3df$Time, labels = date_strings)
+print(p4)
 ```
 
 The residual plot shows a clear pattern, and the fact that the residuals are wholly positive implies that our model is consistently under-estimating the truth. The pattern to the residual plot is quite interesting, and may suggest that part of the reason the predictions are off is that there is some additional pattern in the data that we are not capturing with our current model.
-
-This can be exemplified in the plot below, where we are roughly able to fit a sinusoid to the residuals. (*NOTE*: this is purely to exemplify a pattern in the residuals, and is not calculated through OLS or otherwise.)
- 
-```{r resid_pattern}
-xtest = seq(from = 0, to = pi, length.out = 1000 )
-plot(test - preds, main = "Residual Plot with Sinusoid")
-lines(xtest  + 2021, 0.25*sin(4*xtest)+.35)
-```
 
 It's difficult to say exactly what this "additional component" could be; however, there could be some secondary seasonal component (i.e. multiple-seasonality) that we are not detecting, or, as was discussed earlier, perhaps a purely linear model does not suit the trend component well.
 
@@ -309,28 +355,140 @@ As was mentioned in the previous question, it would be *extremely* wise to add c
 
 ## Task 2: Analyzing New York Temperature Data
 
-### a) Read the data into R and create an R object called dat for the data.
+### Question (a) 
 
-```{r}
-# Code block for Task 2a
+**Part 1:** : First, we read the data into R and create an R object called `dat`.
+
+```{r q2p11}
+dat = read.csv("NY_Temperature_Data.csv")
 ```
 
-### b) Create zoo objects for daily Max Temperature. Create monthly maxima time series. Plot the monthly maximum temperature series and comment on any features you observe.
 
-```{r}
-# Code block for Task 2b
+**Part 2:** Now, we create a zoo object for daily Max Temperature. 
+
+
+*NOTE*: Our object is called `x`, but the input to `zoo()` is the daily maxima column from `dat`.
+```{r q2p12}
+x = zoo(dat$TMAX, zoo::as.Date(dat$Date))
 ```
 
-### c) Fit a suitable seasonal decomposition model to the monthly data using the moving average smoothing (R function decompose) and plot the estimates of the trend, seasonal, and error components.
-
-```{r}
-# Code block for Task 2c
+**Part 3:** Now, we make the monthly maxima time series, in an object called `monthly_max`.
+```{r q2p13}
+monthly_max = aggregate(x, as.yearmon, FUN=max)
 ```
 
-### d) Plot the correlogram for the deseasonalized series of monthly temperature maxima using the seasonal decomposition model you fit in part (c). Comment on the serial dependence of this series.
+**Part 4:** Now, we plot the monthly maximum temperature series. Since we're using `ggplot2` to create the plot, we'll use `fortify.zoo` that works alongside the `ggfortify` package to convert the `monthly_max` object to be `ggplot2` compliant. 
+
+```{r q2p14}
+p2df <- fortify.zoo(monthly_max)
+p21 <- ggplot(p2df, aes(x = Index, y = monthly_max)) +
+  geom_line(color = "#f48c06") + theme_bw() +
+  labs(
+    x = "Year",
+    y =  expression(paste("Monthly Maximum (", degree, "C)")),
+    title = expression(paste(
+      "Monthly Maximum Temperature (", degree, "C) in New York"
+    )),
+    subtitle = "Measured From 1990-2024, Sourced from NOAA"
+  ) +
+  coord_fixed(ratio = 0.275) 
+print(p21)
+```
+
+**Part 5:** Comments on the observed features.
+
+There are a few features we can observe. Firstly, the time series appears to be very high-frequency; that is, the period $p$ is relatively short with respect to the overall time scale. However, there doesn't seem to be a change in amplitude over time, which, as discussed in the previous question, indicates the potential of using an additive model ($X_t = s_t + m_t + Z_t$) to describe this process. Finally, there doesn't immediately seem to be a high-magnitude trend component to this model; importantly, this doesn't imply that one doesn't exist. For example, we can see that the "troughs" (or lowest points) in the monthly maximum temperature seems to be decreasing slightly over time, implying that temperatures may be getting colder. There isn't conclusive evidence of a trend component simply from an initial observation; however, seeing if $m_t$ is significant in this model certainly warrants investigation.
+
+### Question (c)
+
+Fit a suitable seasonal decomposition model to the monthly data using the moving average smoothing (R function `decompose`) and plot the estimates of the trend, seasonal, and error components.
+
+We start by using `zooreg` to convert to a time series.
+```{r}
+month_ts <- ts(zooreg(monthly_max), 
+               start = c(1990, 1),
+               end = c(2024, 1),
+               frequency = 12)
+```
+
+From our preliminary analytics in the previous part, we will decompose this time series as an additive model, i.e. $X_{t} = m_t + s_t + Z_t$, where $Z_t \sim \text{WN}(0, \sigma^2)$ for $t \in \mathbb{Z}$.
 
 ```{r}
-# Code block for Task 2d
+month_decomp <- decompose(month_ts)
+mseasonal = month_decomp$seasonal
+mtrend = month_decomp$trend
+mnoise = month_decomp$random
+```
+
+For organization and ease of visualization, we de-contextualized the plot titles, simply mentioning it is for the Additive Model. However, it should be clarified that each plot title could be further specified to be "Component of Additive Model for Monthly Max Temperature in New York (1990-2024)."
+
+```{r plots, warning=FALSE}
+sp2c <- ggplot(data = fortify.zoo(mseasonal, na.fill = 0), aes(x = Index, y = mseasonal)) +
+  geom_line(color = "#9d0208", linewidth = 0.5) +
+  theme_bw() +
+  labs(
+    title = "Seasonal Component of Additive Model",
+    y = "st",
+    x = NULL
+  ) +  xlim(1990, 2024)
+
+mp2c <- ggplot(data = fortify.zoo(mtrend, na.fill = 0), aes(x = Index, y = mtrend)) +
+  geom_line(color = "#dc2f02", linewidth = 0.5) +
+  theme_bw() +
+  labs(
+    title = "Trend Component of Additive Model",
+    y = "mt",
+    x = NULL
+  )  +  xlim(1990, 2024)
+
+zp2c <- ggplot(data = fortify.zoo(mnoise, na.fill = 0), aes(x = Index, y = mnoise)) +
+  geom_line(color = "#e85d04", linewidth = 0.5) +
+  theme_bw() +
+  labs(
+    title = "Random Component of Additive Model",
+    y = "Zt",
+    x = "Year"
+  )  +  xlim(1990, 2024)
+
+grid.arrange(sp2c, mp2c, zp2c)
+```
+
+
+### Question (d) 
+
+Plot the correlogram for the deseasonalized series of monthly temperature maxima using the seasonal decomposition model you fit in part (c). Comment on the serial dependence of this series.
+
+
+To de-seasonalize the data, we have to subtract the $s_t$ component found in the previous section from the overall time series $X_t$ found via aggregation. In terms of our `R` objects, the seasonal component is `mseasonal` and the time series observed (as a `ts` object) is `month_ts`. We compute their difference below:
+
+```{r}
+deseasonalized = month_ts - mseasonal
+```
+
+Then, we plot the $\text{ACF} = \rho(h)$, using `na.pass` to compensate for the NA components of the `mtrend` object.
+
+```{r}
+acf(deseasonalized, na.action = na.pass)
+
+# lag on 1 year : doesn't look like there's much serial dependence (we'd see a more obvious pattern to the correlogram), this mostly appears to be white noise
+acf(deseasonalized, na.action = na.pass, lag.max = 12)
+
+# lag on many years: the acf appears to still basically be white noise, the magnitude of which seems to be declining over time, as we'd expect
+acf(deseasonalized, na.action = na.pass, lag.max = 408)
+
+# calculating what's one year in the TS
+delta = time(deseasonalized)[2] - time(deseasonalized)[1]
+# calculating what's the entire TS
+(2024-1990)/delta
+```
+
+**Comments**
+
+IID noise: the sample acf tends to be within $\pm 2 / \sqrt{n}$ bounds.
+```{r noisytest}
+n = length(deseasonalized)
+n
+2/sqrt(n)
 ```
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient

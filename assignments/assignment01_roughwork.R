@@ -5,6 +5,8 @@ library(gridExtra)
 library(reshape2)
 library(forecast)
 
+
+#######   QUESTION 1 #######
 df <- read.csv("assignments/usual_hours_worked_ca.csv")
 
 jobseries = ts(data = df$Hours,
@@ -143,9 +145,7 @@ n = nrow(trend_df); k = 1
 
 period = unique(seasonal)
 
-trend_df
-
-2022 + (0:23)/12
+########## part 3
 
 beta_0 = trend_summary$coefficients[1, "Estimate"]
 beta_1 = trend_summary$coefficients[2, "Estimate"]
@@ -160,45 +160,64 @@ preds = exp(mt_pred + st_pred)
 par(mfrow = c(1,1))
 plot(test, ylim = c(34, 37))
 lines(preds, col = 'red')
+test
 
+p3df <- data.frame(
+          Time = as.numeric(time(test)),
+          Actual = as.numeric(test), 
+          Predicted = preds)
+# create custom-spaced month/date strings
+date_strings <- unlist(lapply(2022:2023, function(year) {
+  sapply(1:12, function(month) {
+    if (month %% 6 == 0) paste(month, "/", year, sep = "")
+    else ""
+  })
+}))
+# specify additional parameters
+date_strings[1] = "1/2022"
+low_ylim = 34.5; up_ylim = 36.5
+# create plot
+p3 <- ggplot(p3df) +
+  geom_line(aes(x = Time, y = Actual, color = "Actual")) +
+  geom_line(aes(x = Time, y = Predicted, color = "Forecast")) +
+  scale_color_manual(values = c("Actual" = "#373d20", "Forecast" = "#a98467"),
+                     name = "Type", labels = c("Actual", "Forecast")) +
+  labs(
+    title = "Monthly Average of Usual Hours Worked in Canada, with Forecast",
+    subtitle = "Across all Industries from January 2022 to December 2023",
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
+  ) + theme_bw() + 
+  scale_x_continuous(breaks = p3df$Time, labels = date_strings) +
+  scale_y_continuous(limits = c(low_ylim, up_ylim),
+                     breaks = seq(low_ylim, up_ylim, by = 0.5),
+                     labels = seq(low_ylim, up_ylim, by = 0.5)) +
+  theme(panel.grid.major = element_line(
+    color = "grey95",
+    linetype = "solid",
+    linewidth = 0.5
+  ), 
+  panel.grid.minor.y = element_line(
+    color = "grey95",
+    linetype = "solid",
+    linewidth = 0.5
+  ))
+print(p3)
 
+# resid plot
 
-library(splines)
-
-# cubic spline model
-n_knots <- 5
-knots <- quantile(trend_df$Time, 
-                  probs = seq(0, 1, length.out = n_knots + 2)[-c(1, n_knots + 2)])
-model <- lm(log_hours ~ bs(Time, knots=knots, degree=3), data = trend_df)
-mt_pred_fancy <- predict(model, data.frame(Time = time(test)))
-preds_f = exp(mt_pred_fancy + st_pred)
-pr_df = data.frame(p = as.numeric(preds_f), t = time(test))
-
-# poly model
-modelp <- lm(log_hours ~ poly(Time, degree = 3), data = trend_df)
-mt_pred_poly <- predict(modelp, data.frame(Time = time(test)))
-preds_p = exp(mt_pred_poly + st_pred)
-pp_df = data.frame(p = as.numeric(preds_p), t = time(test))
-
-# GAM (Generalized Additive Model)
-# \mathbb{E}{Y \mid X=x} = \beta_0 + f_1(x_{1})+\cdots+f_p(x_{p}).
-# produced via Generalized Cross Validation (GCV) 
-
-library(mgcv)
-gam_vers <- gam(log_hours ~ s(Time), data = trend_df)
-mt_pred_g <- predict(gam_vers, data.frame(Time = time(test)))
-preds_g = exp(mt_pred_g + st_pred)
-pg_df = data.frame(p = as.numeric(preds_g), t = time(test))
-
-# rough plot for now
-par(mfrow = c(1, 1))
-plot(test, ylim = c(33, 38))
-lines(x = as.numeric(pr_df$t), y  = pr_df$p, col = 'blue')
-lines(preds, col = 'red')
-# lines(x = as.numeric(pp_df$t), y  = pp_df$p, col = 'green')
-lines(x = as.numeric(pg_df$t), y = pg_df$p, col = "purple")
-
-
-####### resids
-
-
+p4df <- data.frame(
+  Time = as.numeric(time(test)),
+  Residual = as.numeric(test - preds)
+)
+p4 <- ggplot(p4df) +
+  geom_line(aes(x = Time, y = Residual),color = "#780000") +
+  labs(
+    title = "Residual Plot of Actual Values against Forecast",
+    subtitle = "Hours Worked Dataset (January 2022 to December 2023)",
+    y = "Observed Residual",
+    x = "Year"
+  ) + theme_bw() + ylim(-0.05, 0.6) +
+  geom_hline(yintercept = 0, lty = "dashed") +
+  scale_x_continuous(breaks = p3df$Time, labels = date_strings)
+p4
