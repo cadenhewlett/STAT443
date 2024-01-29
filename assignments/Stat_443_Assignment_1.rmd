@@ -620,6 +620,7 @@ Repeat the following $\forall i \in [1, m]$ (assuming *iid* white noise $Z_t$):
 This algorithm is implemented directly in the code below:
 
 ```{r big_simlation}
+set.seed(443)
 m = 8000; n = 2000
 simulation = sapply(1:m, 
               # Algorithm
@@ -650,12 +651,13 @@ We will let $\mathbb{E}(\mathcal{R}_1)$ and $\mathbb{E}(\mathcal{R}_2)$ be the m
 These values are computed and summarized in the table below.
 
 ```{r tbltime}
-tableDF <- data.frame(names =colnames(results),
-                      means =sapply(results, function(r) {sprintf("%.2e", mean(r))}),
-                      vars  =sapply(results, function(r) {sprintf("%.2e", var(r))}),
-                      theory=c(1/n, -1/n)
+tableDF <- data.frame(names = c(colnames(results), "Theorized Value"),
+                      means = c(sapply(results, function(r) {sprintf("%.2e", mean(r))}),
+                                 -1/n),
+                      vars  = c(sapply(results, function(r) {sprintf("%.2e", var(r))}),
+                                1/n)
 )
-colnames(tableDF) = c("Lag", "Mean", "Variance", "Theorized Value")
+colnames(tableDF) = c("Lag", "Mean", "Variance")
 
 gt_table <- gt(tableDF) %>%
   tab_header(title = "Simulation Results",
