@@ -689,7 +689,20 @@ gt_table <- gt(tableDF) %>%
 
 - Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag h and their theoretical approximation.
 
+Theoretical:
+
+$$
+\forall h, \; r_h \sim N\Big(\mu = -\frac{1}{n}, \sigma^2 = \frac{1}{n} \Big)
+$$
 ```{r}
 t.test(x = results$R2, mu = -5e-4)
 t.test(x = results$R1, mu = -5e-4)
+```
+
+then variances
+```{r}
+N = m 
+alpha = 0.05
+var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = T)
+var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = F)
 ```

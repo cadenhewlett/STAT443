@@ -168,10 +168,12 @@ gt_table <- gt(tableDF) %>%
   gt_add_divider(columns = "Lag", style = "solid", col = 'grey70')
 
 (gt_table)
--1/n
-1/n
-?t.test
-mean(results$R2)
 
+?chisq.test
+chisq.test(x = results$R2, 5e-4)
 t.test(x = results$R2, mu = -5e-4)
 t.test(x = results$R1, mu = -5e-4)
+
+alpha = 0.05
+var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = T)
+var(results$R1)*(N-1) / qchisq(alpha/2, df = (N - 1), lower.tail = F)
