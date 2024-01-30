@@ -205,15 +205,74 @@ signif(civs, 3)
 
 # create sequence of x-variables
 x <- seq(from = -0.05, to = 0.05, length.out = m)
-# calculate density for R1
-density_R1 <- density(results$R1)
-density_R1 <- data.frame(x = density_R1$x, y = density_R1$y)
-hist(results$R1)
-ggplot() +
-  geom_line(data = density_df, aes(x = x, y = y, color = "Observed")) +
-  geom_line(data = normal_curve, aes(x = x, y = y, color = "Theorized")) +
-  # geom_histogram(data = results, inherit.aes = FALSE, aes(x = results$R1, y = after_stat(results$R1)), 
-  # fill = "blue", alpha = 0.5) +
-  labs(x = "X-axis Label", y = "Y-axis Label") +
-  scale_color_manual(values = c("Observed" = "blue", "Theorized" = "red")) +
-  theme_minimal()
+hist(results$R1, freq = F, main = "Histogram With Density and Asymptotic Normal Curve")
+lines(density(results$R1), col = 'red')
+lines(x = x, y = dnorm(x, mean = -1/n, sd = sqrt(1/n)), col = 'blue')
+
+x <- seq(from = -0.05, to = 0.05, length.out = m)
+p3b1 = ggplot(results, aes(x = R1)) + theme_bw() +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    binwidth = 0.0065,
+    colour = "#555B6E",
+    fill = "#fdfdff",
+    position = "identity"
+  ) +
+  geom_density(aes(color = "Observed Density")) +
+  labs(x = expression(paste("Values of ", r[1] )),
+       y = "Density",
+       color='Legend:',
+       title = expression(paste("Histogram of Simulated ", r[1], " Values")),
+       subtitle = "With Density Curve and Theoretical Asymptotic Normal Curve") +
+  geom_line(aes(
+    x = x,
+    y = dnorm(x, mean = -1 / n, sd = sqrt(1 / n)),
+    color = "Theorized"
+  )) +
+  scale_color_manual(values = c(
+    "Observed Density" = "#594436",
+    "Theorized" = "#89B0AE"
+  )) +
+  theme(legend.position = "top",
+    panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p3b1)
+# r2 plot
+p3b2 = ggplot(results, aes(x = R2)) + theme_bw() +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    binwidth = 0.0065,
+    colour = "#555B6E",
+    fill = "#fffdfd",
+    position = "identity"
+  ) +
+  geom_density(aes(color = "Observed Density")) +
+  labs(x = expression(paste("Values of ", r[2] )),
+       y = "Density",
+       color='Legend:',
+       title = expression(paste("Histogram of Simulated ", r[2], " Values")),
+       subtitle = "With Density Curve and Theoretical Asymptotic Normal Curve") +
+  geom_line(aes(
+    x = x,
+    y = dnorm(x, mean = -1 / n, sd = sqrt(1 / n)),
+    color = "Theorized"
+  )) +
+  scale_color_manual(values = c(
+    "Observed Density" = "#432534",
+    "Theorized" = "#c44900"
+  )) +
+  theme(legend.position = "top",
+        panel.grid.minor = element_line(
+          color = "grey90",
+          linetype = "dashed",
+          linewidth = 0.5
+        ))
+print(p3b2)
+# ?geom_histogram
+
+# r1 and r2 values
+# from the simulation study (function hist()), add the smoothed version of the histogram
+# (function density()) and the theoretical asymptotic normal density

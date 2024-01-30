@@ -558,6 +558,12 @@ In addition to the computation from the threshold above, we don't see any period
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient
 
+Recall that, for a time series of length $n$, from a white noise process, the sample autocorrelation coefficient at lag $h$
+approximately follows a normal distribution with mean $-1/n$ and variance $1/n$:
+$$r_h \sim N (-1/n, 1/n)$$
+for large values of $n$. To confirm this theoretical fact, we'll conduct a simulation study for lags $h = 1$ and $h = 2$.
+
+
 ### Part (i) 
 
 Simulate a time series of length $n = 2000$ from a white noise process with $Z_t \sim N(0, 1)$ (function `rnorm()`).
@@ -677,9 +683,79 @@ gt_table <- gt(tableDF) %>%
 
 #### Part (iv.2.) 
 
+In two separate figures plot the two histograms for the sample of r1 and r2 values from the simulation study (function hist()) add the smoothed version of the histogram (function density()) and the theoretical asymptotic normal density (function dnorm()). Make sure your plots are well-presented including a suitable title, axes labels, curves of different type or colour, and a legend.
 
 
-- In two separate figures plot the two histograms for the sample of r1 and r2 values from the simulation study (function hist()) add the smoothed version of the histogram (function density()) and the theoretical asymptotic normal density (function dnorm()). Make sure your plots are well-presented including a suitable title, axes labels, curves of different type or colour, and a legend.
+We'll begin with the plot of observed $r_1$ values. 
+
+```{r r1valhist}
+x <- seq(from = -0.05, to = 0.05, length.out = m)
+p3b1 = ggplot(results, aes(x = R1)) + theme_bw() +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    binwidth = 0.0065,
+    colour = "#555B6E",
+    fill = "#fdfdff",
+    position = "identity"
+  ) +
+  geom_density(aes(color = "Observed Density")) +
+  labs(x = expression(paste("Simulated Values of ", r[1] )),
+       y = "Density",
+       color='Legend:',
+       title = expression(paste("Histogram of Simulated ", r[1], " Values")),
+       subtitle = "With Density Curve and Theoretical Asymptotic Normal Curve") +
+  geom_line(aes(
+    x = x,
+    y = dnorm(x, mean = -1 / n, sd = sqrt(1 / n)),
+    color = "Theorized"
+  )) +
+  scale_color_manual(values = c(
+    "Observed Density" = "#594436",
+    "Theorized" = "#89B0AE"
+  )) +
+  theme(legend.position = "top",
+    panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p3b1)
+```
+
+Now, we'll plot the simulated $r_2$ values.
+
+```{r 2rplot}
+p3b2 = ggplot(results, aes(x = R2)) + theme_bw() +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    binwidth = 0.0065,
+    colour = "#555B6E",
+    fill = "#fffdfd",
+    position = "identity"
+  ) +
+  geom_density(aes(color = "Observed Density")) +
+  labs(x = expression(paste("Values of ", r[2] )),
+       y = "Density",
+       color='Legend:',
+       title = expression(paste("Histogram of Simulated ", r[2], " Values")),
+       subtitle = "With Density Curve and Theoretical Asymptotic Normal Curve") +
+  geom_line(aes(
+    x = x,
+    y = dnorm(x, mean = -1 / n, sd = sqrt(1 / n)),
+    color = "Theorized"
+  )) +
+  scale_color_manual(values = c(
+    "Observed Density" = "#432534",
+    "Theorized" = "#c44900"
+  )) +
+  theme(legend.position = "top",
+        panel.grid.minor = element_line(
+          color = "grey90",
+          linetype = "dashed",
+          linewidth = 0.5
+        ))
+print(p3b2)
+```
 
 
 
