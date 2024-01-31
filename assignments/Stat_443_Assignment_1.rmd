@@ -2,6 +2,8 @@
 ---
 title: "Stat 443 Assignment 1: Exploratory Data Analysis"
 author: Caden Hewlett
+header-includes:
+   - \usepackage{bbm}
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
@@ -16,6 +18,8 @@ library(reshape2)
 library(forecast)
 library(ggfortify)
 library(grid)
+library(gt)
+library(gtExtras)
 # library(mgcv)
 ```
 ## Task 1: Analyzing Usual Hours Worked in Canada
@@ -59,7 +63,7 @@ Yes. It seems that there is a downward (negative) trend to the data, with the me
 
 Yes. There appears to be seasonal variation. Visually, we see this as as sinusoidal pattern to the time series. This seasonality could be caused by, for example, months during a given year. 
 
-Further, we would anticipate a multiplicative model, i.e. $\{X_t\} = m_t s_t Z_t$. Visually, we can notice this by the changing amplitude of the seasonal periods over time.
+Further, we would anticipate a multiplicative model, i.e. $\{X_t\} = m_t s_t Z_t$ for $Z_t \sim \text{WN}(0, \sigma^2)$ where $\sigma \in \mathbb{R}^{+}$. Visually, we can notice this by the changing amplitude of the seasonal periods over time.
 
 To give an example of this, consider the following noise-less toy examples of Additive ($X_t = m_t + s_t$) Model and Multiplicative Model ($X_t = m_ts_t$)
 
@@ -467,67 +471,364 @@ deseasonalized = month_ts - mseasonal
 
 Then, we plot the $\text{ACF} = \rho(h)$, using `na.pass` to compensate for the NA components of the `mtrend` object.
 
-```{r}
-acf(deseasonalized, na.action = na.pass)
+To informatively plot the sample acf, we need to determine how many time steps exist in our monthly data set so that we can accurately set the `lag.max` parameter. To do this, we let $\Delta t = t_{2} - t_{1}$ be the time step between entries. For our data, $p = 12$, thus, $\Delta t = 1/12$ as calculated below.
 
-# lag on 1 year : doesn't look like there's much serial dependence (we'd see a more obvious pattern to the correlogram), this mostly appears to be white noise
-acf(deseasonalized, na.action = na.pass, lag.max = 12)
-
-# lag on many years: the acf appears to still basically be white noise, the magnitude of which seems to be declining over time, as we'd expect
-acf(deseasonalized, na.action = na.pass, lag.max = 408)
-
+```{r deltat}
 # calculating what's one year in the TS
 delta = time(deseasonalized)[2] - time(deseasonalized)[1]
-# calculating what's the entire TS
-(2024-1990)/delta
 ```
+
+Then, to determine the maximum lag value, we divide the total elapsed number of years in the time series by the time step size to find $h_{\text{max}}$.
+
+$$
+h_{\text{max}} = \dfrac{(t{}_{\text{max}} - t_{\text{min}})}{\Delta t} =  \dfrac{(2024 - 1990)}{(1 /12)} = 408
+$$
+```{r hmax}
+# calculating what's the entire TS size (for max lag)
+hmax = (2024-1990)/delta
+```
+
+Then, we can create the entire correlogram for our data.
+
+```{r}
+d_acf <- acf(deseasonalized, 
+             na.action = na.pass, 
+             lag.max = hmax, plot = FALSE)
+
+```
+
+
+We know that if the sample acf values tend to be withing $\pm 2 / \sqrt{n}$, this is indicative of no serial dependence (i.e. simply *iid* noise.) These values are plotted below as horizontal dotted lines alongside the sample acf. 
+
+```{r sampleacf}
+# create plotting dataframe
+p2ddata = data.frame(
+  h = 0:hmax,
+  rh = d_acf$acf
+)
+# determine n
+n = length(deseasonalized)
+# determine significance bars for iid noise serial dependence
+bars = c(-2, 2)/sqrt(n)
+# create plot
+p2d <- ggplot(p2ddata, aes(x = h, y = rh)) +
+    geom_segment(aes(xend = h, yend = 0),
+                 color = "#606c38",
+                 linewidth = 0.5) +
+    geom_hline(yintercept = bars[1], linetype = "dashed", col = "#283618")+
+    geom_hline(yintercept = bars[2], linetype = "dashed", col = "#283618")+
+    ylim(-0.2, 1)+
+    geom_hline(yintercept = 0,
+               linetype = "dashed",
+               color = "darkgray") +
+    labs(x = "Lag", y = "Autocorrelation", 
+         title = "Correlogram of De-Seasonalized Monthly Max Temperature Data",
+         subtitle = "In New York 1990-2024, Data Sourced from NOAA") +
+    theme_bw()
+print(p2d)
+```
+
 
 **Comments**
 
-IID noise: the sample acf tends to be within $\pm 2 / \sqrt{n}$ bounds.
-```{r noisytest}
-n = length(deseasonalized)
-n
-2/sqrt(n)
+Visually, it appears that the de-seasonalized data seem to be predominantly white noise (i.e. no serial dependence) that is decaying very slowly over time (as we'd expect.) Further, the majority of the observations fall below the $\pm 2 / \sqrt{n}$ bars. 
+
+To verify this observation, we'll let $\Upsilon$ be the proportion of $\rho(h)$ values greater than the $\pm 2 / \sqrt{n}$ threshold.
+
+We'll compute the proportion as follows:
+$$
+\Upsilon = \frac{1}{(h_{\text{max}} + 1)}\sum_{i = 0}^{h_\text{max}} \mathbbm{1}\Big(|\rho(h_i)| \geq \dfrac{2}{\sqrt{n}}\Big)
+$$
+In our `R` code, we compute the value below:
+```{r pgreater}
+# same as mean( abs(d_acf$acf) >  bars[2] )
+p_greater = sum( abs(d_acf$acf) >  bars[2] ) / (hmax + 1)
+# show as percent
+(p_greater * 100)
 ```
+
+It appears that only approximately $0.98 \%$ the sample acf values lie above the random noise threshold (noting that this include $\rho(0) = 1$ that is always above this threshold.) It seems overwhelmingly likely that there is no serial dependence to the de-seasonalized data.
+
+In addition to the computation from the threshold above, we don't see any periodicity to the correlogram that would indicate any "left over" seasonality, nor do we see a slow decay of high-magnitude autocorrelation values on the same side of the mean that would indicate a trend. Hence, we can conclude that it is likely that there is no serial dependence present in the de-seasonalized data. 
+
+<!-- If the series has a trend, the acf will have a very slow decay due to high -->
+<!-- correlation of the consecutive values (which tend to lie on the same -->
+<!-- side of the mean) -->
+
 
 ## Task 3: Conducting a Simulation Study on the Autocorrelation Coefficient
 
-### i) 
+Recall that for a time series of length $n$, from a white noise process, for $n$ sufficiently large the sample autocorrelation coefficient at lag $h$ approximately follows a normal distribution with mean $-1/n$ and variance $1/n$.
+
+
+### Part (i) 
 
 Simulate a time series of length $n = 2000$ from a white noise process with $Z_t \sim N(0, 1)$ (function `rnorm()`).
 
-```{r}
-# Code block for Task 3i
-```
-
-### ii) Evaluate the sample autocorrelation coefficient.
-
-At lag $h$ for $h = 1$ and $h = 2$. Store these values.
+Below, we compute $n = 2000$ realizations of a $N(0,1)$ random variable. We will let $\mathcal{Z}_1 = \{z_{1,1} \,, z_{1,2} , \dots, z_{1,n} \}$ be this set of realizations where $z_{i, j}$ is the $j$-th realization from the $i$-the vector of simulated values, for $i \in [1,m]$ and $j \in [1,n]$.
 
 ```{r}
-# Code block for Task 3ii
+z_1 = rnorm(n = 2000, mean = 0, sd = 1)
 ```
 
-### iii) Repeat steps (i) and (ii) m = 8000 times; 
+### Part (ii) 
 
-i.e. generate 8000 time series of length n and for each of them compute r1 and r2. You should now have two vectors of length m with estimates r1 and r2.
+Evaluate the sample autocorrelation coefficient $r_h$ at lag $h$ for $h = 1$ and $h = 2$. Store these values.
+
+We note that in this case we slice the vector of observed $\rho(h)$ values at index $h + 1$, since `R` language vectors begin at index `1`. Hence, `$acf[1]` would give $\rho(0) = 1$ which isn't what we want here.
 
 ```{r}
-# Code block for Task 3iii
+r_1 = acf(z_1, plot = FALSE)$acf[2]
+r_2 = acf(z_1, plot = FALSE)$acf[3]
+round(c(r_1, r_2), 4)
 ```
 
-### To summarize the results of the simulation study:
+### Part (iii) 
+
+Repeat steps (i) and (ii) $m = 8000$ times; 
+
+Generate 8000 time series of length $n$ and for each of them compute $r_1$ and $r_2$. You should now have two vectors of length $m$ with estimates $r_1$ and $r_2$.
+
+The code below uses the following algorithm:
+
+\textbf{\underline{Algorithm}}
+
+Repeat the following $\forall i \in [1, m]$ (assuming *iid* white noise $Z_t$):
 
 
-- Compute the mean and variance of r1 and r2 values from your simulation study.
+
+1.) Let $\mathcal{Z}_i = \{z_{i,1} \,, z_{i,2} , \dots, z_{i,n} \}$ be $n$ realizations from an $N(0,1)$ random variable. 
 
 
-- In two separate figures plot the two histograms for the sample of r1 and r2 values from the simulation study (function hist()) add the smoothed version of the histogram (function density()) and the theoretical asymptotic normal density (function dnorm()). Make sure your plots are well-presented including a suitable title, axes labels, curves of different type or colour, and a legend.
+
+2.) Let $\rho_i(h)$ be the sample acf from $\mathcal{Z}_i$.
 
 
-- Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag h and their theoretical approximation.
+
+3.) Let $r_{i,1} = \rho_i(1)$ be the auto-correlation of lag $h = 1$ from this iteration. 
+
+
+
+4.) Let $r_{i,2} = \rho_i(2)$ be the auto-correlation of lag $h = 2$ from this iteration.
+
+
+
+5.) Append $r_{i,1}$ to vector $\mathcal{R}_1$ and append $r_{i,2}$ to vector $\mathcal{R}_2$. 
+
+
+
+\textbf{\underline{Result}}: After $m$ iterations, we will have $\mathcal{R}_1 = \{r_{1,1}, r_{2,1}, \dots r_{m,1}\}$ and $\mathcal{R}_2 = \{r_{1,2}, r_{2,2}, \dots r_{m,2}\}$ such that $|\mathcal{R}_1|=|\mathcal{R}_2| = m,$ as required.
+
+\newpage
+
+This algorithm is implemented directly in the code below:
+
+```{r big_simulation}
+set.seed(11292023)
+m = 8000; n = 2000
+simulation = sapply(1:m, 
+              # Algorithm
+             function(i){
+               z_i = rnorm(n)
+               rho_i = acf(z_i, plot = FALSE)
+               r_i1 = rho_i$acf[2]
+               r_i2 = rho_i$acf[3]
+               c(r_i1, r_i2)
+             })
+# Results
+results = data.frame(t(simulation))
+colnames(results) = c("R1", "R2")
+head(results)
+```
+
+### Part (iv)
+
+Now, we summarize the results of the simulation study in the following three sections.
+
+
+#### Part (iv.1.) 
+
+
+We will let $\mathbb{E}(\mathcal{R}_1)$ and $\mathbb{E}(\mathcal{R}_2)$ be the mean of the simulated $r_1$ and $r_2$ values from the study, respectively. Similarly, we let $\text{var}(\mathcal{R}_1)$ and $\text{var}(\mathcal{R}_2)$ be the variance of the $r_1$ and $r_2$ values from the study, respectively. 
+
+
+These values are computed and summarized in the table below.
+
+```{r tbltime}
+tableDF <- data.frame(names = c(colnames(results), "Theorized Value"),
+                      means = c(sapply(results, function(r) {sprintf("%.2e", mean(r))}),
+                                 -1/n),
+                      vars  = c(sapply(results, function(r) {sprintf("%.2e", var(r))}),
+                                1/n)
+)
+colnames(tableDF) = c("Lag", "Mean", "Variance")
+
+gt_table <- gt(tableDF) %>%
+  tab_header(title = "Simulation Results",
+             subtitle = md("From `m = 8000` Iterations")) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_column_labels(columns = everything())
+  ) %>% tab_options(
+    stub.border.width = px(2),
+    stub.border.color = "black"
+  ) %>%
+  gt_add_divider(columns = "Lag", style = "solid", col = 'grey70')
+
+(gt_table)
+```
+
+
+#### Part (iv.2.) 
+
+In two separate figures plot the two histograms for the sample of r1 and r2 values from the simulation study (function hist()) add the smoothed version of the histogram (function density()) and the theoretical asymptotic normal density (function dnorm()). Make sure your plots are well-presented including a suitable title, axes labels, curves of different type or colour, and a legend.
+
+
+We'll begin with the plot of observed $r_1$ values. 
+
+```{r r1valhist}
+x <- seq(from = -0.05, to = 0.05, length.out = m)
+p3b1 = ggplot(results, aes(x = R1)) + theme_bw() +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    binwidth = 0.0065,
+    colour = "#555B6E",
+    fill = "#fdfdff",
+    position = "identity"
+  ) +
+  geom_density(aes(color = "Observed Density")) +
+  labs(x = expression(paste("Simulated Values of ", r[1] )),
+       y = "Density",
+       color='Legend:',
+       title = expression(paste("Histogram of Simulated ", r[1], " Values")),
+       subtitle = "With Density Curve and Theoretical Asymptotic Normal Curve") +
+  geom_line(aes(
+    x = x,
+    y = dnorm(x, mean = -1 / n, sd = sqrt(1 / n)),
+    color = "Theorized"
+  )) +
+  scale_color_manual(values = c(
+    "Observed Density" = "#594436",
+    "Theorized" = "#89B0AE"
+  )) +
+  theme(legend.position = "top",
+    panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p3b1)
+```
+
+Now, we'll plot the simulated $r_2$ values.
+
+```{r 2rplot}
+p3b2 = ggplot(results, aes(x = R2)) + theme_bw() +
+  geom_histogram(
+    aes(y = after_stat(density)),
+    binwidth = 0.0065,
+    colour = "#555B6E",
+    fill = "#fffdfd",
+    position = "identity"
+  ) +
+  geom_density(aes(color = "Observed Density")) +
+  labs(x = expression(paste("Values of ", r[2] )),
+       y = "Density",
+       color='Legend:',
+       title = expression(paste("Histogram of Simulated ", r[2], " Values")),
+       subtitle = "With Density Curve and Theoretical Asymptotic Normal Curve") +
+  geom_line(aes(
+    x = x,
+    y = dnorm(x, mean = -1 / n, sd = sqrt(1 / n)),
+    color = "Theorized"
+  )) +
+  scale_color_manual(values = c(
+    "Observed Density" = "#432534",
+    "Theorized" = "#c44900"
+  )) +
+  theme(legend.position = "top",
+        panel.grid.minor = element_line(
+          color = "grey90",
+          linetype = "dashed",
+          linewidth = 0.5
+        ))
+print(p3b2)
+```
+
+
+
+#### Part (iv.3.) 
+
+
+
+- Comment whether there is an agreement between the empirical estimates of the bias, variance, and sampling density of the estimator of the autocorrelation at lag $h$ and their theoretical approximation.
+
+
+Visually, it appears that there is an agreement between the sampling density of the estimator of the autocorrelation with their theoretical normal values at both $h = 1$ and $h = 2$.
+
+
+Further, it seems as if the observed density curve and theorized normal densities are centered at approximately the same location for both lag values.
+
+
+Finally, we can see that the two curves follow approximately the same dispersion/spread as the theoretical normal density. It appears slightly heavier-tailed than the theorized distribution; however, not to an extreme degree.
+
+In short, from our empirical observations based on the plots in the previous question, it seems likely that both the true $r_1$ and $r_2$ values follow the theoretical approximation.
+
+
+However, we may wish to also analytically verify these claims. To do so, we will construct confidence intervals for the mean and variances at $\alpha = 0.05$, i.e. $95\%$. We will begin by constructing pairwise confidence intervals for the means of $r_1$ and $r_2$ to determine if $-1/n$ is in these intervals. To adjust for family-wise error rate, we'll apply the Bonferroni correction and use $\alpha' = 0.05/2$, in other words constructing $97.5\%$ intervals. 
+
+
+We'll construct the $CI$s for $r_1$ and $r_2$ by the following methodology, using sample size $N = m$ and a $t$-Distribution with $m-1$ degrees of freedom (noting for values of $N$ this large, the $t$ distribution is approximately standard normal):
+
+$$
+\text{For } h \in [1,2], \hspace{0.25cm}\text{CI}_h(\alpha) =  \bigg({\mathbb{E}(\mathcal{R}_h)} \pm t_{\alpha/2\,; \,(m-1)}\frac{\text{se}(\mathcal{R}_h)}{\sqrt{m}}\bigg)
+$$
+
+
+
+The code to compute the two simultaneous intervals is below
 
 ```{r}
-# Code block for summarizing the simulation study results
+alpha = 0.05
+alpha_prime = alpha/2
+cis = data.frame( apply(results, MARGIN = 2, 
+      function(r){
+        rbar = mean(r)
+        se_i = sd(r) / sqrt(m)
+        moe =  qt(alpha_prime/2, df = m-1)*se_i
+        return(rbar + c(moe, -moe))
+        }))
+rownames(cis) = c("Lower", "Upper")
+signif(cis, 3)
 ```
+
+As the intervals show, the value of $-1/n = -5\times10^{-4}$ lies within both the $r_1$ and $r_2$ intervals. Hence, we know that the corresponding hypotheses for equality of means would fail to reject $H_0$ at the $95\%$ level. In other words, there is statistically significant evidence (at $\alpha = 0.05$) to suggest that the means of the simulated values follow the theoretical approximations, for this particular seed. Further, from the results of this hypothesis test, we can conclude that there is not statistically significant evidence at $\alpha = 0.05$ to suggest that either lag $h = 1$ or $h = 2$ have bias relative to their theoretical distributions.
+
+$$\forall h \in [1, 2], \;\text{bias}(r_h) = \mathbb{E}(\mathcal{R}_h) - \Big(-\frac{1}{n}\Big) = 0$$
+
+
+
+We can follow a similar methodology to determine whether or not our simulations follow the theorized variance of $\sigma^2 = 1/n$. Again, we will construct two simultaneous confidence intervals adjusting for FWER, noting that for variance the intervals are constructed as follows (where $m$, $\alpha$, $\mathcal{R}$ and $h$ are as previously declared):
+
+
+$$
+\text{For } h \in [1,2], \hspace{0.25cm}\text{CI}_h(\alpha) =  \bigg(\dfrac{\text{var}(\mathcal{R}_h)(m-1)}{\chi^2_{1-(\alpha/2)\,; \,(m-1)}}, \dfrac{\text{var}(\mathcal{R}_h)(m-1)}{\chi^2_{\alpha/2\,; \,(m-1)}}\bigg)
+$$
+
+```{r}
+civs = data.frame( apply(results, MARGIN = 2, 
+                  function(r){
+                    numer = var(r)*(m-1)
+                    ci_v = c( numer / qchisq(1-alpha_prime/2, df = (m - 1)),
+                              numer / qchisq(alpha_prime/2, df = (m - 1)))
+                    return(ci_v)
+                  }))
+rownames(civs) = c("Lower", "Upper")
+signif(civs, 3)
+```
+
+
+As the intervals show, the value of $1/n = 5\times10^{-4}$ lies within both the $r_1$ and $r_2$ variance confidence intervals. Hence, we know that the corresponding hypotheses for equality of variances would fail to reject $H_0$ at the $95\%$ level. In other words, there is statistically significant evidence (at $\alpha = 0.05$) to suggest that the variance of the simulated values follow the theoretical approximations, for this particular seed. 
+
+
+Putting all this together, the consistency of the confidence intervals with the theoretical approximations give us some important analytical credence to our initial empirical observations. We can conclude that it is overwhelmingly likely true that the simulated data follow the theorized distribution.
