@@ -1,5 +1,5 @@
 ---
-title: "STAT 443 Lab 3"
+title: "STAT 443 Lab 4 : SARIMA"
 author: "Caden Hewlett"
 date: "2024-01-26"
 output: pdf_document
