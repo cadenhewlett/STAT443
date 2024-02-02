@@ -76,7 +76,7 @@ acf(l4ts_d1, lag.max = length(l4ts_d1))
 
 As we noted before, the cyclical pattern to the acf may be indicative of some residual seasonality in the model. This is reflected by the periodicity of the correlation values (above and below the zero line) as a function of lag $h$. We saw in lecture that acfs like this tend to point towards the presence of seasonality. Fortunately for us, however, the magnitude of autocorrelation is in fact decreasing as a funciton of lag as we'd hope.
 
-# Question 3
+# Question 4
 
 Let's take a seasonal difference of $s = 5$, $D = 1$ for these data. In other words, we will subtract $D = 1$ seasons of magnitude $s = 5$.
 
