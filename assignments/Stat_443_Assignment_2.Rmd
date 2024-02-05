@@ -3,6 +3,9 @@
 title: "Stat 443: Time Series and Forecasting"
 subtitle: "Assignment 2: Time Series Models"
 author: Caden Hewlett
+header-includes:
+    - \usepackage{upgreek}
+    - \usepackage{bbm}
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
@@ -32,7 +35,9 @@ $$
 X_t = \frac{7}{10}X_{t-1} - \frac{1}{10}X_{t-2} + Z_t
 $$
 
-where ${Z_t}_{t \in \mathbb{Z}}$ denotes a white noise process with mean zero and variance $\sigma^2$.
+Where $\{Z_t\}_{t \in \mathbb{Z}} \sim \text{WN}(0, \sigma^2)$.
+
+
 
 ### a) Yule-Walker Equations
 
@@ -55,6 +60,7 @@ Consider the ARMA(2,1) process:
 $$
 X_t = -0.5X_{t-2} + Z_t + 0.5Z_{t-1}
 $$
+Where $\{Z_t\}_{t \in \mathbb{Z}} \sim \text{WN}(0, \sigma^2)$.
 
 ### a) Stationarity and Invertibility
 
@@ -67,19 +73,120 @@ By rearrangement,
 X_t &= -0.5X_{t-2} + Z_t + 0.5Z_{t-1} \\
 X_t + 0.5X_{t-2}  &=  Z_t + 0.5Z_{t-1} \\
 X_t(B^0 + 0.5B^2)  &=  Z_t(B^0 + 0.5B^1) \\
-X_t(1+ 0.5B^2)  &=  Z_t(1+ 0.5B) \\
+X_t(1+ 0.5B^2)  &=  Z_t(1+ 0.5B) 
 \end{align*}
 
 Therefore, we can write our ARMA(2,1) process as:
-$$
+\begin{align*}
 \text{ARMA}(2, 1) : \varphi(B)X_t = \theta(B)Z_t\\
 \text{Where }  \begin{cases}\varphi(B) =  1+0.5B^2 \\
-\theta(B) = 1 + 0.5B \end{cases} 
+\theta(B) = 1 + 0.5B \end{cases}
+\end{align*}
+
+Now, we have everything to need to verify invertibility and stationarity. 
+
+**Invertibility**: We know that $\{X_t\}$ is invertible.
+
+
+*Proof:* Let $\tilde{\theta}_i \in \mathbb{C}$ be the $i$-th root of $\theta(B)$. In order for the ARMA process to be invertible, it must hold that all roots of $\theta(B)$ are greater than the roots of unity. In other words, we wish to show that: 
+$$\forall i \in[1,q],\, \|\tilde{\theta}_i \| > 1$$
+Hence, we must find the roots of $\theta(B)$ and their magnitude. By the Fundamental Theorem of Algebra, we know that there will exist exactly one root $\tilde{\theta}_1 \in \mathbb{C}$, as $\theta(B)$ has order 1.
+
+Directly, we see:
+\begin{align*}
+1 + 0.5B &= 0 \\
+2 + B &= 0 \\
+B &= -2 
+\end{align*}
+$$\text{Hence, } \tilde{\theta}_1 = -2 , \text{ and } \|\tilde{\theta}_1\| = 2 > 1\; \therefore \{X_t\} \text{ is invertible.} \;\;\square$$
+
+Thus, we have proved $\{X_t\}$ is invertible, as required.
+
+
+
+**Stationarity** We know that $\{X_t\}$ is stationary.
+
+
+*Proof:* Let $\tilde{\varphi}_j \in \mathbb{C}$ be the $j$-th root of $\varphi(B)$. In order for the ARMA process to be stationary, it must hold that all roots of $\varphi(B)$ are greater than the roots of unity. In other words, we wish to show that: 
+$$\forall j \in[1,p],\, \|\tilde{\varphi}_i \| > 1$$
+Hence, we must find the roots of $\varphi(B)$ and their magnitude. By the Fundamental Theorem of Algebra, we know that there will exist exactly two roots $\{\tilde{\varphi}_1, \tilde{\varphi}_2\} \in \mathbb{C}$, as $\varphi(B)$ has order 2.
+
+We can find them directly.
+\begin{align*}
+1 + 0.5B^2 &= 0 \\
+2 + B^2 &= 0 \\
+B &= \pm\sqrt{-2}
+\end{align*}
+
+Hence, 
+$$\{\tilde{\varphi}_1, \tilde{\varphi}_2\} = \{i\sqrt{2}, -i\sqrt{2}\}
 $$
+Further, we know that 
+$$\|\tilde{\varphi}_1\| = \| \tilde{\varphi}_2 \| = \sqrt{2} > 1, \; \therefore \{X_t\} \text{ is stationary.} \;\;\square\\$$
+Thus, we have proved $\{X_t\}$ is stationary, as required.
+
+In conclusion, we have shown that the ARMA(2, 1) process is both stationary and invertible.
+
 
 ### b) Pure AR Process
 
 Write the above ARMA(2,1) process as a pure AR process.
+
+
+In order to write the model as a pure AR process, we will express it in the following form:
+$$
+Z_t = \bigg(\frac{\varphi(B)}{\theta(B)}\bigg)X_t = \mathcal{\uppi}(B)X_t
+$$
+
+Where $\theta(B)$ and $\varphi(B)$ are as defined in the previous question. Let us find an expression for $\mathcal{\uppi}(B)$:
+$$
+\mathcal{\uppi}(B) = \frac{\varphi(B)}{\theta(B)} = \dfrac{(1+0.5B^2)}{(1 + 0.5B)} = \dfrac{(1+0.5B^2)}{\big(1 - (-0.5B)\big)} = (1+0.5B^2)\sum_{n=1}^{\infty}(-0.5B)^n
+$$
+Where the last expression in the equality follows from the definition of a geometric series, under the assumption that $|-0.5B| < 1$.
+We expand this process, letting $\delta = 0.5$ for readability.
+\begin{align*}
+{\uppi}(B) &= (1+ \delta B^2)\sum_{n=1}^{\infty}(-\delta B)^n \\
+{\uppi}(B) &= (1+ \delta B^2)\Big[1 + (-\delta B) + (-\delta B)^2 + (-\delta B)^3 + \dots \Big] \\
+{\uppi}(B) &= \Big[ 1 + (-\delta B) + \big(\delta B^2 +(- \delta B)^2  \big) + \big((\delta B^2)(-\delta B) +(- \delta B)^3\big) + \dots\Big]
+\end{align*}
+Now, we can begin to attempt to investigate each $\pi_i \in \uppi(B)$ where $i$ indicates the power of $B$ in the expression.
+\begin{align*}
+\pi_0 &= 1 \\
+\pi_1 &=  (-\delta B)\\
+\pi_2 &= \delta B^2 + (- \delta B)^2 \\
+\pi_3 &= (\delta B^2)(-\delta B) +(- \delta B)^3 \\
+\pi_4 &= (\delta B^2)(-\delta B)^2 +(- \delta B)^4 \\
+\vdots 
+\end{align*}
+Investigating these terms, we begin to notice a pattern:
+\begin{align*}
+\pi_0 &=  (0 + (-\delta)^0)B^0 \\
+\pi_1 &= (0 + (-\delta)^1)B^1  \\
+\pi_2 &= (\delta + (- \delta)^2)B^2 \\
+\pi_3 &= (\delta(-\delta) + (-\delta)^3)B^3 \\
+\pi_4 &= ( \delta(-\delta )^2 +(- \delta )^4) B^4 \\
+\vdots  \\
+\pi_j  &= (\delta (-\delta)^{j-2} + (-\delta)^j)B^j
+\end{align*}
+With this in mind, we can denote the following term to define all elements of $\uppi(B)$ for $j \in \mathbb{N}$ where, still using $\delta = 0.5$, each $\pi_j$ term is defined by the rule stated (using indicators to account for the fact that $\pi_0$ and $\pi_1$ follow a slightly different general pattern.)
+$$
+\uppi(B) = \sum_{j=0}^{\infty} B^j\pi_j, \text{ where } \pi_j =  \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
+$$
+
+Now that we have a clear definition for $\uppi(B)$, we can conclude by writing:
+
+$$
+ \uppi(B)X_t = Z_t
+$$
+Thus, we've converted the ARMA process to a pure infinite-order AR process with a new characteristic polynomial $\uppi(B)$ as required.
+
+
+<!-- We can hence succintly represent the general form of $\uppi(B)$ as follows: -->
+<!-- $$\uppi(B) = \Big\{  \pi_j \mid \pi_0 =1, \delta = 0.5,\text{ and } \forall j \in \mathbb{N}, \pi_j = (\delta B^2 -\delta B)(-\delta B) ^{j-1} \Big\}$$ -->
+<!-- Or, alternatively, as the function: -->
+<!-- $$ -->
+
+<!-- $$ -->
 
 ### c) Pure MA Process
 
