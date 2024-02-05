@@ -194,7 +194,7 @@ Write the above ARMA(2,1) process as a pure MA process.
 
 ### d) Autocorrelation Function
 
-Find the ACF of ${X_t}_{t \in \mathbb{Z}}$.
+Find the ACF of $\{X_t\}_{t \in \mathbb{Z}}$.
 
 ## 3. AR(2) Process
 
