@@ -1,0 +1,110 @@
+
+---
+title: "Stat 443: Time Series and Forecasting"
+subtitle: "Assignment 2: Time Series Models"
+author: Caden Hewlett
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(zoo)
+library(tseries)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(forecast)
+library(ggfortify)
+library(grid)
+library(gt)
+library(gtExtras)
+# library(mgcv)
+```
+
+# Questions
+
+## 1. Stationary Second-Order AR Process
+
+Consider the stationary second-order AR process:
+
+$$
+X_t = \frac{7}{10}X_{t-1} - \frac{1}{10}X_{t-2} + Z_t
+$$
+
+where ${Z_t}_{t \in \mathbb{Z}}$ denotes a white noise process with mean zero and variance $\sigma^2$.
+
+### a) Yule-Walker Equations
+
+Derive the Yule-Walker equations and find the autocorrelation functions of ${X_t}_{t \in \mathbb{Z}}$.
+
+### b) Simulation and Plot
+
+Assume $\sigma^2 = 1$. Using `set.seed(443)` to set the simulation seed and `arima.sim()` function simulate 1000 observations from the AR(2) process defined above. Plot its sample ACF for the first 15 lags along with the theoretical ACF obtained in part (a). Compare the sample and theoretical ACFs.
+
+```{r}
+# R code block for simulation and plotting
+set.seed(443)
+# Further simulation and plotting code goes here
+```
+
+## 2. ARMA(2,1) Process
+
+Consider the ARMA(2,1) process:
+
+$$
+X_t = -0.5X_{t-2} + Z_t + 0.5Z_{t-1}
+$$
+
+### a) Stationarity and Invertibility
+
+Check whether the process is stationary and invertible. Justify your answers.
+
+We will begin by converting $\{X_t\}$ into a function of the characteristic polynomials $\varphi(B)$ and $\theta(B)$. We let $B$ denote the backshift operator. 
+
+By rearrangement, 
+\begin{align*}
+X_t &= -0.5X_{t-2} + Z_t + 0.5Z_{t-1} \\
+X_t + 0.5X_{t-2}  &=  Z_t + 0.5Z_{t-1} \\
+X_t(B^0 + 0.5B^2)  &=  Z_t(B^0 + 0.5B^1) \\
+X_t(1+ 0.5B^2)  &=  Z_t(1+ 0.5B) \\
+\end{align*}
+
+Therefore, we can write our ARMA(2,1) process as:
+$$
+\text{ARMA}(2, 1) : \varphi(B)X_t = \theta(B)Z_t\\
+\text{Where }  \begin{cases}\varphi(B) =  1+0.5B^2 \\
+\theta(B) = 1 + 0.5B \end{cases} 
+$$
+
+### b) Pure AR Process
+
+Write the above ARMA(2,1) process as a pure AR process.
+
+### c) Pure MA Process
+
+Write the above ARMA(2,1) process as a pure MA process.
+
+### d) Autocorrelation Function
+
+Find the ACF of ${X_t}_{t \in \mathbb{Z}}$.
+
+## 3. AR(2) Process
+
+Consider the AR(2) process given by:
+
+$$
+2aX_t + \frac{3}{6a}X_{t-1} - \frac{1}{6a}X_{t-2} = Z_t, \quad a \in \mathbb{R}
+$$
+
+### a) Stationarity Conditions
+
+Under which conditions on constant $a$ is the process ${X_t}_{t \in \mathbb{Z}}$ stationary?
+
+### b) Autocorrelation Function
+
+Assuming that $a$ satisfies conditions found in part (a), find the ACF of ${X_t}_{t \in \mathbb{Z}}$.
+
+## 4. SARIMA Model
+
+Show that SARIMA(2,1,1)$\times$(0,1,1)$_{12}$ can be written as an ARMA(p,q) process and specify values of $p$ and $q$.
