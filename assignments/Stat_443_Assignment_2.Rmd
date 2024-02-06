@@ -128,7 +128,9 @@ Thus, we have proved $\{X_t\}$ is stationary, as required.
 In conclusion, we have shown that the ARMA(2, 1) process is both stationary and invertible.
 
 
-### b) Pure AR Process
+### b) Pure AR Process: 
+
+<!-- Pure MA? -->
 
 Write the above ARMA(2,1) process as a pure AR process.
 
@@ -138,9 +140,9 @@ $$
 Z_t = \bigg(\frac{\varphi(B)}{\theta(B)}\bigg)X_t = \mathcal{\uppi}(B)X_t
 $$
 
-Where $\theta(B)$ and $\varphi(B)$ are as defined in the previous question. Let us find an expression for $\mathcal{\uppi}(B)$:
+Where $\theta(B)$ and $\varphi(B)$ are as defined in the previous question. Let us find an expression for ${\uppi}(B)$:
 $$
-\mathcal{\uppi}(B) = \frac{\varphi(B)}{\theta(B)} = \dfrac{(1+0.5B^2)}{(1 + 0.5B)} = \dfrac{(1+0.5B^2)}{\big(1 - (-0.5B)\big)} = (1+0.5B^2)\sum_{n=1}^{\infty}(-0.5B)^n
+\mathcal{\uppi}(B) = \frac{\varphi(B)}{\theta(B)} = \dfrac{(1+0.5B^2)}{(1 + 0.5B)} = \dfrac{(1+0.5B^2)}{\big(1 - (-0.5B)\big)} = (1+0.5B^2)\sum_{n=0}^{\infty}(-0.5B)^n
 $$
 Where the last expression in the equality follows from the definition of a geometric series, under the assumption that $|-0.5B| < 1$.
 We expand this process, letting $\delta = 0.5$ for readability.
@@ -170,7 +172,7 @@ Investigating these terms, we begin to notice a pattern:
 \end{align*}
 With this in mind, we can denote the following term to define all elements of $\uppi(B)$ for $j \in \mathbb{N}$ where, still using $\delta = 0.5$, each $\pi_j$ term is defined by the rule stated (using indicators to account for the fact that $\pi_0$ and $\pi_1$ follow a slightly different general pattern.)
 $$
-\uppi(B) = \sum_{j=0}^{\infty} B^j\pi_j, \text{ where } \pi_j =  \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
+\uppi(B) = 1-\sum_{j=0}^{\infty} B^j\pi_j, \text{ where } \{\pi_j\} =  \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
 $$
 
 Now that we have a clear definition for $\uppi(B)$, we can conclude by writing:
@@ -188,13 +190,65 @@ Thus, we've converted the ARMA process to a pure infinite-order AR process with 
 
 <!-- $$ -->
 
-### c) Pure MA Process
+### c) Pure MA Process (Pure AR?)
 
 Write the above ARMA(2,1) process as a pure MA process.
+
+In order to write the model as a pure MA process, we will express it in the following form:
+$$
+X_t = \bigg(\frac{\theta(B)}{\varphi(B)}\bigg)Z_t = \Psi(B)Z_t
+$$
+
+Where $\theta(B)$ and $\varphi(B)$ are as defined in the previous question.Let us find an expression for $\Psi(B)$:
+$$
+{\Psi}(B) = \frac{\theta(B)}{\varphi(B)} = \dfrac{(1 + 0.5B)}{(1+0.5B^2)} = \dfrac{(1 + 0.5B)}{\big(1 - (-0.5B^2)\big)} = (1+0.5B)\sum_{n=0}^{\infty}(-0.5B^2)^n
+$$
+Where the last expression in the equality follows from the definition of a geometric series, under the assumption that $|-0.5B^2| < 1$.
+Let's expand this product's infinite sum a bit, again letting $\delta = 0.5$.
+\begin{align*}
+\Psi(B) &=(1+\delta B)\sum_{n=0}^{\infty}(-\delta B^2)^n \\
+\Psi(B) &=(1+\delta B)\big(1 + (-\delta B^2 )+ \delta^2 B^4 + (- \delta^3 B^6) + \dots ) \\
+\Psi(B) &= \big( 1 + \delta B - \delta B^2 - \delta ^2 B^3 + \delta^2 B^4 -\delta^3 B^5 - \delta^3B^6 + \dots )
+\end{align*}
+
+Investigating these in terms of the powers of $B$, we begin to see a pattern. It's slightly more complicated than the last one, because of the squared term in the infinite sum.
+\begin{align*}
+\psi_0 &= 1 = (-1)^0(-\delta)^0B^0\\ 
+\psi_1 &= \delta B = (-1)^1(-\delta)^1B^1\\
+\psi_2 &= -\delta B^2 = (-1)^2(-\delta)^1B^2\\
+\psi_3 &= -\delta^2 B^3 = (-1)^3(-\delta)^2B^3 \\
+\psi_4 &= \delta^2 B^4 = (-1)^4(-\delta)^2B^4 \\
+\psi_5 &= \delta^3 B^5 = (-1)^5(-\delta)^3B^5 \\
+\psi_6 &= -\delta^3 B^6 = (-1)^6(-\delta)^3B^6 \\
+\vdots \\
+\psi_j &= \overset{\text{?}}{\dots} = (-1)^j(-\delta)^{\lceil j / 2\rceil} B^j
+\end{align*}
+
+The series for $\psi_i$ seems to have a "lagging" component in the $\delta$ terms. It could even seem as if there's a different series for odd and even indices. However, we can encapsulate the series with the ceiling function, as shown above.
+
+We could alternatively express the series as a piecewise function, if we don't wish to use the ceiling function.
+
+$$
+\psi_j =  \begin{cases}(-\delta)^{j/2} B^j, & j \equiv 0\text{mod}(2) \\
+(-\delta)^{(j-1)/2}B^j, & j \equiv 1 \text{mod}(2)\end{cases} 
+$$
+In either case, we can write $\Psi(B)$ in its entirety. Letting $\delta = 0.5$, we write:
+
+$$
+\Psi(B) = \sum_{i = 0}^{\infty} \psi_i B^i, \text{ where } \{\psi_j\} = (-1)^{\,j}(-\delta)^{\lceil j / 2\rceil} B^{\,j}
+$$
+By this definition, we conclude that:
+
+$$
+X_t = \Psi(B)Z_t, \text{ for } \Psi(B) = \sum_{i = 0}^{\infty} \psi_i B^i
+$$
 
 ### d) Autocorrelation Function
 
 Find the ACF of $\{X_t\}_{t \in \mathbb{Z}}$.
+
+(how..? Is my MA equation wrong?)
+
 
 ## 3. AR(2) Process
 
