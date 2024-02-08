@@ -147,7 +147,7 @@ $$
 Where the last expression in the equality follows from the definition of a geometric series, under the assumption that $|-0.5B| < 1$.
 We expand this process, letting $\delta = 0.5$ for readability.
 \begin{align*}
-{\uppi}(B) &= (1+ \delta B^2)\sum_{n=1}^{\infty}(-\delta B)^n \\
+{\uppi}(B) &= (1+ \delta B^2)\sum_{n=0}^{\infty}(-\delta B)^n \\
 {\uppi}(B) &= (1+ \delta B^2)\Big[1 + (-\delta B) + (-\delta B)^2 + (-\delta B)^3 + \dots \Big] \\
 {\uppi}(B) &= \Big[ 1 + (-\delta B) + \big(\delta B^2 +(- \delta B)^2  \big) + \big((\delta B^2)(-\delta B) +(- \delta B)^3\big) + \dots\Big]
 \end{align*}
