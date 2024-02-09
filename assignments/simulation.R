@@ -18,14 +18,12 @@ myacf = function(h){
     (-0.5)^(h/2)
   }
   else{
-    # why not 1/4?
+    # why not 1/4 
     (1/5)*((-0.5)^((h-1)/2))
   }
 }
 
-otheracf = function(h){
-  if()
-}
+
 cols=sapply(0:p, function(h){
   ifelse((h %% 2) == 0, 'red', 'blue')
 })
