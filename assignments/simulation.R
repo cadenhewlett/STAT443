@@ -21,7 +21,7 @@ myacf = function(h){
     # why not 1/4 
     (1/5)*((-0.5)^((h-1)/2))
   }
-}
+}   
 
 
 cols=sapply(0:p, function(h){
