@@ -124,10 +124,37 @@ $$
 Assume $\sigma^2 = 1$. Using `set.seed(443)` to set the simulation seed and `arima.sim()` function simulate 1000 observations from the AR(2) process defined above. Plot its sample ACF for the first 15 lags along with the theoretical ACF obtained in part (a). Compare the sample and theoretical ACFs.
 
 ```{r}
+my_acf = function(h){
+  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
+}
+theo = sapply(0:15, my_acf)
 # R code block for simulation and plotting
 set.seed(443)
 # Further simulation and plotting code goes here
+sigma_2 = 1
+sim = arima.sim(n = 1000, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+
+# lines(sapply(0:15, my_acf), col = 'red')
+## resids
+
 ```
+
+```{r}
+set.seed(443)
+theo = sapply(0:15, my_acf)
+resids = sapply(seq(from = 500, to = 11000, by = 100), 
+                function(n)
+                  {
+                  sim = arima.sim(n = n, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+                  sample_acf = acf(sim, lag.max = 15, plot = FALSE)
+                  rss = sum((sample_acf$acf - theo)^2)
+                  rss
+                })
+
+plot(y = resids, x = seq(from = 500, to = 11000, by = 100), ylab = "RSS", xlab = "Sample Size")
+points(y = resids[6], x = 1000, col = 'red', pch = 12)
+```
+
 
 ## 2. ARMA(2,1) Process
 
