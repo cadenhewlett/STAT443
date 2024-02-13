@@ -41,11 +41,11 @@ acf_vlas[3]
 
 par(mfrow = c(1, 2))
 
-test = arima.sim(n = 1000000, list(ar = c(0,  -0.5), ma = c(0.5)),
+test = arima.sim(n = 10000000, list(ar = c(0,  -0.5), ma = c(0.5)),
           sd = 1)
 
-
-p = 100
+36/3
+p = 20
 
 acf_vals = acf(test, lag.max = p, plot= F)$acf
 
@@ -68,9 +68,12 @@ plot(x = sapply(0:p, myacf),
 abline(a = 0, b = 1, col = "black", lty='dotted')
 
 plot((acf_vals -sapply(0:p, myacf) )^2)
-sum( (acf_vals -sapply(0:p, myacf) )^2)
+sum((acf_vals -sapply(0:p, myacf) )^2)
 
-
+(data.frame(
+  x = round(sapply(0:p, myacf), 4),
+  y = round(acf_vals, 4)
+))
 # odds = (0:10000)[0:10000 %% 2 == 1]
 # evens = (0:10000)[0:10000 %% 2 == 0]
 # sum((-0.5)^odds) + sum(  (-0.5)^evens )
@@ -117,4 +120,16 @@ test_acf = function(h){
 #   # \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
 #   (j >= 2)*delta*((-1*delta)^j) + (-1*delta)^j
 # }
+<<<<<<< HEAD
 >>>>>>> 8a23a83b73a1466e1ea584f0900fceb8bd19daf0
+=======
+q1test = function(h){
+  # \frac{16}{11}\Big(\frac{1}{2}\Big)^{|h|}-\frac{6}{11}\Big(\frac{1}{5}\Big)^{|h|} 
+  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
+}
+q1test(0)
+q1test(1)
+7/11
+q1test(2)
+19/55
+>>>>>>> 05c42bac2b8ce2ef53e1e545b23432d941efa77a
