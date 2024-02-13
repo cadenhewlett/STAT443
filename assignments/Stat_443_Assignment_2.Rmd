@@ -260,12 +260,96 @@ $$
 
 ### a) Stationarity Conditions
 
-Under which conditions on constant $a$ is the process ${X_t}_{t \in \mathbb{Z}}$ stationary?
+Under which conditions on constant $a$ is the process $\{X_t\}_{t \in \mathbb{Z}}$ stationary?
+
+Let's adjust the expression in terms of the backshift operator $B$.
+
+$$\Big(2aB^0 + \frac{3}{6a}B - \frac{1}{6a}B^2\Big)X_t = Z_t$$
+From this, we can conclude that the characteristic polynomial $\varphi(B)$ can be written as:
+$$
+\varphi(B) = 2a + \frac{3}{6a}B - \frac{1}{6a}B^2
+$$
+Again, let $\tilde{\varphi}_j \in \mathbb{C}$ be the $j$-th root of $\varphi(B)$. In order for the ARM process to be stationary, it must hold that all roots of $\varphi(B)$ are greater than the roots of unity. In other words, we wish to show that: 
+$$\forall j \in[1,p],\, \|\tilde{\varphi}_i \| > 1$$
+By the Fundamental Theorem of Algebra, there are two roots $\{\tilde{\varphi}_1, \tilde{\varphi}_2\}$ that we can find for this characteristic polynomial. We should note from the beginning that in order for the polynomial to be well defined, $a \neq 0$. 
+
+Let us solve:
+
+- check roots of $(2a + (3B)/6A - (B^2)/6a)
 
 ### b) Autocorrelation Function
 
-Assuming that $a$ satisfies conditions found in part (a), find the ACF of ${X_t}_{t \in \mathbb{Z}}$.
+Assuming that $a$ satisfies conditions found in part (a), find the ACF of $\{X_t\}_{t \in \mathbb{Z}}$.
+
+1.) yule walker
+
+2.) find $d_i$
+
+3.) find $A_i$
+
+4.) done
 
 ## 4. SARIMA Model
 
-Show that SARIMA(2,1,1)$\times$(0,1,1)$_{12}$ can be written as an ARMA(p,q) process and specify values of $p$ and $q$.
+Show that $\text{SARIMA}(\underset{p}{2}, \underset{d}{1}, \underset{q}{1}) \times (\underset{P}{0}, \underset{D}{1}, \underset{Q}{1})_{\underset{s}{12}}$ can be written as an ARMA(p,q) process and specify values of $p$ and $q$.
+
+
+Let us begin by finding the $p$-value for the AR process. 
+
+For a $\text{SARIMA}(\underset{p}{2}, \underset{d}{1}, \underset{q}{1}) \times (\underset{P}{0}, \underset{D}{1}, \underset{Q}{1})_{\underset{s}{12}}$
+
+$$
+\text{LHS} = \varphi(B)\Phi(B^s)W_t, \text{ where } W_t = \nabla^d \nabla^D_s X_t 
+$$
+We wish to represent it in ARMA form, which has a single polynomial on each side. In other words, let the following be our "desired" ARMA process:
+
+$$
+{\varphi}^{\oplus}(B)X_t = {\theta}^{\oplus}(B)Z_t
+$$
+Where ${\varphi}^{\oplus}(B)$ and ${\theta}^{\oplus}(B)$ are the characteristic polynomials of the ARMA model. Let's begin find $p$, the order of ${\theta}^{\oplus}(B)$, by expanding the $\text{LHS}$ of the SARIMA model.
+
+In order to do this, we must first expand $W_t$. 
+
+\begin{align*}
+W_t &= \nabla^d \nabla^D_s X_t \\
+W_t &= \nabla^{1} \nabla^{1}_{12} X_t \\
+W_t &=  \nabla^{1}_{12} (X_t - X_{t-1}) \\
+W_t &=  \nabla^{1}_{12} (X_t) -  \nabla^{1}_{12} (X_{t-1}) \\
+W_t &=   (X_t - X_{t-12}) -   (X_{t-1} - X_{t- 12 -1}) \\
+W_t &=   X_t - X_{t-1} - X_{t-12} +  X_{t- 13}
+\end{align*}
+
+Now, we expand $\phi(B)$, understanding that $\Phi(B) = 1$ since $P = 0$.
+$$
+\phi(B) = (1 - \alpha_1B - \alpha_2B^2)
+$$
+
+Then we put this together as:
+
+$$
+{\varphi}^{\oplus}(B)X_t = (1 - \alpha_1B - \alpha_2B^2)(X_t - X_{t-1} - X_{t-12} +  X_{t- 13})
+$$
+We can expand this briefly (but not entirely) to find $p$ for ${\varphi}^{\oplus}(B)$.
+\begin{align*}
+{\varphi}^{\oplus}(B)X_t &= (1 - \alpha_1B - \alpha_2B^2)(X_t - X_{t-1} - X_{t-12} +  X_{t- 13}) \\
+{\varphi}^{\oplus}(B)X_t &= X_t - \alpha_1BX_t - \alpha_2B^2X_t - \dots - \alpha_1BX_{t- 13} -\alpha_2B^2X_{t- 13} \\
+{\varphi}^{\oplus}(B)X_t &= X_t - \alpha_1X_{t-1} - \alpha_2X_{t-2} - \dots - \alpha_1 X_{t- 14} -\alpha_2 X_{t- 15}
+\end{align*}
+Hence, from the final term of ${\varphi}^{\oplus}(B)X_t$, we can conclude that $p = 15$.
+
+We can similarly determine the order $q$ of the right-hand side of the equation.
+
+$$\text{RHS} = \theta(B) \Theta(B^s)Z_t
+$$
+In this situation, both $q$ and $Q$ are nonzero. We'll expand each term independently, then consider their product.
+$$\theta(B) = (1+ \beta B), \hspace{ 0.25cm} \Theta(B^s) = (1 + \tilde{\beta} B^{12})$$
+Hence, we can expand the AR piece of the model to be:
+$$\begin{aligned}
+\theta^{\oplus}(B) &= (1+ \beta B)(1 + \tilde{\beta} B^{12})Z_t \\
+\theta^{\oplus}(B) &= (1+ \beta B)(1 + \tilde{\beta} B^{12})Z_t \\
+\theta^{\oplus}(B) &=(1 + \beta B + \tilde{\beta}B^{12} + \beta\tilde{\beta}BB^{12}) \\
+\theta^{\oplus}(B) &=Z_{t} + \beta Z_{t-1} + \tilde{\beta}Z_{t-12} + \beta\tilde{\beta}Z_{t-13}
+\end{aligned}$$
+Hence, from the final term of ${\theta}^{\oplus}(B)Z_t$, we can conclude that $q = 13$.
+
+Therefore, we can conclude that the SARIMA model can decompose into an ARMA$(p = 15, q = 13)$ model under this decomposition. $\square$

@@ -3,11 +3,11 @@ library(tseries)
 
 par(mfrow = c(1, 2))
 
-test = arima.sim(n = 1000000, list(ar = c(0,  -0.5), ma = c(0.5)),
+test = arima.sim(n = 10000000, list(ar = c(0,  -0.5), ma = c(0.5)),
           sd = 1)
 
 
-p = 100
+p = 20
 
 acf_vals = acf(test, lag.max = p, plot= F)$acf
 
@@ -30,9 +30,12 @@ plot(x = sapply(0:p, myacf),
 abline(a = 0, b = 1, col = "black", lty='dotted')
 
 plot((acf_vals -sapply(0:p, myacf) )^2)
-sum( (acf_vals -sapply(0:p, myacf) )^2)
+sum((acf_vals -sapply(0:p, myacf) )^2)
 
-
+(data.frame(
+  x = round(sapply(0:p, myacf), 4),
+  y = round(acf_vals, 4)
+))
 # odds = (0:10000)[0:10000 %% 2 == 1]
 # evens = (0:10000)[0:10000 %% 2 == 0]
 # sum((-0.5)^odds) + sum(  (-0.5)^evens )
