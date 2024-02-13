@@ -43,6 +43,82 @@ Where $\{Z_t\}_{t \in \mathbb{Z}} \sim \text{WN}(0, \sigma^2)$.
 
 Derive the Yule-Walker equations and find the autocorrelation functions of ${X_t}_{t \in \mathbb{Z}}$.
 
+Let us begin by deriving the Yule-Walker Equations.
+
+
+**Step 1**: The first step is to multiply each side of the equation by $X_{t-i}$ for $i \in [1,p]$.
+$$
+\begin{aligned}
+X_tX_{t-1} &= \frac{7}{10}X_{t-1}X_{t-1} - \frac{1}{10}X_{t-1}X_{t-2} + Z_tX_{t-1} \\
+X_tX_{t-2} &= \frac{7}{10}X_{t-1}X_{t-2} - \frac{1}{10}X_{t-2}X_{t-2} + Z_tX_{t-2}
+\end{aligned}
+$$
+**Step 2**: Then we take the expectation of these equations, using linearity of expectation directly. 
+$$
+\begin{aligned}
+\mathbb{E}(X_tX_{t-1}) &= \frac{7}{10}\mathbb{E}(X_{t-1}X_{t-1}) - \frac{1}{10}\mathbb{E}(X_{t-1}X_{t-2}) + \mathbb{E}(Z_tX_{t-1}) \\
+\mathbb{E}(X_tX_{t-2}) &= \frac{7}{10}\mathbb{E}(X_{t-1}X_{t-2}) - \frac{1}{10}\mathbb{E}(X_{t-2}X_{t-2}) + \mathbb{E}(Z_tX_{t-2}) \\
+\text{This simplifies} &\text{ to...}\\
+\gamma(1) &= \frac{7}{10}\gamma(0) - \frac{1}{10}\gamma(1)  \\
+\gamma(2) &= \frac{7}{10}\gamma(1) - \frac{1}{10}\gamma(0) \\
+\end{aligned}
+$$
+**Step 3**: Divide everything by $\gamma(0)$ to get correlation values.
+$$
+\begin{aligned}
+\rho(1) &= \frac{7}{10} - \frac{1}{10}\rho(1)  \\
+\rho(2) &= \frac{7}{10}\rho(1) - \frac{1}{10} \\
+\end{aligned}
+$$
+Then, we can solve directly to find:
+$$\rho(1) = \frac{7}{11}, \text{ and } \rho(2) = \frac{19}{55}$$
+However, we're not done! We still need to find the general autocorrelation function for all $h$ values, i.e. $\rho(h)$.
+
+To do this, we must reconsider the original AR model, which I'll write as:
+$$
+\begin{aligned}
+\alpha_0X_t = \alpha_1X_{t-1} + \alpha_2X_{t-2} + Z_t \\
+\text{ Where } \alpha_0 = 1, \alpha_1 = \frac{7}{10} \text{ and } \alpha_2 = - \frac{1}{10}
+\end{aligned}
+$$
+With this definition of $\alpha_i$ for $i \in [0,2]$ we can write the polynomial:
+$$
+D^p - \alpha_1D^{p-1} - \alpha_2 D^{p-2} = D^2 - \frac{7}{10}D + \frac{1}{10}
+$$ 
+Then, we solve the roots of this polynomial:
+$$
+\begin{aligned}
+0 &= D^2 - \frac{7}{10}D + \frac{1}{10} \\
+0 &= 10D^2 - {7}D + {1} \\
+0 &= (5D - 1)(2D -1) \\
+&\text{Hence, } d_1 = \frac{1}{5} \text{ and } d_2 = \frac{1}{2}
+\end{aligned}
+$$
+We then substitue these into the General Equation for $\rho(h)$.
+$$
+\rho(h) =  A_1 d_1^{|h|} +  A_2 d_2^{|h|} \rightarrow \rho(h) = A_1\Big(\frac{1}{5}\Big)^{|h|} +  A_2\Big(\frac{1}{2}\Big)^{|h|}
+$$
+We'll use our known solutions of $\rho(0) = 1$ and $\rho(1) = 7 / 11$ to find $A_1$ and $A_2$.
+$$
+\begin{aligned}
+\rho(0) &= A_1 + A_2 = 1 \text{ hence } A_1 = 1-A_2\\
+\rho(1) &= \frac{A_1}{5} + \frac{A_2}{2} = \frac{7}{11} \\
+\end{aligned}
+$$
+Substituting $A_1 = 1-A_2$ into the second equation, 
+
+$$
+\begin{aligned}
+ \frac{1}{5}(1 - A_2) + \frac{1}{2}(A_2) &= \frac{7}{11} \\
+\frac{3}{10}A_2 &= \frac{24}{55} \\
+\text{ Hence } A_2 &= \frac{16}{11}, \text{ and } A_1 = -\frac{5}{11}
+\end{aligned}
+$$
+Thus, we can write the general acf function at lag $h$ as:
+$$
+\rho(h) =  \frac{16}{11}\Big(\frac{1}{2}\Big)^{|h|}-\frac{5}{11}\Big(\frac{1}{5}\Big)^{|h|} 
+$$
+
 ### b) Simulation and Plot
 
 Assume $\sigma^2 = 1$. Using `set.seed(443)` to set the simulation seed and `arima.sim()` function simulate 1000 observations from the AR(2) process defined above. Plot its sample ACF for the first 15 lags along with the theoretical ACF obtained in part (a). Compare the sample and theoretical ACFs.
@@ -205,14 +281,16 @@ $$
 $$
 Where the last expression in the equality follows from the definition of a geometric series, under the assumption that $|-0.5B^2| < 1$.
 Let's expand this product's infinite sum a bit, again letting $\delta = 0.5$.
-\begin{align*}
+$$
+\begin{aligned}
 \Psi(B) &=(1+\delta B)\sum_{n=0}^{\infty}(-\delta B^2)^n \\
 \Psi(B) &=(1+\delta B)\big(1 + (-\delta B^2 )+ \delta^2 B^4 + (- \delta^3 B^6) + \dots ) \\
 \Psi(B) &= \big( 1 + \delta B - \delta B^2 - \delta ^2 B^3 + \delta^2 B^4 -\delta^3 B^5 - \delta^3B^6 + \dots )
-\end{align*}
-
+\end{aligned}
+$$
 Investigating these in terms of the powers of $B$, we begin to see a pattern. It's slightly more complicated than the last one, because of the squared term in the infinite sum.
-\begin{align*}
+$$
+\begin{aligned}
 \psi_0 &= 1 = (-1)^0(-\delta)^0B^0\\ 
 \psi_1 &= \delta B = (-1)^1(-\delta)^1B^1\\
 \psi_2 &= -\delta B^2 = (-1)^2(-\delta)^1B^2\\
@@ -222,15 +300,15 @@ Investigating these in terms of the powers of $B$, we begin to see a pattern. It
 \psi_6 &= -\delta^3 B^6 = (-1)^6(-\delta)^3B^6 \\
 \vdots \\
 \psi_j &= \overset{\text{?}}{\dots} = (-1)^j(-\delta)^{\lceil j / 2\rceil} B^j
-\end{align*}
-
+\end{aligned}
+$$
 The series for $\psi_i$ seems to have a "lagging" component in the $\delta$ terms. It could even seem as if there's a different series for odd and even indices. However, we can encapsulate the series with the ceiling function, as shown above.
 
 We could alternatively express the series as a piecewise function, if we don't wish to use the ceiling function.
 
 $$
 \psi_j =  \begin{cases}(-\delta)^{j/2} B^j, & j \equiv 0\text{mod}(2) \\
-(-\delta)^{(j-1)/2}B^j, & j \equiv 1 \text{mod}(2)\end{cases} 
+(-\delta)^{(j+1)/2}B^j, & j \equiv 1 \text{mod}(2)\end{cases} 
 $$
 In either case, we can write $\Psi(B)$ in its entirety. Letting $\delta = 0.5$, we write:
 

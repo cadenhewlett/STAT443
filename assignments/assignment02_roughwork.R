@@ -6,7 +6,7 @@ par(mfrow = c(1, 2))
 test = arima.sim(n = 10000000, list(ar = c(0,  -0.5), ma = c(0.5)),
           sd = 1)
 
-
+36/3
 p = 20
 
 acf_vals = acf(test, lag.max = p, plot= F)$acf
@@ -60,3 +60,12 @@ sum((acf_vals -sapply(0:p, myacf) )^2)
 #   # \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
 #   (j >= 2)*delta*((-1*delta)^j) + (-1*delta)^j
 # }
+q1test = function(h){
+  # \frac{16}{11}\Big(\frac{1}{2}\Big)^{|h|}-\frac{6}{11}\Big(\frac{1}{5}\Big)^{|h|} 
+  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
+}
+q1test(0)
+q1test(1)
+7/11
+q1test(2)
+19/55
