@@ -378,7 +378,7 @@ $$
 \text{cov}(X_t, X_{t+h}) &= \text{cov}\big(\Psi(B)Z_{t}, \Psi(B)Z_{t+h}\big) 
 \end{aligned}
 $$
-Noting that $\mathbb{E}(X_t) = 0$, 
+Noting that $\mathbb{E}(X_t) = 0$, we can write $\text{cov}(X_t, X_{t+h}) = \mathbb{E}(X_t, X_{t+h})$:
 $$
 \begin{aligned}
 \gamma(h) &= \mathbb{E}\bigg(\sum_{i=0}^{\infty}\psi_iZ_{t-i}, \sum_{j=0}^{\infty}\psi_jZ_{t-j+h}\bigg) \\
@@ -421,7 +421,7 @@ We'll evaluate the sum of sums:
 $$
 \gamma(h \mid h \text{ is even}) =\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}} + \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}}
 $$
-We start with evaluating the first term in the sum. It is crucial to remember that each $\psi$ is itself an infinite-order polynomail, so we must write them as:
+We start with evaluating the first term in the sum. It is crucial to remember that each $\psi$ is itself an infinite-order polynomial, so we must write them as:
 $$
 \begin{aligned}
 \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}} &= \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \sum_{i\text{ is even}}^{\infty}\psi_{i+h}^{\text{E}} 
