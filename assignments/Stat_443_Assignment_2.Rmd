@@ -495,6 +495,28 @@ $$
 \end{aligned}
 $$
 
+Putting this together, we can derive an overall expression for the odd case:
+$$
+\gamma(h \mid h \text{ is odd}) = \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} +  \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} = -\dfrac{4}{9}(-\delta)^{(h + 1)/2}  + \frac{2}{9} (-\delta)^{(h + 1)/2}  = -\dfrac{2}{9}(-0.5)^{(h + 1)/2} 
+$$
+Putting this all together, we can write the piece-wise expression for $\gamma(h)$.
+$$
+\gamma(h) = \sigma^2\begin{cases}{\dfrac{5}{9}(-0.5)^{h/2}}\, &h\text{ is even.} \\
+-\dfrac{2}{9}(-0.5)^{(h + 1)/2}  &h \text{ is odd}.\end{cases}
+$$
+However, this is not yet the *acf*. To get the *acf*, we must divide $\gamma(h)$ by $\gamma(0)$. Noting that zero is even, we can write:
+$$
+\gamma(0) = \sigma^2(-0.5)^{0/2} = \dfrac{5\sigma^2}{9}
+$$
+Then, dividing the acvf by $\gamma(0)$, we arrive at the true acf for the ARMA process.
+$$
+\rho(h) = \begin{cases}{(-0.5)^{h/2}}\, &h\text{ is even.} \\
+-\dfrac{2}{5}(-0.5)^{(h + 1)/2}  &h \text{ is odd}.\end{cases} 
+$$
+Thus ends the most ridiculous sub-question I have ever done. $\square$
+
+
+
 ## 3. AR(2) Process
 
 Consider the AR(2) process given by:
