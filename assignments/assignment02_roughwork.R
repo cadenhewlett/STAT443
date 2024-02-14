@@ -36,6 +36,23 @@ sum((acf_vals -sapply(0:p, myacf) )^2)
   x = round(sapply(0:p, myacf), 4),
   y = round(acf_vals, 4)
 ))
+
+# ```{r}
+# set.seed(443)
+# theo = sapply(0:15, my_acf)
+# resids = sapply(seq(from = 500, to = 11000, by = 100), 
+#                 function(n)
+#                 {
+#                   sim = arima.sim(n = n, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+#                   sample_acf = acf(sim, lag.max = 15, plot = FALSE)
+#                   rss = sum((sample_acf$acf - theo)^2)
+#                   rss
+#                 })
+# 
+# plot(y = resids, x = seq(from = 500, to = 11000, by = 100), ylab = "RSS", xlab = "Sample Size")
+# points(y = resids[6], x = 1000, col = 'red', pch = 12)
+# ```
+
 # odds = (0:10000)[0:10000 %% 2 == 1]
 # evens = (0:10000)[0:10000 %% 2 == 0]
 # sum((-0.5)^odds) + sum(  (-0.5)^evens )
@@ -60,12 +77,12 @@ sum((acf_vals -sapply(0:p, myacf) )^2)
 #   # \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
 #   (j >= 2)*delta*((-1*delta)^j) + (-1*delta)^j
 # }
-q1test = function(h){
-  # \frac{16}{11}\Big(\frac{1}{2}\Big)^{|h|}-\frac{6}{11}\Big(\frac{1}{5}\Big)^{|h|} 
-  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
-}
-q1test(0)
-q1test(1)
-7/11
-q1test(2)
-19/55
+# q1test = function(h){
+#   # \frac{16}{11}\Big(\frac{1}{2}\Big)^{|h|}-\frac{6}{11}\Big(\frac{1}{5}\Big)^{|h|} 
+#   (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
+# }
+# q1test(0)
+# q1test(1)
+# 7/11
+# q1test(2)
+# 19/55
