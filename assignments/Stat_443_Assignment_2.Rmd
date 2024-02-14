@@ -249,22 +249,27 @@ $$
 $$
 Where the last expression in the equality follows from the definition of a geometric series, under the assumption that $|-0.5B| < 1$.
 We expand this process, letting $\delta = 0.5$ for readability.
-\begin{align*}
+$$
+\begin{aligned}
 {\uppi}(B) &= (1+ \delta B^2)\sum_{n=1}^{\infty}(-\delta B)^n \\
 {\uppi}(B) &= (1+ \delta B^2)\Big[1 + (-\delta B) + (-\delta B)^2 + (-\delta B)^3 + \dots \Big] \\
 {\uppi}(B) &= \Big[ 1 + (-\delta B) + \big(\delta B^2 +(- \delta B)^2  \big) + \big((\delta B^2)(-\delta B) +(- \delta B)^3\big) + \dots\Big]
-\end{align*}
+\end{aligned}
+$$
 Now, we can begin to attempt to investigate each $\pi_i \in \uppi(B)$ where $i$ indicates the power of $B$ in the expression.
-\begin{align*}
+$$
+\begin{aligned}
 \pi_0 &= 1 \\
 \pi_1 &=  (-\delta B)\\
 \pi_2 &= \delta B^2 + (- \delta B)^2 \\
 \pi_3 &= (\delta B^2)(-\delta B) +(- \delta B)^3 \\
 \pi_4 &= (\delta B^2)(-\delta B)^2 +(- \delta B)^4 \\
 \vdots 
-\end{align*}
+\end{aligned}
+$$
 Investigating these terms, we begin to notice a pattern:
-\begin{align*}
+$$
+\begin{aligned}
 \pi_0 &=  (0 + (-\delta)^0)B^0 \\
 \pi_1 &= (0 + (-\delta)^1)B^1  \\
 \pi_2 &= (\delta + (- \delta)^2)B^2 \\
@@ -272,12 +277,16 @@ Investigating these terms, we begin to notice a pattern:
 \pi_4 &= ( \delta(-\delta )^2 +(- \delta )^4) B^4 \\
 \vdots  \\
 \pi_j  &= (\delta (-\delta)^{j-2} + (-\delta)^j)B^j
-\end{align*}
+\end{aligned}
+$$
 With this in mind, we can denote the following term to define all elements of $\uppi(B)$ for $j \in \mathbb{N}$ where, still using $\delta = 0.5$, each $\pi_j$ term is defined by the rule stated (using indicators to account for the fact that $\pi_0$ and $\pi_1$ follow a slightly different general pattern.)
 $$
 \uppi(B) = 1-\sum_{j=0}^{\infty} B^j\pi_j, \text{ where } \{\pi_j\} =  \big(\mathbbm{1}[j \geq 2]\delta(-\delta)^{j - 2}\big) + (- \delta)^j
 $$
-
+Alternatively, we can write $\{\pi_j\}$ by uniquely declaring the first two terms, and re-substituting $\delta = 0.5$. Then, we wouldn't have to write it with indicators.
+$$
+\{\pi_j\} := \big\{\pi_0 =1, \pi_1 = -0.5, \forall j \geq2, \pi_j = 0.5(-0.5)^{j-2} + (-0.5)^j\big\}
+$$
 Now that we have a clear definition for $\uppi(B)$, we can conclude by writing:
 
 $$
@@ -293,7 +302,7 @@ Thus, we've converted the ARMA process to a pure infinite-order AR process with 
 
 <!-- $$ -->
 
-### c) Pure MA Process (Pure AR?)
+### c) Pure MA Process 
 
 Write the above ARMA(2,1) process as a pure MA process.
 
@@ -335,7 +344,7 @@ We could alternatively express the series as a piecewise function, if we don't w
 
 $$
 \psi_j =  \begin{cases}(-\delta)^{j/2} B^j, & j \equiv 0\text{mod}(2) \\
-(-\delta)^{(j+1)/2}B^j, & j \equiv 1 \text{mod}(2)\end{cases} 
+-(-\delta)^{(j+1)/2}B^j, & j \equiv 1 \text{mod}(2)\end{cases} 
 $$
 In either case, we can write $\Psi(B)$ in its entirety. Letting $\delta = 0.5$, we write:
 
@@ -352,8 +361,139 @@ $$
 
 Find the ACF of $\{X_t\}_{t \in \mathbb{Z}}$.
 
-(how..? Is my MA equation wrong?)
+For this question, we continue to use the nomenclature of the previous questions; namely, that $\delta = 0.5$. To begin, we will find the autocovariance function using the MA representation from **Part C**. 
 
+We will use the piecewise definition. However, we make the following adjustments to the terminology:
+$$
+\psi_i = \begin{cases} \psi_i^{\text{E}}B^{\,i}, &i\text{ is even.} \\
+\psi_i^{\text{O}}B^{\,i}, &i \text{ is odd}.\end{cases}
+$$
+Where, 
+$$
+\psi_i^{\text{E}} = (-\delta)^{i /2}, \text{ and } \psi_i^{\text{O}} = -(-\delta)^{(j+1)/2}
+$$
+We consider the model in the MA form, $X_t = \Psi(B)Z_t$ to find the covariance $\gamma(h) =\text{cov}(X_t, X_{t+h})$.
+$$
+\begin{aligned}
+\text{cov}(X_t, X_{t+h}) &= \text{cov}\big(\Psi(B)Z_{t}, \Psi(B)Z_{t+h}\big) 
+\end{aligned}
+$$
+Noting that $\mathbb{E}(X_t) = 0$, 
+$$
+\begin{aligned}
+\gamma(h) &= \mathbb{E}\bigg(\sum_{i=0}^{\infty}\psi_iZ_{t-i}, \sum_{j=0}^{\infty}\psi_jZ_{t-j+h}\bigg) \\
+\gamma(h) &= \sum_{i=0}^{\infty}\sum_{j=0}^{\infty} \psi_i \psi_j\mathbb{E}\bigg(Z_{t-i}, Z_{t-j+h}\bigg) 
+\end{aligned}
+$$
+Letting $j = i + h$, we can unify the summations:
+$$
+\begin{aligned}
+\gamma(h) &= \sum_{i=0}^{\infty} \psi_i \psi_{i+h}\mathbb{E}\big(Z_{t-i}, Z_{t-i}\big) \\
+\gamma(h) &= \sigma^2 \sum_{i=0}^{\infty} \psi_i \psi_{i+h}
+\end{aligned}
+$$
+Now, we need to evaluate the summation of these two $\psi$ terms. This is where we return to our Even/Odd representation from earlier. 
+$$
+\begin{aligned}
+\gamma(h) &= \sigma^2 \sum_{i\text{ is even}}^{\infty} \psi_i \psi_{i+h} + \sigma^2 \sum_{j\text{ is odd}}^{\infty} \psi_j \psi_{j+h}
+\end{aligned}
+$$
+However, there is an additional step to consider. We cannot simply factor in our $\psi_i^{\text{E}}$ and $\psi_i^{\text{O}}$ polynomials, because the \underline{parity of $h$} impacts the polynomial choice, too.
+
+Hence, we have to consider the cases where $h$ is even and odd as well. If $h$ is even, then $i + h$ remains even and $j + h$ remains odd. Therefore, 
+$$
+\gamma(h \mid h \text{ is even}) = \sigma^2 \sum_{i\text{ is even}}^{\infty} \psi_i^{\text{E}} \psi_{i+h}^{\text{E}} + \sigma^2 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}}
+$$
+Similarly, if $h$ is odd, $i + h$ becomes odd and $j + h$ becomes even. Therefore,
+$$
+\gamma(h \mid h \text{ is odd}) = \sigma^2 \sum_{i\text{ is even}}^{\infty} \psi_i^{\text{E}} \psi_{i+h}^{\text{O}} + \sigma^2 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}}
+$$
+Hence, our equation for $\gamma(h)$ is as follows (moving $\sigma^2$  outside the cases for simplicity):
+$$
+\gamma(h) = \sigma^2\begin{cases} \sum_{i\text{ is even}}^{\infty} \psi_i^{\text{E}} \psi_{i+h}^{\text{E}} + \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}}\,, &h\text{ is even.} \\
+ \sum_{i\text{ is even}}^{\infty} \psi_i^{\text{E}} \psi_{i+h}^{\text{O}} +  \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}}\,, &h \text{ is odd}.\end{cases}
+$$
+We evaluate each of these cases in turn.
+
+**Case 1:** $h$ is even.
+
+We'll evaluate the sum of sums:
+$$
+\gamma(h \mid h \text{ is even}) =\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}} + \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}}
+$$
+We start with evaluating the first term in the sum. It is crucial to remember that each $\psi$ is itself an infinite-order polynomail, so we must write them as:
+$$
+\begin{aligned}
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}} &= \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \sum_{i\text{ is even}}^{\infty}\psi_{i+h}^{\text{E}} 
+\end{aligned}
+$$
+Now, we evaluate recalling $\delta = 0.5$:
+$$
+\begin{aligned}
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= \sum_{i\text{ is even}}^{\infty}(-\delta)^{i/2} \sum_{i\text{ is even}}^{\infty}(-\delta)^{i+h/2} \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= \sum_{i\text{ is even}}^{\infty}(-\delta)^{i/2} \sum_{i\text{ is even}}^{\infty}(-\delta)^{h/2}(-\delta)^{i/2} \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= (-\delta)^{h/2}\bigg(\sum_{\;i\text{ is even}}^{\infty}(-\delta)^{i/2} \bigg)^2\\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= (-\delta)^{h/2}\big(1 - \delta + \delta^2 - \delta^3 + \dots\big)^2\\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= (-\delta)^{h/2}\Big(\sum_{\ell = 0}^{\infty}(-\delta)^{\ell}\Big)^2 \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= (-\delta)^{h/2}\Big(\frac{1}{1-(-0.5)}\Big)^2 \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= (-\delta)^{h/2}\Big(\frac{2}{3}\Big)^2 \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}}&= \frac{4}{9}(-\delta)^{h/2}
+\end{aligned}
+$$
+We henceforth use that $\sum_{\ell = 0}^{\infty}(-\delta)^{\ell} = 2/3$ without showing the expansion.
+
+Let us continue with the second term.
+$$
+\begin{aligned}
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \sum_{j\text{ is odd}}^{\infty}\psi_{j+h}^{\text{O}} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= \sum_{j\text{ is odd}}^{\infty} -(-\delta)^{(i + 1)/2}\sum_{j\text{ is odd}}^{\infty}-(-\delta)^{(i + 1 + h)/2} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= (-\delta)^{h/2}\bigg(\sum_{j\text{ is odd}}^{\infty} -(-\delta)^{(i + 1)/2}\bigg)^2 \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= (-\delta)^{h/2}\big(-\delta + \delta^2 - \delta^3 + \delta^4 + \dots\big)^2 \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= (-\delta)^{h/2}\Big(-1 + \sum_{\ell = 0}^{\infty}(-\delta)^{\ell}\Big)^2 \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= (-\delta)^{h/2}\Big(-1 + \frac{2}{3}\Big)^2 \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} &= \frac{1}{9}(-\delta)^{h/2}
+\end{aligned}
+$$
+Hence, we can add these two togehter to get $\gamma(h)$ in the even case:
+$$
+\gamma(h \mid h \text{ is even}) =  \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{E}} + \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{O}} = \frac{4}{9}(-\delta)^{h/2}+\frac{1}{9}(-\delta)^{h/2} = {\frac{5}{9}(-0.5)^{h/2}}
+$$
+**Case 2:** $h$ is odd.
+
+Now, we evaluate the second part of the piece-wise function:
+
+$$
+\gamma(h \mid h \text{ is odd}) = \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} +  \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}}
+$$
+We'll begin with the first term in the sum.
+$$
+\begin{aligned}
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}}  \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= \sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \sum_{i\text{ is even}}^{\infty}\psi_{i+h}^{\text{O}} \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= \sum_{i\text{ is even}}^{\infty}(-\delta^{i/2}) \sum_{i\text{ is even}}^{\infty}-(-\delta)^{(i+1+h)/2} \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= \Big(\sum_{\ell = 0}^{\infty}-\delta^{-\ell}\Big) \sum_{i\text{ is even}}^{\infty}-(-\delta)^{(i+1+h)/2}  \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= \frac{2}{3} \sum_{i\text{ is even}}^{\infty}-(-\delta)^{i/2}(-\delta)^{(1+h)/2} \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= -\frac{2}{3}(-\delta)^{(1+h)/2} \sum_{i\text{ is even}}^{\infty}(-\delta)^{i/2} \\
+\sum_{i\text{ is even}}^{\infty}\psi_i^{\text{E}} \psi_{i+h}^{\text{O}} &= -\frac{4}{9}(-\delta)^{(1+h)/2} 
+\end{aligned}
+$$
+
+Now, we move onto the final term.
+
+$$
+\begin{aligned}
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}}\sum_{j\text{ is odd}}^{\infty}\psi_{j+h}^{\text{E}} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \sum_{j\text{ is odd}}^{\infty} -(-\delta)^{(j+1)/2}\sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j + h )/2} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\sum_{j\text{ is odd}}^{\infty} (-\delta)^{(j+1)/2}\sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\bigg(-1 +\sum_{\ell = 0}^{\infty}(-\delta)^{\ell}\bigg) \sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\bigg(-\frac{1}{3}\bigg) \sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2}  \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{1}{3} (-\delta)^{(h + 1)/2}\sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1 )/2}\\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{1}{3} (-\delta)^{(h + 1)/2}\big(1 -\delta + \delta^2 - \delta^3 +\dots)\\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{1}{3} (-\delta)^{(h + 1)/2}\Big(\sum_{\ell = 0}^{\infty}(-\delta)^{\ell} \Big) \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{1}{3} (-\delta)^{(h + 1)/2}\Big( \frac{2}{3}\Big) \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{2}{9} (-\delta)^{(h + 1)/2} 
+\end{aligned}
+$$
 
 ## 3. AR(2) Process
 
@@ -414,16 +554,16 @@ $$
 Where ${\varphi}^{\oplus}(B)$ and ${\theta}^{\oplus}(B)$ are the characteristic polynomials of the ARMA model. Let's begin find $p$, the order of ${\theta}^{\oplus}(B)$, by expanding the $\text{LHS}$ of the SARIMA model.
 
 In order to do this, we must first expand $W_t$. 
-
-\begin{align*}
+$$
+\begin{aligned}
 W_t &= \nabla^d \nabla^D_s X_t \\
 W_t &= \nabla^{1} \nabla^{1}_{12} X_t \\
 W_t &=  \nabla^{1}_{12} (X_t - X_{t-1}) \\
 W_t &=  \nabla^{1}_{12} (X_t) -  \nabla^{1}_{12} (X_{t-1}) \\
 W_t &=   (X_t - X_{t-12}) -   (X_{t-1} - X_{t- 12 -1}) \\
 W_t &=   X_t - X_{t-1} - X_{t-12} +  X_{t- 13}
-\end{align*}
-
+\end{aligned}
+$$
 Now, we expand $\phi(B)$, understanding that $\Phi(B) = 1$ since $P = 0$.
 $$
 \phi(B) = (1 - \alpha_1B - \alpha_2B^2)
@@ -435,11 +575,13 @@ $$
 {\varphi}^{\oplus}(B)X_t = (1 - \alpha_1B - \alpha_2B^2)(X_t - X_{t-1} - X_{t-12} +  X_{t- 13})
 $$
 We can expand this briefly (but not entirely) to find $p$ for ${\varphi}^{\oplus}(B)$.
-\begin{align*}
+$$
+\begin{aligned}
 {\varphi}^{\oplus}(B)X_t &= (1 - \alpha_1B - \alpha_2B^2)(X_t - X_{t-1} - X_{t-12} +  X_{t- 13}) \\
 {\varphi}^{\oplus}(B)X_t &= X_t - \alpha_1BX_t - \alpha_2B^2X_t - \dots - \alpha_1BX_{t- 13} -\alpha_2B^2X_{t- 13} \\
 {\varphi}^{\oplus}(B)X_t &= X_t - \alpha_1X_{t-1} - \alpha_2X_{t-2} - \dots - \alpha_1 X_{t- 14} -\alpha_2 X_{t- 15}
-\end{align*}
+\end{aligned}
+$$
 Hence, from the final term of ${\varphi}^{\oplus}(B)X_t$, we can conclude that $p = 15$.
 
 We can similarly determine the order $q$ of the right-hand side of the equation.
