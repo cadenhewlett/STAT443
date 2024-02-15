@@ -100,5 +100,58 @@ sum((acf_vals -sapply(0:p, myacf) )^2)
 
 data.frame(
   sapply(0:p, jason_acf),
-  sapply(0:p, my_acf)
+  sapply(0:p, myacf)
 )
+
+
+
+theo = sapply(0:15, my_acf)
+# R code block for simulation and plotting
+set.seed(443)
+# Further simulation and plotting code goes here
+
+# lines(sapply(0:15, my_acf), col = 'red')
+## resids
+
+
+
+library(ggplot2)
+set.seed(443)
+# add my acf
+my_acf = function(h){
+  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
+}
+
+# simulate using arima.sim
+sigma_2 = 1
+sim = arima.sim(n = 1000, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+sim2 = arima.sim(n = 10000, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+
+lagmax = 15
+plotDF = data.frame(
+  lag = 0:lagmax,
+  theoretical = sapply(0:lagmax, my_acf),
+  observed = acf(sim, plot = F, lag.max = lagmax)$acf,
+  observed_large = acf(sim2, plot = F, lag.max = lagmax)$acf
+)
+
+ggplot(plotDF) + 
+  geom_point(aes(x = lag, y = theoretical)) + 
+  geom_point(aes(x = lag, y = observed), col = 'red') + 
+ # geom_point(aes(x = lag, y = observed_large), col = 'blue')  +
+  theme_bw()
+
+plotDF$resids = plotDF$observed - plotDF$theoretical 
+# hypothesis testing
+mean(plotDF$resids) / ( sd(plotDF$resids) / sqrt(16) )
+# resids = sapply(seq(from = 500, to = 11000, by = 100), 
+#                 function(n)
+#                 {
+#                   sim = arima.sim(n = n, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+#                   sample_acf = acf(sim, lag.max = 15, plot = FALSE)
+#                   rss = sum((sample_acf$acf - theo)^2)
+#                   rss
+#                 })
+# 
+# plot(y = resids, x = seq(from = 500, to = 11000, by = 100), ylab = "RSS", xlab = "Sample Size")
+# points(y = resids[6], x = 1000, col = 'red', pch = 12)
