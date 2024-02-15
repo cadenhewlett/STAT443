@@ -137,7 +137,6 @@ plotDF = data.frame(
   theoretical = sapply(0:15, my_acf),
   observed = acf(sim, plot = FALSE, lag.max = 15)$acf
 )
-
 p <- ggplot(plotDF) + theme_bw() +
   geom_segment(
     aes(
@@ -148,21 +147,36 @@ p <- ggplot(plotDF) + theme_bw() +
     ),
     color = "#ff0a54",
     alpha = 0.25
-  )  +
+  ) +
   geom_segment(aes(
     x = lag,
     xend = lag,
     y = 0,
     yend = theoretical
+  ), color = "#adc2cc") +
+  geom_point(aes(
+    x = lag,
+    y = theoretical,
+    color = "Theoretical",
+    shape = "Theoretical"
   ),
-  color = "#adc2cc")  +
-  geom_point(aes(x = lag, y = theoretical, col = "t"), shape = 4, size = 2.0) +
-  geom_point(aes(x = lag, y = observed, col = "o"), shape = 3, size = 2.0 ) +
+  size = 2.0) +
+  geom_point(aes(
+    x = lag,
+    y = observed,
+    color = "Observed",
+    shape = "Observed"
+  ),
+  size = 2.0) +
   scale_color_manual(
-    values = c("t" = "#08415c", "o" = "#720026"),
-    labels = c("Theoretical", "Observed"),
-    name = "ACF"
+    values = c(
+      "Theoretical" = "#08415c",
+      "Observed" = "#720026"
+    ),
+    name = "ACF Type"
   ) +
+  scale_shape_manual(values = c("Theoretical" = 4, "Observed" = 3),
+                     name = "ACF Type") +
   theme(
     panel.grid.minor = element_line(
       color = "grey90",
@@ -177,6 +191,7 @@ p <- ggplot(plotDF) + theme_bw() +
     title = "Correlogram of Second-Order AR Process",
     subtitle = "Simulated Values (n = 1000) vs. Theoretical"
   )
+
 print(p)
 ```
 
@@ -548,7 +563,7 @@ Thus ends the most ridiculous sub-question I have ever done. $\square$
 Consider the AR(2) process given by:
 
 $$
-2aX_t + \frac{3}{6a}X_{t-1} - \frac{1}{6a}X_{t-2} = Z_t, \quad a \in \mathbb{R}
+X_t + \frac{2a-3}{6a}X_{t-1} - \frac{1}{6a}X_{t-2} = Z_t, \quad a \in \mathbb{R}
 $$
 
 ### a) Stationarity Conditions
@@ -557,18 +572,51 @@ Under which conditions on constant $a$ is the process $\{X_t\}_{t \in \mathbb{Z}
 
 Let's adjust the expression in terms of the backshift operator $B$.
 
-$$\Big(2aB^0 + \frac{3}{6a}B - \frac{1}{6a}B^2\Big)X_t = Z_t$$
+$$\Big(1B^0 + \frac{2a-3}{6a}B - \frac{1}{6a}B^2\Big)X_t = Z_t$$
 From this, we can conclude that the characteristic polynomial $\varphi(B)$ can be written as:
 $$
-\varphi(B) = 2a + \frac{3}{6a}B - \frac{1}{6a}B^2
+\varphi(B) = 1 + \frac{2a-3}{6a}B - \frac{1}{6a}B^2
 $$
 Again, let $\tilde{\varphi}_j \in \mathbb{C}$ be the $j$-th root of $\varphi(B)$. In order for the ARM process to be stationary, it must hold that all roots of $\varphi(B)$ are greater than the roots of unity. In other words, we wish to show that: 
 $$\forall j \in[1,p],\, \|\tilde{\varphi}_i \| > 1$$
 By the Fundamental Theorem of Algebra, there are two roots $\{\tilde{\varphi}_1, \tilde{\varphi}_2\}$ that we can find for this characteristic polynomial. We should note from the beginning that in order for the polynomial to be well defined, $a \neq 0$. 
 
-Let us solve:
+Let us solve. We will do this in three steps.
 
-- check roots of $(2a + (3B)/6A - (B^2)/6a)
+
+\underline{\textbf{Step 1}}: First, we find an expression for $\tilde{\varphi}_i$ as a function of $a$ using the quadratic formula
+$$
+\begin{aligned}
+\tilde{\varphi} &= \dfrac{-B \pm \sqrt{B^2 - 4AC}}{2A} , \text{ where } A = \frac{-1}{6a}, B = \frac{(2a-3)}{6a}, C = 1\\
+\tilde{\varphi} &= \dfrac{\dfrac{-(2a-3)}{6a} \pm \sqrt{\bigg(\dfrac{(2a-3)}{6a} \bigg)^2 - 4\bigg(\dfrac{-1}{6a}\bigg)(1)}}{2\bigg(\dfrac{-1}{6a}\bigg)} \\
+\tilde{\varphi} &= \dfrac{\dfrac{(-2a+3)}{6a} \pm \sqrt{\dfrac{(2a-3)^2}{36a^2} + \bigg(\dfrac{4}{6a}\bigg)}}{\bigg(\dfrac{-1}{3a}\bigg)} \\
+\tilde{\varphi} &= (-3a)\bigg({\dfrac{(-2a+3)}{6a} \pm \sqrt{\dfrac{(4a^2 - 12a+9)}{36a^2} + \dfrac{4(6a)}{36a^2}}}\;\;\bigg) \\
+\tilde{\varphi} &= (-3a)\bigg({\dfrac{(-2a+3)}{6a} \pm \frac{1}{6a}\sqrt{(4a^2 - 12a+9)+ 24a }}\;\;\bigg) \\
+\tilde{\varphi} &= -\frac{1}{2}\bigg({{(-2a+3)\pm \sqrt{(4a^2 +12a +9) }} }\;\;\bigg) \\
+\tilde{\varphi} &= -\frac{1}{2}\bigg((-2a+3)\pm \sqrt{(2a + 3)^2} \;\;\bigg)  \\
+\tilde{\varphi} &= -\frac{1}{2}\bigg((-2a+3)\pm (2a + 3) \;\;\bigg) 
+\end{aligned}
+$$
+
+Then we have the following roots:
+$$
+\begin{aligned}
+\tilde{\varphi}_1 &= -\frac{1}{2}\bigg((-2a+3)+ (2a + 3) \;\;\bigg) \\
+\tilde{\varphi}_1 &= -\frac{1}{2}(-2a+3 + 2a + 3) \\
+\tilde{\varphi}_1 &= \boxed{-3}
+\end{aligned}
+$$
+And, for the second root,
+$$
+\begin{aligned}
+\tilde{\varphi}_1 &= -\frac{1}{2}\bigg((-2a+3)+ (2a + 3) \;\;\bigg) \\
+\tilde{\varphi}_1 &= -\frac{1}{2}(-2a+3 - 2a +- 3) \\
+\tilde{\varphi}_1 &= \boxed{2a}
+\end{aligned}
+$$
+Therefore, our restrictions on $a$ are that $a \neq 0$ and $|a| > 1/2$.
+
+In other words, these roots are redundant since it must be the case that $a \in \mathbb{R}$ as per the problem description.
 
 ### b) Autocorrelation Function
 
