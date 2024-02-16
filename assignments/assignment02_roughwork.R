@@ -86,3 +86,6 @@ sum((acf_vals -sapply(0:p, myacf) )^2)
 # 7/11
 # q1test(2)
 # 19/55
+16/48
+1/sqrt(3)
+8*6
