@@ -86,6 +86,45 @@ sum((acf_vals -sapply(0:p, myacf) )^2)
 # 7/11
 # q1test(2)
 # 19/55
-16/48
-1/sqrt(3)
-8*6
+my_acf = function(h){
+  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
+}
+set.seed(443)
+
+sigma_2 = 1
+sim = arima.sim(n = 1000, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+
+error_line = 2 / sqrt(2000)
+p <- ggplot(plotDF) + theme_bw() +
+  geom_segment(aes(x = lag, xend = lag, y = 0, yend = observed), color = "#ff0a54", alpha = 0.25) +
+  geom_segment(aes(x = lag, xend = lag, y = 0, yend = theoretical), color = "#adc2cc") +
+  geom_point(aes(x = lag, y = theoretical, color = "Theoretical", shape = "Theoretical"), size = 2.0) +
+  geom_point(aes(x = lag, y = observed, color = "Observed", shape = "Observed"), size = 2.0) +
+  scale_color_manual(values = c("Theoretical" = "#08415c", "Observed" = "#720026"), name = "ACF Type") +
+  scale_shape_manual(values = c("Theoretical" = 4, "Observed" = 3), name = "ACF Type") +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5), legend.position = "top") +
+  labs(x = "Lag", y = "Autocorrelation", title = "Correlogram of Second-Order AR Process", 
+       subtitle = "Simulated Values (n = 1000) vs. Theoretical")
+
+
+print(p)
+
+sim2 = arima.sim(n = 10000, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
+
+plotDF = data.frame(
+  lag = 0:15,
+  theoretical = sapply(0:15, my_acf),
+  observed = acf(sim, plot = F, lag.max = 15)$acf,
+  observed_long = acf(sim2, plot = F, lag.max = 15)$acf
+)
+
+plotDF$resids = plotDF$observed - plotDF$theoretical
+
+p2 <- ggplot(plotDF )+ theme_bw() +
+      geom_point(aes(x = lag, y = resids)) +
+      geom_segment(aes(x = lag, xend = lag, y = 0, yend = resids) )
+
+# wilcox.test((plotDF$observed - plotDF$theoretical), mu = 0, paired = FALSE, correct = F)
+# 
+# wilcox.test((plotDF$observed_long - plotDF$theoretical), mu = 0, paired = FALSE, correct = F)
+wilcox.test(plotDF$observed , plotDF$theoretical, paired = F, correct = F)

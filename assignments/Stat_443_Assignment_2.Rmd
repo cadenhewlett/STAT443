@@ -41,7 +41,7 @@ Where $\{Z_t\}_{t \in \mathbb{Z}} \sim \text{WN}(0, \sigma^2)$.
 
 ### a) Yule-Walker Equations
 
-Derive the Yule-Walker equations and find the autocorrelation functions of ${X_t}_{t \in \mathbb{Z}}$.
+Derive the Yule-Walker equations and find the autocorrelation functions of $\{X_t\}_{t \in \mathbb{Z}}$.
 
 Let us begin by deriving the Yule-Walker Equations.
 
@@ -123,79 +123,45 @@ $$
 
 Assume $\sigma^2 = 1$. Using `set.seed(443)` to set the simulation seed and `arima.sim()` function simulate 1000 observations from the AR(2) process defined above. Plot its sample ACF for the first 15 lags along with the theoretical ACF obtained in part (a). Compare the sample and theoretical ACFs.
 
-```{r}
-my_acf = function(h){
-  (16/11)*((1/2)^h) - (5/11)*((1/5)^h)
-}
+```{r, warning=FALSE}
+my_acf = function(h){ (16/11)*((1/2)^h) - (5/11)*((1/5)^h) }
 set.seed(443)
-
-sigma_2 = 1
-sim = arima.sim(n = 1000, model = list(ar = c(7/10, -1/10)), sd = sigma_2)
-
+sim = arima.sim(n = 1000, model = list(ar = c(7/10, -1/10)), sd = 1)
+error_line = 2 / sqrt(2000)
 plotDF = data.frame(
   lag = 0:15,
   theoretical = sapply(0:15, my_acf),
-  observed = acf(sim, plot = FALSE, lag.max = 15)$acf
-)
+  observed = acf(sim, plot = F, lag.max = 15)$acf)
 p <- ggplot(plotDF) + theme_bw() +
-  geom_segment(
-    aes(
-      x = lag,
-      xend = lag,
-      y = 0,
-      yend = observed
-    ),
-    color = "#ff0a54",
-    alpha = 0.25
-  ) +
-  geom_segment(aes(
-    x = lag,
-    xend = lag,
-    y = 0,
-    yend = theoretical
-  ), color = "#adc2cc") +
-  geom_point(aes(
-    x = lag,
-    y = theoretical,
-    color = "Theoretical",
-    shape = "Theoretical"
-  ),
-  size = 2.0) +
-  geom_point(aes(
-    x = lag,
-    y = observed,
-    color = "Observed",
-    shape = "Observed"
-  ),
-  size = 2.0) +
-  scale_color_manual(
-    values = c(
-      "Theoretical" = "#08415c",
-      "Observed" = "#720026"
-    ),
-    name = "ACF Type"
-  ) +
-  scale_shape_manual(values = c("Theoretical" = 4, "Observed" = 3),
+  geom_segment(aes(x = lag, xend = lag, y = 0, yend = observed), color = "#ff0a54", alpha = 0.25) +
+  geom_segment(aes(x = lag, xend = lag, y = 0, yend = theoretical), color = "#adc2cc") +
+  geom_hline(yintercept = error_line, color = "grey15", linetype = "dotted", size = 0.1) + 
+  geom_hline(yintercept = -error_line, color = "grey15", linetype = "dotted", size = 0.1) + 
+  geom_point(aes(x = lag, y = theoretical, color = "Theoretical", shape = "Theoretical"), size = 2.0) +
+  geom_point(aes(x = lag, y = observed, color = "Observed", shape = "Observed"), size = 2.0) +
+  scale_color_manual(values = c("Theoretical" = "#08415c", "Observed" = "#720026"), 
                      name = "ACF Type") +
-  theme(
-    panel.grid.minor = element_line(
-      color = "grey90",
-      linetype = "dashed",
-      linewidth = 0.5
-    ),
-    legend.position = "top"
-  ) +
-  labs(
-    x = "Lag",
-    y = "Autocorrelation",
-    title = "Correlogram of Second-Order AR Process",
-    subtitle = "Simulated Values (n = 1000) vs. Theoretical"
-  )
-
+  scale_shape_manual(values = c("Theoretical" = 4, "Observed" = 3), name = "ACF Type") +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5), 
+        legend.position = "top") +
+  labs(x = "Lag", y = "Autocorrelation", 
+       title = "Correlogram of Second-Order AR Process", 
+       subtitle = "Simulated Values (n = 1000) vs. Theoretical")
 print(p)
 ```
 
 
+\newpage
+**Comments** Compare the sample and theoretical ACFs.
+
+The sample ACF appears to have a bit more noise than the theoretical ACF. This makes sense, since the "true" theoretical ACF would only occur in the limit as $n \rightarrow \infty$. Regardless, it follows the general pattern well. 
+
+
+To ensure that our theoretical value is in fact correct, let us do some brief residual analytics. In order to avoid assumptions on the distribution of the data-generating process, we conducted a Wilcoxon rank sum exact test on the theorized and observed values, with a tie-adjustment policy adjustment of $1 \times 10^{-8}$. Consider the hypotheses for median values:
+$$
+H_0: \text{ Theorized } = \text{ Observed }  \hspace{0.25cm}\text{v.s.}\hspace{0.25cm} H_A: \text{ Theorized } \neq \text{ Observed }  
+$$
+The observed test statistics was $W = 152$ with a corresponding $p$-value of approximately $0.38$, which implies we fail to reject at most standard testing levels. This tells us there is not statistically significant evidence to suggest a median difference between the theorized and observed values. This is good news - it means that despite the "noisy" values at lags six through ten, the theorized values are not significantly different from those observed.
 
 ## 2. ARMA(2,1) Process
 
@@ -526,7 +492,12 @@ $$
 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}}\sum_{j\text{ is odd}}^{\infty}\psi_{j+h}^{\text{E}} \\
 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \sum_{j\text{ is odd}}^{\infty} -(-\delta)^{(j+1)/2}\sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j + h )/2} \\
 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\sum_{j\text{ is odd}}^{\infty} (-\delta)^{(j+1)/2}\sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2} \\
-\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\bigg(-1 +\sum_{\ell = 0}^{\infty}(-\delta)^{\ell}\bigg) \sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2} \\
+\sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\bigg(-1 +\sum_{\ell = 0}^{\infty}(-\delta)^{\ell}\bigg) \sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2}
+\end{aligned}
+$$
+\pagebreak
+$$
+\begin{aligned}
 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= -\bigg(-\frac{1}{3}\bigg) \sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1+ h + 1 )/2}  \\
 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{1}{3} (-\delta)^{(h + 1)/2}\sum_{j\text{ is odd}}^{\infty}(-\delta)^{(j -1 )/2}\\
 \sum_{j\text{ is odd}}^{\infty} \psi_j^{\text{O}} \psi_{j+h}^{\text{E}} &= \frac{1}{3} (-\delta)^{(h + 1)/2}\big(1 -\delta + \delta^2 - \delta^3 +\dots)\\
@@ -554,7 +525,7 @@ $$
 \rho(h) = \begin{cases}{(-0.5)^{h/2}}\, &h\text{ is even.} \\
 -\dfrac{2}{5}(-0.5)^{(h + 1)/2}  &h \text{ is odd}.\end{cases} 
 $$
-Thus ends the most ridiculous sub-question I have ever done. $\square$
+Thus ends the most ridiculous sub-question I have ever done. I'll never get those hours of my life back. $\square$
 
 
 
@@ -733,6 +704,8 @@ So, then, the general-form acf is given by:
 $$
 \rho(h) = A_1 d_1^{|h|} +  A_2 d_2^{|h|} \longrightarrow \Big(\dfrac{12a^2 - 3}{12a^2 + 16a - 3} \Big) \Big( -\dfrac{1}{3}\Big)^{|h|} + \Big(\dfrac{16a}{12a^2 + 16a - 3}\Big) \Big(\dfrac{1}{2a}\Big)^{|h|}
 $$
+Why we needed to derive such an obtuse and complicated expression just to show an AR(2) process, I'll never know. $\square$
+
 ## 4. SARIMA Model
 
 Show that $\text{SARIMA}(\underset{p}{2}, \underset{d}{1}, \underset{q}{1}) \times (\underset{P}{0}, \underset{D}{1}, \underset{Q}{1})_{\underset{s}{12}}$ can be written as an ARMA(p,q) process and specify values of $p$ and $q$.
@@ -798,4 +771,8 @@ $$\begin{aligned}
 \end{aligned}$$
 Hence, from the final term of ${\theta}^{\oplus}(B)Z_t$, we can conclude that $q = 13$.
 
-Therefore, we can conclude that the SARIMA model can decompose into an ARMA$(p = 15, q = 13)$ model under this decomposition. $\square$
+
+Therefore, we can conclude that the SARIMA model can decompose into an ARMA$(p = 15, q = 13)$ model under this decomposition.
+
+
+This means we're finally done this assignment, and I can sleep. $\square$
