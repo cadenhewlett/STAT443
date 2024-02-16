@@ -63,7 +63,7 @@ Yes. It seems that there is a downward (negative) trend to the data, with the me
 
 Yes. There appears to be seasonal variation. Visually, we see this as as sinusoidal pattern to the time series. This seasonality could be caused by, for example, months during a given year. 
 
-Further, we would anticipate a multiplicative model, i.e. $\{X_t\} = m_t s_t Z_t$. Visually, we can notice this by the changing amplitude of the seasonal periods over time.
+Further, we would anticipate a multiplicative model, i.e. $\{X_t\} = m_t s_t Z_t$ for $Z_t \sim \text{WN}(0, \sigma^2)$ where $\sigma \in \mathbb{R}^{+}$. Visually, we can notice this by the changing amplitude of the seasonal periods over time.
 
 To give an example of this, consider the following noise-less toy examples of Additive ($X_t = m_t + s_t$) Model and Multiplicative Model ($X_t = m_ts_t$)
 
@@ -547,9 +547,9 @@ p_greater = sum( abs(d_acf$acf) >  bars[2] ) / (hmax + 1)
 (p_greater * 100)
 ```
 
-It appears that approximately $0.98 \%$ the sample acf values lie above the random noise threshold (noting that this include $\rho(0) = 1$ that is always above this threshold.) It seems overwhelmingly likely that there is no serial dependence to the de-seasonalized data.
+It appears that only approximately $0.98 \%$ the sample acf values lie above the random noise threshold (noting that this include $\rho(0) = 1$ that is always above this threshold.) It seems overwhelmingly likely that there is no serial dependence to the de-seasonalized data.
 
-In addition to the computation from the threshold above, we don't see any periodicity to the correlogram that would indicate seasonality, nor do we see a slow decay of high-magnitude autocorrelation values on the same side of the mean that would indicate a trend. Hence, we can conclude that it is likely that there is no serial dependence present in the de-seasonalized data. 
+In addition to the computation from the threshold above, we don't see any periodicity to the correlogram that would indicate any "left over" seasonality, nor do we see a slow decay of high-magnitude autocorrelation values on the same side of the mean that would indicate a trend. Hence, we can conclude that it is likely that there is no serial dependence present in the de-seasonalized data. 
 
 <!-- If the series has a trend, the acf will have a very slow decay due to high -->
 <!-- correlation of the consecutive values (which tend to lie on the same -->
@@ -580,6 +580,7 @@ We note that in this case we slice the vector of observed $\rho(h)$ values at in
 ```{r}
 r_1 = acf(z_1, plot = FALSE)$acf[2]
 r_2 = acf(z_1, plot = FALSE)$acf[3]
+round(c(r_1, r_2), 4)
 ```
 
 ### Part (iii) 
