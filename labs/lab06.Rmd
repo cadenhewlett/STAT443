@@ -121,3 +121,20 @@ to include “fig.height” option for a better display of your plots)
 ```{r diag, fig.height=8, fig.width=6}
 tsdiag(fitted)
 ```
+
+Let's interpret these plots one-by-one
+
+## Plot 1
+This plot shows a plot of the standardized residuals. We see that they are centered about zero (as we would anticipate if the fit was sound), and show no clear pattern - in a sense that it appears to simply be "noisy" values above and below zero. If there was a clear pattern (i.e. residuals consistently above/below), we would have less confidence in the strength of our fit; however, the lack of pattern in the residuals is encouraging.
+
+## Plot 2
+
+Here, we see the autocorrelation function of the residuals. Beyond $\rho(0)=1$, the majority of the values are within the $\pm 2 / \sqrt{n}$ white noise boundary (save for lag 7 which *barely* exceeds it.) The fact that the residuals appear to be white noise reinforce our observations from the previous plot and demonstrate a good fit of the model.
+
+## Plot 3
+
+The final plot shows the $p$-values of the Ljung-Box test statistic for differnent values of $m$. 
+
+We recall that this statistic takes a chi-square distribution where $Q_2 \sim \chi^2_{m-p-q}$, noting that we have $p = 2, q = 0$.
+
+Crucially, there are no observed $p$-values below the $\alpha = 0.05$ threshold (horizontal line), implying that the lack-of-fit test would fail to reject $H_0$; in other words, at varying lag levels, there is not statistically significant evidence to suggest that the model does not in fact fit the data well. We see this in the Ljung-Box plot as the observed $Q_2$ values seem quite consistent with the corresponding $\chi^2$ distribution on varying degrees of freedom (as we change $m$.)
