@@ -127,4 +127,6 @@ p2 <- ggplot(plotDF )+ theme_bw() +
 # wilcox.test((plotDF$observed - plotDF$theoretical), mu = 0, paired = FALSE, correct = F)
 # 
 # wilcox.test((plotDF$observed_long - plotDF$theoretical), mu = 0, paired = FALSE, correct = F)
-wilcox.test(plotDF$observed , plotDF$theoretical, paired = F, correct = F)
+wilcox.test(plotDF$observed,
+            plotDF$theoretical+1e-8, correct = F)
+?wilcox.test
