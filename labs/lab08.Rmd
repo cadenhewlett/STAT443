@@ -141,4 +141,4 @@ kable(blargh)
 
 # Question 6
 
-It seems to me like a logarithmic transformation could theoretically be considered for this model. If we have a multiplicative model (using the standard nomenclature of the course) given by $X_t = m_t s_t Z_t$, then the logarithm is an additive model, i.e. $\log(X_t) = \log(m_t) + \log(s_t) + \log(Z_t)$ which is additive with respect to $\log(X_t)$. A decomposition of this fashion would allow us to easily fit a OLS model to any potential trend in the model  (if desired) and it would make visualization easier.  
+It seems to me like a logarithmic transformation could theoretically be considered for this model. If we have a multiplicative model (using the standard nomenclature of the course) given by $X_t = m_t s_t Z_t$, then the logarithm is an additive model, i.e. $\log(X_t) = \log(m_t) + \log(s_t) + \log(Z_t)$ which is additive with respect to $\log(X_t)$. A decomposition of this fashion would allow us to easily fit a OLS model to any potential trend in the model to focus more on seasonality (if desired) and the transform would also make visualization easier.  
