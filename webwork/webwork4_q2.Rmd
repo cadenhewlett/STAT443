@@ -1,4 +1,4 @@
----
+--
 title: "WWK4-Q2"
 author: "STAT443"
 date: "`r Sys.Date()`"
@@ -19,7 +19,7 @@ The data available to download above are end-of-week closing prices for Accentur
 
 ```{r}
 df =read.csv("file49b38b157b9.csv")
-df =read.csv("443ww4file.csv")
+#df =read.csv("443ww4file.csv")
 # series = ts(df$x,
 #    start = c(2010, 01), 
 #    end = c(2014, 11),
@@ -38,7 +38,7 @@ pacf(series, main="PACF of Accenture PLC Closing Prices")
 ```
 Simple HW Smoothing
 ```{r}
-hw = HoltWinters(series)
+hw = HoltWinters(series )
 plot(hw)
 ```
 
@@ -74,14 +74,17 @@ sum(residuals(hw)^2)
 
 Now, we predict one ahead:
 ```{r}
-hw_forecast <- predict(fit_holt, n.ahead=1)
-
-# The forecasted value is
-hw_forecast_value <- hw_forecast
-print(hw_forecast_value)
+?HoltWinters
+# hw_forecast <- predict(fit_holt, n.ahead=1)
+# 
+# # The forecasted value is
+# hw_forecast_value <- hw_forecast
+# print(hw_forecast_value)
 ```
 ```{r}
 qd = round( forecast(fit_holt, h=1)$mean, 3)
+
+new_holt = HoltWinters(series, beta = FALSE)
 ```
 
 ## MY WORK
@@ -91,5 +94,15 @@ print(paste("Question A:", "B"))
 print(paste("Question B:", round(hw$alpha, 3)))
 print(paste("Question C:", as.numeric(round(predict(hw, n.ahead = 1), 3))))
 print(paste("Question D:", "D"))
-print(paste("Question E:", round( forecast(fit_holt, h=1)$mean, 3)))
+print(paste("Question E:", round( as.numeric( predict(new_holt, n.ahead = 1) ), 3)))
+new_holt = HoltWinters(series)
+```
+
+## ??
+```{r}
+test_holtwinter = HoltWinters(series, gamma = FALSE, seasonal = "multiplicative")
+test_holt = HoltWinters(series, gamma = FALSE, beta = FALSE, seasonal = "multiplicative")
+as.numeric(predict(test_holtwinter, n.ahead = 1))
+as.numeric(predict(test_holt, n.ahead = 1))
+as.numeric(test_holtwinter$alpha)
 ```
