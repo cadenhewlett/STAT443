@@ -1,0 +1,56 @@
+---
+date: "2024-03-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 2
+
+```{r, echo=TRUE}
+# Part (a)
+price_data <- read.csv("file49b38b157b9.csv")
+head(price_data, 52)
+tail(price_data)
+price.ts <- ts(price_data$x, start=c(2010, 1), frequency=52, end=c(2014, 46)) #52
+head(price.ts)
+plot(price.ts, main="Closing prices of Accenture PLC 2010-2014", ylab="Price")
+acf(price.ts, main="Sample ACF of time series")
+pacf(price.ts, main="Sample PACF of time series")
+```
+
+## Holt-Winters
+
+```{r, echo=TRUE}
+#holt_model <- HoltWinters(price.ts)
+#plot(holt_model)
+
+#plot(fitted(holt_model))
+
+part.b <- HoltWinters(price.ts, alpha = NULL, beta = FALSE , gamma = FALSE , seasonal = c("additive", "multiplicative"), start.periods = 3, l.start = NULL, b.start = NULL, s.start = NULL, optim.start = c(alpha = 0.3, beta = 0.1, gamma = 0.1), optim.control = list())
+
+plot(part.b)
+
+# Part (b)
+#holt_model$alpha
+part.b$alpha
+
+
+# Part (c)
+# next_val <- predict(holt_model, n.ahead=1, prediction.interval = TRUE, level=0.95)
+# next_val
+
+next_val_2 <- predict(part.b, n.ahead=1, prediction.interval=FALSE, level=0.95)
+next_val_2
+
+# Part (d & e)
+hw.e = HoltWinters(price.ts, alpha = NULL, beta = NULL , gamma = FALSE , seasonal = c("additive", "multiplicative"), start.periods = 3, l.start = NULL, b.start = NULL, s.start = NULL, optim.start = c(alpha = 0.3, beta = 0.1, gamma = 0.1), optim.control = list())
+
+ans.e = predict(hw.e, n.ahead=1, prediction.interval = FALSE, level = 0.95)
+ans.e
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
