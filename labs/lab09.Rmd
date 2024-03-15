@@ -62,7 +62,7 @@ acf(train, main = "ACF of Annual Water Level of Lake Huron in Feet, 1875-1969")
 
 PACF:
 ```{r}
-pacf(train, main = "ACF of Annual Water Level of Lake Huron in Feet, 1875-1969")
+pacf(train, main = "PACF of Annual Water Level of Lake Huron in Feet, 1875-1969")
 ```
 
 
