@@ -1,0 +1,153 @@
+---
+title: "Lab 9 Forecasting Part 2"
+subtitle: "STAT 443"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(zoo)
+library(tseries)
+library(xts)
+library(ggplot2)
+library(knitr)
+```
+# Introduction
+
+In this lab you will apply the Box–Jenkins forecasting method using a case study. The dataset
+LakeHuron (available in R) measures the annual level of Lake Huron from 1875 to 1972, in feet.
+To load the data, use command `data(LakeHuron)`.
+
+```{r load}
+data(LakeHuron)
+series = LakeHuron
+head(series)
+```
+Note that it is already in a time series format.
+
+Using the window command or otherwise, first subset the Lake Huron data into two separate
+datasets: training data, which should contain observations up to and including year 1969, and
+test data containing lake level measurements for 1970-1972. We will use the training dataset to
+“train” a model and forecast the next three points based on the fitted model.
+```{r traintest}
+train = window(series, start = c(1875), end = c(1969))
+test = window(series, start = c(1970), end = c(1972))
+# verify our splitting
+length(series) == (length(train) + length(test))
+```
+
+## Question 1
+
+The data may show a slightly decreasing trend. 
+
+
+Ignore this possible decreasing trend in what follows. 
+
+
+Plot the training data, its acf and pacf. 
+
+
+Main Plot:
+```{r}
+plot(train, main = "Annual Water Level of Lake Huron in Feet, 1875-1969",
+      ylab = "Annual Water Level (ft)", xlab = "Year")
+```
+
+ACF:
+```{r}
+acf(train, main = "ACF of Annual Water Level of Lake Huron in Feet, 1875-1969")
+```
+
+PACF:
+```{r}
+pacf(train, main = "ACF of Annual Water Level of Lake Huron in Feet, 1875-1969")
+```
+
+
+\underline{ Determine an appropriate ARMA model and explain your choice. }
+
+Firstly, as we are told to ignore the trend, there is no trend component $m_t$. Further, from inspection, there doesn't seem to be a seasonal component $s_t$. Hence, it seems logical to assume stationarity for this series.
+
+
+Then, under stationarity assumptions, we examine the ACF. The ACF seems to be dominated by a slow-decaying trend (not, notably, a dampened sine curve) indicative of a potential AR component. Further, there is a "hint" of a dampened sine component to the positive ACF values. This could suggest a secondary $\alpha_2$ which is negative. From this ACF, we don't really see a sharp tailing off of ACF values, so I would question the presence of a nonzero MA component in the ARMA process.
+
+
+So, under the assumptions that an AR composition is sound, we inspect the PACF. As per our analysis of the ACF, there is a fairly large positive observed $\alpha_{11}$ as well as a secondary negative $\alpha_{22}$. There also seems to be a decently large Partial ACF around lag 10; however, it is tough to visually determine if it is significant. Keeping a parsimonious model in mind, it seems most sensible to choose $2$ as the $p$ value such that $\forall k > p, \; |\hat\alpha_{kk}| < 2/\sqrt{n}$ which seems sensible given our assumptions and the observed PACF.
+
+So, with all this in mind, we decide on an $\text{ARMA}(p = 2, q = 0)$ model.
+
+## Question 2
+
+
+Fit the model you chose above using the function `arima()`. Write down the fitted model.
+
+Prior to fitting, we have a theoretical model of the following form. Note that we assume nonzero $\mu$.
+$$
+\text{ARMA}(\underset{p}{2}, \underset{q}{0}): X_t = \mu  +Z_t + \alpha_1(X_{t-1} - \mu) + \alpha_2 (X_{t-2} - \mu), \text{ where } Z_t \overset{\text{iid}}\sim  \text{WN}(0, \sigma^2)
+$$
+
+With this in mind, we fit the model (not assuming a zero mean.)
+
+```{r fit}
+p = 2; d = 0; q = 0;
+fit = arima(train, order = c(p, d, q), include.mean = TRUE)
+(fit)
+```
+So, now we can write our fitted ARMA model as follows:
+$$
+\widehat{\text{ARMA}}(\underset{p}{2}, \underset{q}{0}): X_t = \hat\mu  + Z_t + \hat\alpha_1(X_{t-1} - \hat\mu) + \hat\alpha_2 (X_{t-2} - \hat\mu), \text{ where } Z_t \overset{\text{iid}}\sim  \text{WN}(0, \hat\sigma^2)
+$$
+From our model fitted, we have $\hat\mu \approx 579.03$, $\hat\alpha_1 \approx 1.06$, $\hat\alpha_2 \approx -0.27$ and $\hat\sigma^2 \approx 0.48$, hence we can write:
+
+$$
+X_t =  579.03  + Z_t + 1.06(X_{t-1} -  579.03) -0.27 (X_{t-2} -  579.03), \text{ where } Z_t \overset{\text{iid}}\sim  \text{WN}(0,   0.48)
+$$
+
+## Question 3
+
+Examine appropriate diagnostics for your fitted model.
+
+```{r}
+acf(fit$residuals, main = "ACF of Residuals for ARMA fit of Lake Huron Water Levels (in ft)",
+    lag.max = 10)
+```
+
+*Specifically, first plot the acf of the residuals to see if there are significant autocorrelations after lag 0.*
+
+The above plot of the ACF of the residuals has a marginally significant value at around lag $9$ (i.e. very nearly above the threshold), which we commented on earlier. While it is tough to determine above the white noise threshold, this value may indicate that there is some other component we are not capturing in our model, which may in fact be significant. It's important to note that the white noise threshold is just a "rule of thumb" and isn't foolproof. 
+
+*Then, use tsdiag() to observe the standardized residuals and the p-values of the Ljung-Box version for the portmanteau test. Report what you observe and then comment on the fit.*
+
+```{r diag, fig.height=12}
+tsdiag(fit)
+```
+
+From the diagnostic plots above, it seems like there is a lot of noise in the residuals, with lots of standardized values around $\pm 2$, which is not as low as we'd like to see. This could be due in part to the fact that there is that high acf value around lag $9$. However, despite these discrepancies from a "perfect" model, the $p$-values of the Ljung-Box Portmanteau test do not fall below the $\alpha$ for any common testing levels (i.e. $\alpha \in \{0.01, 0.05, 0.10\}$) which indicates that there is not significant evidence to suggest a lack of fit in the model. However, it should be noted the $p$-values are lower than we've seen in previous labs with well-fitting models (but this isn't itself evidence for a lack-of-fit!)
+
+## Question 4
+
+Use the `predict` command in R to forecast the Lake Huron level for the next three years,
+i.e., 1970, 1971, and 1972. Provide 95% prediction intervals for each forecast.
+
+
+Rather than using the reported standard errors, we use the `forecast` package for additional precision
+```{r, warning=FALSE, message=FALSE}
+library(forecast)
+
+results = data.frame(forecast(fit))
+
+kable(results[1:3, c(1, 4, 5)])
+```
+
+## Question 5
+
+Compare the forecast with the true values (in test dataset). Comment on what you find.
+
+The values from the test data set are provided below:
+```{r}
+as.numeric(test)
+```
+
+So, the forecasted values are quite close to the true values. Indeed, each of them lie within their respective $95\%$ prediction intervals, as we would hope for a well-fitting model. 
