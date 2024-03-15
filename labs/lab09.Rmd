@@ -110,7 +110,8 @@ $$
 Examine appropriate diagnostics for your fitted model.
 
 ```{r}
-acf(fit$residuals, main = "ACF of Residuals for ARMA fit of Lake Huron Water Levels (in ft)",
+acf(fit$residuals, 
+    main = "ACF of Residuals for ARMA fit of Lake Huron Water Levels (in ft)",
     lag.max = 10)
 ```
 
