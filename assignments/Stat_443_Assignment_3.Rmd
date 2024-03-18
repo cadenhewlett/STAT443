@@ -3,8 +3,8 @@ title: "Stat 443: Time Series and Forecasting"
 subtitle: "Assignment 3: Time Series Models"
 author: Caden Hewlett
 header-includes:
-    - \usepackage{upgreek}
     - \usepackage{bbm}
+    - \usepackage{yfonts}
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
@@ -27,6 +27,7 @@ library(readr)
 library(tidyverse)
 library(lubridate)
 library(xts)
+# tinytex::reinstall_tinytex(repository = "illinois")
 ```
 
 # Question 1: El Niño Forecasting
@@ -182,7 +183,7 @@ acf(Z + sin(t/2), main = "Artificial ACF", lag.max = 36)
 As you can see, this artificial ACF closely matches our observed ACF from earlier. As such, it is very likely that there exists some seasonal term $s_t$. Further, from a more informal observational perspective, a plot of the original series data doesn't seem to support a non-constant seasonal amplitude (as in changing peak heights between seasons) which may indicate an additive seasonality rather than multiplicative. 
 
 
-Further, neither the plot of the data nor the ACF seem to indicate a significant trend in the data. If there were a trend component $m_t$, we would see some consistent change over time in the overall direction of the series beyond simple seasonality. It doesn't seem like there is anything like that in this series; **however**, a purely visual analysis isn't comprehensive so this doesn't mean that a trend component doesn't exist. In the next section when we inspect removing trend and seasonality, we will attempt to remove both observed $m_t$ and $s_t$ and consider the results. It's vital to not solely rely on visual results but also attempt to analytically decompose time series, especially if the presence of a trend is obscured by strong seasonality (like in these data.)
+Further, neither the plot of the data nor the ACF seem to indicate a significant trend in the data. If there were a trend component $m_t$, we would see some consistent change over time in the overall direction of the series beyond simple seasonality. It doesn't seem like there is anything like that in this series; **however**, a purely visual analysis isn't comprehensive so this doesn't mean that a trend component doesn't exist. 
 
 
 Finally, to determine whether or not the series is stationary, we recall the definition of a weakly stationary stochastic process. Specifically, we will consider the first property of a weak stationarity - that the mean is constant. We defined this formally in Assignment 1 previously, and was given as follows:
@@ -221,7 +222,7 @@ acf_filtered = acf(nino_filtered, lag.max = 30, plot = F)$acf
 pacf_filtered = pacf(nino_filtered, lag.max = 30, plot = F)$acf
 ```
 ```{r}
-plot(nino_stl)
+# plot(nino_stl)
 ```
 
 ideas:
@@ -237,9 +238,75 @@ ideas:
 # fit2$loglik
 ```
 ```{r testzone}
-# 
 auto.arima(nino_train)
 ```
 
 
 ## Part c
+
+
+Forecast sea surface temperature for 2022 and 2023 using the Holt-Winters method and the data from 1870-2021. 
+
+
+### Part c.1.
+
+Use the HoltWinters function in R to fit an appropriate model to the training data. 
+
+
+As in our original series (and with the Box-Jenkins method) we did not observe a significant trend, we will construct a Holt-Winters model with $\beta = 0$.
+
+
+We will use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case, then, $p=12$.
+
+We then have an additive seasonal effect (which I will denote $\mathfrak{I}_t$ rather than the normal $I_t$), given by the following:
+$$
+\mathfrak{I}_{t} = \gamma(x_t - \mathfrak{L}_t) + (1 -  \gamma)\mathfrak{I}_{t - p}
+$$
+
+Where $\mathfrak{L}_t$ is the level component that defines Holt-Withers smoothing/forecasting methods. Since $\beta = 0$, it is constructed without a $T$ component, and is given by:
+$$
+\mathfrak{L}_t = \alpha(x_t - \mathfrak{I}_{t-p}) + (1 - \alpha)\mathfrak{L}_{t-1}
+$$
+Further, the $\ell$-step ahead forecast at time $t$ is given by the following.
+$$
+\hat{x}_t (\ell) = \mathfrak{L}_t + \mathfrak{I}_{t-p+\ell}
+$$
+```{r}
+hw_no_trend = HoltWinters(nino_train, beta = 0, seasonal = "additive") # no trend
+c(hw_no_trend$alpha, hw_no_trend$gamma)
+```
+Our fitted $\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma)\mathfrak{I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ - this means that the model is placing a lot of significance on the current level (with periodicity) and much less on levels in the past when fitting.
+
+
+## Part c.2.
+
+
+Use this model to predict sea surface temperature from Jan 2022 through Nov 2023. 
+
+```{r}
+hw_predictions = predict(hw_no_trend, n.ahead = 23)
+plot(hw_predictions)
+lines(nino_test, col = 'red')
+```
+
+
+## Part c.3.
+
+Calculate the mean squared prediction error.
+
+The mean squared prediction error for our $N_{\ell} = 23$ total $\ell$ step ahead forecast is given by:
+$$
+\text{MSE}_{\text{pred}} = \frac{1}{N}\sum_{\text{Holdout}}\Big(\text{Truth} - \text{Forecast} \Big)^2 = \frac{1}{N_{\ell}}\sum_{\ell = 1}^{N_{\ell}} \Big( x_{t + \ell} - \hat{x}_t(\ell)\Big)^2
+$$
+
+```{r}
+N = length(nino_test)
+# verify equality in set cardinalities
+stopifnot(all.equal(N, length(hw_predictions)))
+# calculate ms prediction error
+ms_pre_hw = mean( (hw_predictions - nino_test)^2 )
+ms_pre_hw
+```
+
+
+How does it compare to the Box-Jenkins models above?
