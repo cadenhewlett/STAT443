@@ -236,8 +236,12 @@ ideas:
 ```{r}
 # fit2$loglik
 ```
+
+### Bonus: Stepwise Model Optimization According to AIC
+
+If we wanted to, we can also use the `auto.arima` function from the `forecast` package to pick the best model according to AIC. The function performs stepwise non-approximation for AIC and returns the model corresponding to the minimum. It takes a bit of time to run (since no approxiamtions are done.)
 ```{r testzone}
-auto.arima(nino_train)
+# bonus_model = auto.arima(nino_train, ic = "aic", stepwise = TRUE, approximation = FALSE)
 ```
 
 
@@ -363,3 +367,211 @@ ms_pre_hw
 ### Part c.4.
 
 How does it compare to the Box-Jenkins models above?
+
+```{r}
+# TODO: Comparison code goes here...
+```
+
+
+
+# Question 2 : Hours Worked Forecasting
+
+In this question we will predict the time series of monthly average values of the usual hours worked across all industries in Canada for the period from January 1987 until December 2023, which was explored in Assignment 1, using the file `usual_hours_worked_ca.csv`. 
+
+We'll use the Box-Jenkins method and Holt-Winters method.
+
+
+## Part 1: Data Preparation
+
+Read in the data and create a time-series object for the mean monthly working hours:
+
+```{r}
+hDF = read.csv("usual_hours_worked_ca.csv")
+hours_series = ts(hDF$Hours, start = c(1987, 1), frequency = 12)
+```
+
+Separate the data into train and test. The training dataset should include all observations up to and including December
+2020; The test dataset should include all observations from January 2021 to December 2023
+
+```{r}
+hours_train = window(hours_series, end = c(2020, 12))
+hours_test = window(hours_series, start = c(2021, 1), end = c(2023, 12))
+# verify split is valid
+stopifnot(all.equal(length(hours_test)+length(hours_train),
+                    length(na.remove(hours_series))))
+```
+
+Plot the training data.
+
+```{r}
+p5data = fortify.zoo(hours_train)
+n = length(hours_train)
+p5 <- ggplot(p5data, aes(x = Index, y = hours_train)) +
+  geom_line(color = "#410B13", linewidth = 0.1) +
+  labs(
+    title = "Monthly Average of Usual Hours Worked in Canada",
+    subtitle = "Across all Industries from January 1987 to December 2020",
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
+  ) + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p5)
+```
+
+## Part 2: Box-Jenkins Method
+
+In this part, we select and fit a $\text{SARIMA}(p, d, q) \times (P, D, Q)_s$ model and make forecasts using the fitted model.
+
+### Part A: Differencing
+
+Difference the training set time series at lag 1. 
+```{r}
+hours_train_diff = diff(hours_train, lag = 1, differences = 1)
+```
+Plot the new time series and its correlogram. 
+
+\underline{New Series}
+```{r}
+p6data = fortify.zoo(hours_train_diff)
+p6 <- ggplot(p6data, aes(x = Index, y = hours_train_diff)) +
+  geom_line(color = "#BA1F33", linewidth = 0.1) +
+  labs(
+    title = "Differenced Series of Monthly Average Hours Worked in Canada",
+    subtitle = "Across all Industries from January 1987 to December 2020",
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
+  ) + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p6)
+```
+
+\underline{Correlogram}
+
+```{r}
+p7data = data.frame(
+  h = 0:36,
+  rh = acf(hours_train_diff, plot = FALSE, lag.max = 36)$acf
+)
+p7 <- ggplot(p7data, aes(x = h, y = rh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#421820") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#421820") +
+  ylim(-0.6, 1) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#CD5D67",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag",  y = "ACF Values",
+       title = "Correlogram of Differenced Series of Monthly Average Work Hours",
+       subtitle = "Using Training Data for Canada, Jan. 1987 to Dec. 2020") +
+    
+  theme_bw()
+print(p7)
+```
+
+\underline{Comment on what you observe.}
+
+While the single-iteration ($d = 1$) of sequential differencing at lag 1 appears to have helped to mitigate the trend in the original training data, as seen in the plot of the differenced training time series, there still appears to be a notable seasonal component in the data. We know that this is likely the case due to the sinusoidal component in the correlogram, which is not really decreasing as a function of lag as we would like to see. This periodicity is indicative of a lingering seasonal component that we still need to difference out or remove via other methods.
+
+
+### Part B: Seasonal Differencing
+
+Apply seasonal differencing to remove seasonal variation. Since we have monthly data, $s = 12$ seems sensible. 
+
+```{r}
+hours_train_diff_s = diff(hours_train_diff, lag = 12, differences = 1)
+```
+
+Plot the resulting differenced time series along with its sample acf and pacf. 
+
+```{r}
+
+acf(hours_train_diff_s, lag.max = 36) # MA at 12, Q = 1, MA at 1, q = 1 
+pacf(hours_train_diff_s, lag.max = 96) # PACF doesn't really show a 
+test = pacf(hours_train_diff_s, lag.max = 96, plot = F)$acf # P = 12 perhaps
+# which( abs(test) > 2/sqrt(n) )
+```
+
+
+Comment on what you observe
+
+```{r}
+auto.arima(hours_train)
+```
+
+### Part C: Difference Parameters.
+Based on the results of Part II (a) and (b), specify the values of $d$, $D$, and $s$.
+
+
+### Part D: SARIMA Parameters
+
+Based on the plots in Part II (b), suggest possible values of $p$, $P$, $q$, and $Q$, justifying your choices.
+
+
+### Part E: Iterative AIC
+
+Now use the Akaike’s Information Criterion (AIC) to select the model based on the training dataset in Part I. Fix the values of p and P as your suggestions in Part II (d),
+
+
+Consider $q \in [0, 5]$ and $Q \in [0, 5]$.
+
+Select the values of q and Q according to the AIC values. 
+
+Fit the model you choose and print the values of the estimated parameters along with the AIC value for the model.
+
+
+First, we declare our fixed $p$, $P$, $s$, $d$ and $D$ values, then iterate through the different 25 models that can be developed and report the AIC for each. 
+
+```{r, all_AIC}
+p = 0; P = 1; s = 12; d = 1; D = 1
+# declare empty matrix
+results = matrix(0, nrow = 5, ncol = 5)
+# with legible names
+rownames(results) = c("q=1", "q=2","q=3","q=4","q=5")
+colnames(results) = c("Q=1", "Q=2","Q=3","Q=4","Q=5")
+# iterate through all candidates
+for (q in 1:5){
+  for (Q in 1:5){
+    results[q, Q] = arima(hours_train,
+                          order = c(p, d, q),
+                          seasonal = c(P, D, Q))$aic
+  }
+}
+
+```
+
+The AIC results are summarized in the table below.
+```{r}
+kable(round(results, 3), caption = "AIC Values for Varying (q, Q)")
+P
+```
+
+According to this table, the best model corresponds to:
+```{r}
+which(results == min(results), arr.ind = TRUE)
+```
+Which corresponds to $q = 4$ and $Q = 5$. It has an AIC of $-627.61$
+
+The full model is given below:
+```{r}
+best_fit = arima(hours_train, order = c(0, 1, 4), seasonal = c(1, 1, 5))
+best_fit
+```
+
+```{r}
+best_fit$coef
+```
+
