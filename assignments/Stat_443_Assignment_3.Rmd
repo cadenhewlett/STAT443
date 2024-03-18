@@ -179,10 +179,10 @@ Z = rnorm(500)
 t = seq(1:500)
 acf(Z + sin(t/2), main = "Artificial ACF", lag.max = 36)
 ```
-As you can see, this artificial ACF closely matches our observed ACF from earlier. As such, it is very likely that there exists some seasonal term $s_t$. Further, from a more observational perspective, a plot of the original series data doesn't seem to support a non-constant seasonal amplitude (as in changing peak heights between seasons) which may indicate an additive seasonality rather than multiplicative. 
+As you can see, this artificial ACF closely matches our observed ACF from earlier. As such, it is very likely that there exists some seasonal term $s_t$. Further, from a more informal observational perspective, a plot of the original series data doesn't seem to support a non-constant seasonal amplitude (as in changing peak heights between seasons) which may indicate an additive seasonality rather than multiplicative. 
 
 
-Further, neither the plot of the data nor the ACF seem to indicate a significant trend in the data. If there were a trend component $m_t$, we would see some consistent change over time in the overall direction of the series beyond simple seasonality. It doesn't seem like there is anything like that in this series; however, a purely visual analysis isn't comprehensive so this doesn't mean that a trend component doesn't exist. 
+Further, neither the plot of the data nor the ACF seem to indicate a significant trend in the data. If there were a trend component $m_t$, we would see some consistent change over time in the overall direction of the series beyond simple seasonality. It doesn't seem like there is anything like that in this series; **however**, a purely visual analysis isn't comprehensive so this doesn't mean that a trend component doesn't exist. In the next section when we inspect removing trend and seasonality, we will attempt to remove both observed $m_t$ and $s_t$ and consider the results. It's vital to not solely rely on visual results but also attempt to analytically decompose time series, especially if the presence of a trend is obscured by strong seasonality (like in these data.)
 
 
 Finally, to determine whether or not the series is stationary, we recall the definition of a weakly stationary stochastic process. Specifically, we will consider the first property of a weak stationarity - that the mean is constant. We defined this formally in Assignment 1 previously, and was given as follows:
@@ -191,9 +191,55 @@ $$
 $$
 The presence of *either* a seasonal component or a trend causes a contradiction, as the expected value of the series becomes some function of $t$ (and hence cannot be a constant.)
 
-Hence, for our particular series, we can consider the following implication, letting $s_t$ be the seasonal component:
-
+Hence, for our particular series, consider the following implication, letting $s_t$ be the seasonal component:
 $$
 \exists s_t \implies \mathbb{E}(X_t) = f(t), \text{ for some } f \; \implies \not\exists \mu \in \mathbb{R} \text{ s.t. } \forall t \mathbb{E}(X_t) = \mu \implies X_t \text{ is not stationary.} \hspace{0.25cm} \square
 $$
-Where the conclusion of the implication is due to the negation of Property one. In short, due to the presence of a trend, the training time series is not stationary.
+Where the conclusion of the implication is due to the negation of Property One. In short, due to the presence of a trend, the training time series is not stationary.
+
+
+## Part b
+
+Forecast sea surface temperature for 2022 and 2023 using the Box-Jenkins method and the data from 1870-2021.
+
+### Part b.1.
+
+Remove any seasonal variation and trend from the training data, if there is any, using the `stl` function in R. 
+
+Plot the filtered data set, as well as its acf and pacf.
+
+
+In experimenting with only de-seasonalizing and only de-trending the data, or both, the best performance (i.e. stationary/near stationary in the ACF) came from removing both season and trend.
+
+```{r deseason}
+nino_stl = stl(nino_train, s.window = "periodic")
+loess_decomp = data.frame(nino_stl$time.series) 
+nino_filtered =  nino_train - loess_decomp$seasonal # - loess_decomp$trend
+acf_filtered = acf(nino_filtered, lag.max = 30, plot = F)$acf
+```
+```{r}
+pacf_filtered = pacf(nino_filtered, lag.max = 30, plot = F)$acf
+```
+```{r}
+plot(nino_stl)
+```
+
+ideas:
+
+```{r}
+# fit1 = arima(nino_filtered, order = c(6, 0, 0)) # -278.9
+# fit2 = arima(nino_filtered, order = c(17, 0, 0)) # -278.9
+# arima(nino_filtered, order = c(0, 0, 12))
+# ?arima
+```
+
+```{r}
+# fit2$loglik
+```
+```{r testzone}
+# 
+auto.arima(nino_train)
+```
+
+
+## Part c
