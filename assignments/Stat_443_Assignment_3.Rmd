@@ -195,7 +195,7 @@ Thus, for our particular series, we have the following implication, letting $s_t
 $$
 \exists s_t \implies  \forall t \;\mathbb{E}(X_t) = f(t) + c \; \implies \not\exists \mu \in \mathbb{R} \text{ s.t. } \forall t\; \mathbb{E}(X_t) = \mu \;\, \therefore \;X_t \text{ is not stationary.} \hspace{0.25cm} \square
 $$
-Where the conclusion of the implication is due to the negation of Property One. In short, due to the presence of a trend, the training time series is not stationary. It should be noted that not much can be concluded with results from the PACF, as the series is non-stationary. 
+ In short, due to the presence of a trend, the time series for the training data is not stationary. It should be noted that not much can be concluded with results from the PACF, as the series is non-stationary. 
 
 
 ## Part b
