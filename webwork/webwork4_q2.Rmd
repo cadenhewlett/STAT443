@@ -96,6 +96,16 @@ print(paste("Question C:", as.numeric(round(predict(hw, n.ahead = 1), 3))))
 print(paste("Question D:", "D"))
 print(paste("Question E:", round( as.numeric( predict(new_holt, n.ahead = 1) ), 3)))
 new_holt = HoltWinters(series)
+
+# define hw object
+hw <- HoltWinters(series)
+# make prediction
+pred = predict(hw, n.ahead = 1)
+# round
+round(pred, 3)
+# numeric version
+as.numeric(round(pred, 3))
+pred
 ```
 
 ## ??
