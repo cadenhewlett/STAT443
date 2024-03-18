@@ -174,7 +174,7 @@ print(p3)
 
 From the ACF, we see that the series exhibits a clear trend. We know that this trend is present due to the sinusoidal component of the ACF. 
 
-In fact, to replicate this pattern exactly. Let $\{Z_t\}_{t = 1}^{500} \overset{\text{iid}}{\sim} N(0, 1)$ and let $X_t = Z_t + \sin(t/2)$, for $t \in \{1, 2, \dots, 500\}$. A plot of this artificial additive seasonal model is below:
+In fact, to replicate this pattern exactly. Let $\{Z_t\}_{t = 1}^{500} \overset{\text{iid}}{\sim} N(0, 1)$ and let $X_t = Z_t + \sin(t/2)$, for $t \in \{1, 2, \dots, 500\} \subset \mathbb{N}$. A plot of this artificial additive seasonal model is below:
 ```{r}
 Z = rnorm(500)
 t = seq(1:500)
@@ -258,39 +258,91 @@ As in our original series (and with the Box-Jenkins method) we did not observe a
 
 We will use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case, then, $p=12$.
 
-We then have an additive seasonal effect (which I will denote $\mathfrak{I}_t$ rather than the normal $I_t$), given by the following:
+We then have an additive seasonal effect $I_t$ for $t \in \mathbb{Z}$ given by the following:
 $$
-\mathfrak{I}_{t} = \gamma(x_t - \mathfrak{L}_t) + (1 -  \gamma)\mathfrak{I}_{t - p}
+{I}_{t} = \gamma(x_t - {L}_t) + (1 -  \gamma){I}_{t - p}
 $$
 
-Where $\mathfrak{L}_t$ is the level component that defines Holt-Withers smoothing/forecasting methods. Since $\beta = 0$, it is constructed without a $T$ component, and is given by:
+Where ${L}_t$ is the level component that defines Holt-Withers smoothing/forecasting methods. Since $\beta = 0$, it is constructed without a $T$ component, and is given by:
 $$
-\mathfrak{L}_t = \alpha(x_t - \mathfrak{I}_{t-p}) + (1 - \alpha)\mathfrak{L}_{t-1}
+{L}_t = \alpha(x_t - {I}_{t-p}) + (1 - \alpha){L}_{t-1}
 $$
-Further, the $\ell$-step ahead forecast at time $t$ is given by the following.
+For $\alpha, \gamma \in [0,1]$. Further, for $\ell \in \mathbb{Z}$, the $\ell$-step ahead forecast at time $t$ is given by the following.
 $$
-\hat{x}_t (\ell) = \mathfrak{L}_t + \mathfrak{I}_{t-p+\ell}
+\hat{x}_t (\ell) = {L}_t + {I}_{t-p+\ell}
 $$
+We report the coefficients from `HoltWinters` in the table below.
 ```{r}
 hw_no_trend = HoltWinters(nino_train, beta = 0, seasonal = "additive") # no trend
-c(hw_no_trend$alpha, hw_no_trend$gamma)
+hw_results_coefs = (data.frame(
+  Alpha = round(hw_no_trend$alpha, 3),
+  Beta = paste(0, ".000", sep = ""),
+  Gamma = paste(hw_no_trend$gamma, ".000", sep = "")
+))
+rownames(hw_results_coefs) = NULL
+kable(hw_results_coefs, caption = "Holt-Winters Coefficients")
 ```
-Our fitted $\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma)\mathfrak{I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ - this means that the model is placing a lot of significance on the current level (with periodicity) and much less on levels in the past when fitting.
+Our fitted $\hat\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma){I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ - this means that the model is placing a lot of significance on the current level (and period) and much less on levels in the past when fitting.
 
 
-## Part c.2.
+### Part c.2.
 
 
 Use this model to predict sea surface temperature from Jan 2022 through Nov 2023. 
 
 ```{r}
-hw_predictions = predict(hw_no_trend, n.ahead = 23)
-plot(hw_predictions)
-lines(nino_test, col = 'red')
+hw_predictions = data.frame(
+  predict(hw_no_trend, n.ahead = 23, prediction.interval = TRUE, level = 0.95))
+
+# prepare the hw forecast data
+p4data = data.frame(
+  Time = as.Date(time(nino_test)),
+  Observed = as.numeric(nino_test),
+  Forecast = as.numeric(hw_predictions$fit),
+  Lower = as.numeric(hw_predictions$lwr),
+  Upper = as.numeric(hw_predictions$upr)
+)
+```
+```{r fancyplot}
+# make fancy as heck plot
+p4 = ggplot(data = p4data, aes(x = Time)) +
+  # lines for obsv, pred and interval bounds
+  geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
+  geom_line(aes(y = Forecast, color = "Forecast"),lwd = 1) +
+  geom_line(aes(y = Lower, color = "95% Interval"), alpha = 0.75) +
+  geom_line(aes(y = Upper, color = "95% Interval"), alpha = 0.75) +
+  # light blue fill area between prediction intervals
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "#caf0f8", alpha = 0.15) +
+  # legend and colour assignment
+  scale_color_manual(name = "",
+    values = c(
+    "Actual" = "#696969",
+    "Forecast" = "#02a9ea",
+    "95% Interval" = "#9fc8d6"
+  )) +
+  # customize x-axis for nice dates
+  scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
+  # add titles with units
+  labs(
+    title = "Forecast and 95% Prediction Interval of Test Data",
+    subtitle = "El Nino 3.4 Index from Jan. 2022 to Nov. 2023",
+    x = "Month and Year",
+    y = expression(
+      paste("Average Equatorial Sea Surface Temperature (in ", degree, "C)")
+    )
+  ) +
+  theme_bw() +
+  theme(panel.grid.minor =  element_line(
+    color = "grey90",
+    linewidth  = 0.35,
+    linetype = "dashed"
+  ), legend.position = "top", legend.justification = "left", 
+  legend.margin = margin(0,0,0,0))
+print(p4)
 ```
 
 
-## Part c.3.
+### Part c.3.
 
 Calculate the mean squared prediction error.
 
@@ -302,11 +354,13 @@ $$
 ```{r}
 N = length(nino_test)
 # verify equality in set cardinalities
-stopifnot(all.equal(N, length(hw_predictions)))
+stopifnot(all.equal(N, length(hw_predictions$fit)))
 # calculate ms prediction error
-ms_pre_hw = mean( (hw_predictions - nino_test)^2 )
+ms_pre_hw = mean( (hw_predictions$fit - nino_test)^2 )
 ms_pre_hw
 ```
 
+
+### Part c.4.
 
 How does it compare to the Box-Jenkins models above?
