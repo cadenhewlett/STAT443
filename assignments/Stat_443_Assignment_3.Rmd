@@ -172,31 +172,30 @@ print(p3)
 \underline{Comments}
 
 
-From the ACF, we see that the series exhibits a clear trend. We know that this trend is present due to the sinusoidal component of the ACF. 
+From the ACF, it is very likely that the original series exhibits a trend. This is due to the fact that there is a clear sinusoidal component of the ACF that is not dampening at a high rate (as we could potentially expect in models with AR components with $\alpha_i < 0$ for $i\in[1,p]$). 
 
-In fact, to replicate this pattern exactly. Let $\{Z_t\}_{t = 1}^{500} \overset{\text{iid}}{\sim} N(0, 1)$ and let $X_t = Z_t + \sin(t/2)$, for $t \in \{1, 2, \dots, 500\} \subset \mathbb{N}$. A plot of this artificial additive seasonal model is below:
+In fact, we can replicate the pattern in the sample ACF quite closely by simply using a sine function alongside random noise. Let $\{Z_t\}_{t = 1}^{500} \overset{\text{iid}}{\sim} N(0, 1)$ and let $X_t = Z_t + \sin(t/2)$, for $t \in \{1, 2, \dots, 500\} \subset \mathbb{N}$. A plot of this artificial additive seasonal model is below:
 ```{r}
-Z = rnorm(500)
-t = seq(1:500)
+set.seed(443); Z = rnorm(500); t = seq(1:500)
 acf(Z + sin(t/2), main = "Artificial ACF", lag.max = 36)
 ```
-As you can see, this artificial ACF closely matches our observed ACF from earlier. As such, it is very likely that there exists some seasonal term $s_t$. Further, from a more informal observational perspective, a plot of the original series data doesn't seem to support a non-constant seasonal amplitude (as in changing peak heights between seasons) which may indicate an additive seasonality rather than multiplicative. 
+As you can see, this artificial ACF closely matches our observed sample ACF from earlier. As such, it is very likely that there exists some seasonal term $s_t$ in the time series of sea surface temperature data. We would intuitively anticipate a seasonal component to these data, as it is very likely that sea temperatures vary over the course of the year due to seasons as measurements are coming from the same area (the international dateline to the coast of South America.)  Moreover, from a more informal observational perspective, a plot of the original series data doesn't seem to support a non-constant seasonal amplitude - as in there's no changing peak heights over time - which may indicate an additive seasonality rather than multiplicative. 
 
 
-Further, neither the plot of the data nor the ACF seem to indicate a significant trend in the data. If there were a trend component $m_t$, we would see some consistent change over time in the overall direction of the series beyond simple seasonality. It doesn't seem like there is anything like that in this series; **however**, a purely visual analysis isn't comprehensive so this doesn't mean that a trend component doesn't exist. 
+In addition, neither the plot of the data nor the ACF seem to indicate a significant trend in the data. If there were a trend component $m_t$, we would see some consistent change over time in the overall direction of the series beyond simple seasonality. It doesn't seem like there is anything like that in this series; **however**, a purely visual analysis isn't comprehensive so this doesn't mean that a trend component doesn't exist. 
 
 
-Finally, to determine whether or not the series is stationary, we recall the definition of a weakly stationary stochastic process. Specifically, we will consider the first property of a weak stationarity - that the mean is constant. We defined this formally in Assignment 1 previously, and was given as follows:
+Finally, to determine whether or not the series is stationary, we recall the definition of a weakly stationary stochastic process. Specifically, we will consider the first property of weak stationarity - that the mean is constant. We defined this formally in Assignment 1 previously, and was given similar to the following:
 $$
-\text{Weak Stationarity Property One: } \exists \mu \in \mathbb{R} \text{ s.t. } \forall t \in \mathbb{Z}, \; \mathbb{E}(X_t) = \mu
+\text{Weak Stationarity Property One: }\; \exists \mu \in \mathbb{R} \text{ s.t. } \forall t \in \mathbb{Z}, \; \mathbb{E}(X_t) = \mu
 $$
-The presence of *either* a seasonal component or a trend causes a contradiction, as the expected value of the series becomes some function of $t$ (and hence cannot be a constant.)
+The presence of *either* a seasonal component or a trend causes a contradiction, as the expected value of the series becomes some function of $t$ (and hence cannot be a constant.) 
 
-Hence, for our particular series, consider the following implication, letting $s_t$ be the seasonal component:
+Thus, for our particular series, we have the following implication, letting $s_t$ be the seasonal component, $c \in \mathbb{R}$ be some real constant and $f(t)$ be a non-constant real function (as in, it changes with $t$.) Then, 
 $$
-\exists s_t \implies \mathbb{E}(X_t) = f(t), \text{ for some } f \; \implies \not\exists \mu \in \mathbb{R} \text{ s.t. } \forall t \mathbb{E}(X_t) = \mu \implies X_t \text{ is not stationary.} \hspace{0.25cm} \square
+\exists s_t \implies  \forall t \;\mathbb{E}(X_t) = f(t) + c \; \implies \not\exists \mu \in \mathbb{R} \text{ s.t. } \forall t\; \mathbb{E}(X_t) = \mu \;\, \therefore \;X_t \text{ is not stationary.} \hspace{0.25cm} \square
 $$
-Where the conclusion of the implication is due to the negation of Property One. In short, due to the presence of a trend, the training time series is not stationary.
+Where the conclusion of the implication is due to the negation of Property One. In short, due to the presence of a trend, the training time series is not stationary. It should be noted that not much can be concluded with results from the PACF, as the series is non-stationary. 
 
 
 ## Part b
@@ -258,7 +257,7 @@ As in our original series (and with the Box-Jenkins method) we did not observe a
 
 We will use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case, then, $p=12$.
 
-We then have an additive seasonal effect $I_t$ for $t \in \mathbb{Z}$ given by the following:
+We then have an additive seasonal effect $I_t$ for $t$ given by the following:
 $$
 {I}_{t} = \gamma(x_t - {L}_t) + (1 -  \gamma){I}_{t - p}
 $$
