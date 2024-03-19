@@ -361,6 +361,7 @@ stopifnot(all.equal(N, length(hw_predictions$fit)))
 ms_pre_hw = sum ( (nino_test - hw_predictions$fit )^2 ) /23
 ms_pre_hw
 ```
+The observed Mean Square prediction error for the Holt-Withers forecast is approximately $1.972$.
 
 
 ### Part c.4.
@@ -518,8 +519,8 @@ print(p8)
 \underline{Sample ACF}
 ```{r}
 p9data = data.frame(
-  h = 0:36,
-  rh = acf(hours_train_diff_s, plot = FALSE, lag.max = 36)$acf
+  h = 0:80,
+  rh = acf(hours_train_diff_s, plot = FALSE, lag.max = 80)$acf
 )
 p9 <- ggplot(p9data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
@@ -545,8 +546,8 @@ print(p9)
 
 ```{r}
 p10data = data.frame(
-  h = 1:36,
-  rh = pacf(hours_train_diff_s, plot = FALSE, lag.max = 36)$acf
+  h = 1:80,
+  rh = pacf(hours_train_diff_s, plot = FALSE, lag.max = 80)$acf
 )
 p10 <- ggplot(p10data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
@@ -568,15 +569,11 @@ p10 <- ggplot(p10data, aes(x = h, y = rh)) +
   theme_bw()
 print(p10)
 ```
+
 Comment on what you observe:
 
-```{r}
-# TODO
-```
+The seasonal differencing paired with the sequential differencing seems to have done a good job in making the series stationary. We see from the plotted data as well as the correlogram that there isn't evidence of a significant season or trend. Further, the visual complexity of both the ACF and the PACF hints at the fact that there may be a blended model (i.e. a mixture of AR and MA) underlying this process. We will discuss in the next sections exaclty what the parameters of the model equation are in this case. 
 
-```{r}
-auto.arima(hours_train)
-```
 
 ### Part C: Difference Parameters.
 Based on the results of Part II (a) and (b), specify the values of $d$, $D$, and $s$.
@@ -586,9 +583,95 @@ From Part II (a), we applied one sequential difference using `diff`, so we know 
 
 ### Part D: SARIMA Parameters
 
-Based on the plots in Part II (b), suggest possible values of $p$, $P$, $q$, and $Q$, justifying your choices.
+Based on the plots in Part II (b), suggest possible values of  justifying your choices.
 
-(idea: use )
+*NOTE*: It is very difficult to accurately determine these coefficients precisely, but I will justify my decisions to the best of my ability.
+
+
+Firstly, let's discuss the presence of an MA component. We henceforth assume stationarity.
+
+In the ACF, we see a fairly large $r_h$ value at $h = 12$, that significantly cuts off for $h > 12$. Unlike a pure MA plot where we would see an expect a very sharp cutoff, in a blended model there will still be other components at work after the MA component. 
+
+All of the lags after $h = 12$ for $h \in [0, 36] \subset \mathbb{Z}$ are noteably smaller, as the Sample ACF shows.
+
+This would imply that either we have a sequential MA with $q = 12$ or a seasonal MA with $Q = 1$. By the prinicple of parsimony, we prefer the latter. Also, this conclusion would imply that it is unlikely that there is a $p$ component.
+
+To explain, we recall the right-hand side of a SARIMA model, assuming $Q=1$.
+$$
+\begin{aligned}
+\text{RHS } &= \Theta(B^s)\theta(B)Z_t \\
+\text{RHS } &= (1 + \tilde{\beta}B^{12})\theta(B)Z_t \\
+\text{RHS } &= \theta(B)Z_t + \theta(B)\tilde{\beta}Z_{t - 12} \\
+\end{aligned}
+$$
+This would help explain the decently large "spike" at lag $12$ (also perhaps suggesting that $\tilde\beta < 0$.)
+
+However, is there a sequential component $q > 0$? By the above, under the assumption that $Q = 1$, if $\theta(B)$ was of an order greater than zero, there would be additional components in the right-hand side that we'd expect to see reflected in the ACF. 
+
+The most likely visually is that $q = 1$. An explanation of why is facilitated by the equation below: 
+$$
+\begin{aligned}
+\text{RHS } &= (1 + \beta B)Z_t + (1 + \beta B)\tilde{\beta}Z_{t - 12} \\
+\text{RHS } &= Z_t + \beta Z_{t-1} +\tilde{\beta}Z_{t - 12} + \beta\tilde{\beta}Z_{t - 13}  \\
+\end{aligned}
+$$
+In other words, from our understanding of MA models, we would see large in magnitude $r_1$ and (slightly less large) $r_{13}$. In the sample ACF, with a spike at lag 1 less than $-2/\sqrt{n}$ and a shorter spike at lag 13, slightly above $2/\sqrt{n}$, however, it is difficult to discern whether or not these are caused by the AR components of the model. 
+
+I am more inclined to favour the AR components causing these observed $r_h$ values than additional MA components due to the fact that there is a large autocorrelation at lag $11$, which isn't described by this sort of MA formulation. Notably, the fact that visually $|r_{11}| \approx |r_1|$ lends informal credence to the hypothesis that it is AR components rather than MA causing the $r_1$ and $r_{13}$ observations. If there were a $q>0$, I would expect it to have a notable magnitude outside of the general AR pattern. So, while it's theoretically plausible that $q>0$, by this reasoning we settle onto $q = 0$ in favour of a more robust AR components.
+
+
+Now let's consider whether or not there are AR components to the series. Visually, the slowly-decaying oscillating pattern is indicative of one or more AR components. Further, since the lag doesn't cut off to white noise immediately after the MA components (we see it sometimes creep above the $\pm 2 / \sqrt{n}$) this tells us there is very likely an AR component of some variety. 
+
+
+To figure out exactly what order these components are, we utilize the PACF, recalling the assumption of stationarity. 
+
+However, we first must recall the left-hand side of the SARIMA equation, so we have a better understanding of the PACF Values
+$$
+\begin{aligned}
+\text{LHS } &= \Psi(B^s)\psi(B)W_t \\
+\text{LHS } &= \Psi(B^s)\psi(B)(\nabla^{12}_1 \nabla^1X_t) \\
+\text{LHS } &= \Psi(B^s)\psi(B)(X_t-X_{t-12} - X_{t-1} + X_{t-13}) \\
+\end{aligned}
+$$
+So, it's a bit more difficult to directly examine the PACF for the largest value of $\hat\alpha_{kk}$ such that $\forall i > k, |\hat\alpha_{ii}| < {2}\sqrt{n}$ as we normally would, since it isn't direct to discern which coefficient in the AR decomposition it actually aligns to in the overall model (i.e. in the full seasonal/sequential differenced with MA.)
+
+Then we find a logical combination of $p$ and $P$, we can informally examine the PACF for what seems "sensible." What immediately jumps out to me is the presence of a large $\hat\alpha_{kk}$ at $k = 12$. This is indicative of a seasonal AR component, i.e. $P \geq 1$. Further, there is an immediate jump at $\hat\alpha_{11}$ as well as other "spikes" across the PACF at $\hat\alpha_{11, 11},  \hat\alpha_{23, 23}$, etc. Since these values $\{1, 11, 23, \dots \}$ are not evenly divisiple by $12$, we know that there must exist one or more sequential AR components, i.e. $p \geq 1$. For the sake of parsimony, my initial suggestion would be to choose $P = p = 1$ as a starting point. 
+
+
+Due to the complexity inherent in this particular mixed models, it is difficult to visually determine values of $p$, $P$, $q$, and $Q$, however, from the arguments above, $\{p, P, q, Q \} = \{0, 1, 1, 1\}$ seems plausible.
+
+<!-- We extract the value of $k$ below: -->
+<!-- ```{r} -->
+<!-- tail(p10data$h[abs(p10data$rh) >= 2/sqrt(n)], 1) -->
+<!-- 41/12 -->
+<!-- ``` -->
+<!-- This value of $k = 54$ supports the observed PACF. However, since we already have a difference of $13$ from $W_t$, we consider $\kappa = k-13 = 41$ as our "target" for combination of AR components. -->
+
+
+<!-- Moreover, since $41 \not \equiv 0\text{mod}(12)$, recalling $s = 12$, it suggests the presence of both sequential AR $p$ and seasonal AR $P$. For the simplest possible combination of coefficients, we first consider the maximum number of seasonal AR components we can add. -->
+
+<!-- Mathematically, this is found as: -->
+<!-- $$ -->
+<!-- P =  \lfloor \kappa \div s\rfloor  =  \lfloor41 \div 12\rfloor =  3 -->
+<!-- $$ -->
+<!-- So, this suggests that there are $P = 4$ seasonal AR components. A hypothesized number of sequential AR components can be found directly as: -->
+<!-- $$ -->
+<!-- p = \kappa - P\cdot s = 41 -  -->
+<!-- $$ -->
+
+
+```{r}
+# n = length(hours_train_diff_s)
+# # (p,d,q): the AR order, the degree of differencing, and the MA order.
+# p9data$rh[p9data$h]
+# all_lags = acf(hours_train_diff_s, plot = FALSE, lag.max = n)$acf
+# twelves = (all_lags[seq(from = 0, to = n, by = 1) %% 11 == 0])
+# 
+# plot(0:(length(twelves)-1), twelves, type="n",
+#      xlab="Index", ylab="Value", main="Lags at Step 12")
+# segments(x0=0:(length(twelves)-1), y0=0, x1=0:(length(twelves)-1), y1=twelves)
+# abline(h = 0)
+```
 <!-- # acf(hours_train_diff_s, lag.max = 36) # MA at 12, Q = 1, MA at 1, q = 1  -->
 <!-- #pacf(hours_train_diff_s, lag.max = 96) # PACF doesn't really show a  -->
 <!-- #test = pacf(hours_train_diff_s, lag.max = 96, plot = F)$acf # P = 12 perhaps, P = 1 -->
@@ -609,16 +692,16 @@ Fit the model you choose and print the values of the estimated parameters along 
 First, we declare our fixed $p$, $P$, $s$, $d$ and $D$ values, then iterate through the different 25 models that can be developed and report the AIC for each. 
 
 ```{r, all_AIC}
-p = 0; P = 1; s = 12; d = 1; D = 1
+p = 1; P = 1; s = 12; d = 1; D = 1
 # declare empty matrix
-results = matrix(0, nrow = 5, ncol = 5)
+results = matrix(0, nrow = 6, ncol = 6)
 # with legible names
-rownames(results) = c("q=1", "q=2","q=3","q=4","q=5")
-colnames(results) = c("Q=1", "Q=2","Q=3","Q=4","Q=5")
+rownames(results) = c("q=0", "q=1", "q=2","q=3","q=4","q=5")
+colnames(results) = c("Q=0", "Q=1", "Q=2","Q=3","Q=4","Q=5")
 # iterate through all candidates
-for (q in 1:5){
-  for (Q in 1:5){
-    results[q, Q] = arima(hours_train,
+for (q in 0:5){
+  for (Q in 0:5){
+    results[q+1, Q+1] = arima(hours_train,
                           order = c(p, d, q),
                           seasonal = c(P, D, Q))$aic
   }
@@ -629,22 +712,53 @@ for (q in 1:5){
 The AIC results are summarized in the table below.
 ```{r}
 kable(round(results, 3), caption = "AIC Values for Varying (q, Q)")
-P
 ```
 
 According to this table, the best model corresponds to:
 ```{r}
 which(results == min(results), arr.ind = TRUE)
+# arima(hours_train, order = c(1, 1, 0), seasonal = c(1, 1, 0))$aic
+# arima(hours_train, order = c(1, 1, 0), seasonal = c(1, 1, 1))$aic
 ```
 Which corresponds to $q = 4$ and $Q = 5$. It has an AIC of $-627.61$
 
+Hence, we will use a model of the form:
+$$
+\text{SARIMA}({\underset{p}{0}}, {\underset{d}{0}}, {\underset{q}{0}}) \times({\underset{P}{0}}, {\underset{D}{0}}, {\underset{Q}{0}})_{{\underset{s}{12}}}
+$$
 The full model is given below:
 ```{r}
-best_fit = arima(hours_train, order = c(0, 1, 4), seasonal = c(1, 1, 5))
-best_fit
+best_fit = arima(hours_train, order = c(0, 1, 1), seasonal = c(1, 1, 5))
+#?auto.arima(hours_train)
+```
+
+```{r}
+# Series: hours_train 
+# ARIMA(1,0,0)(0,1,4)[12] with drift 
+# auto.arima(hours_train, trace = F, ic = "aic",
+#            start.p = 1, start.P = 1, stepwise = F, 
+#            max.Q = 5, max.q = 5, max.d = 1, max.D = 1)
 ```
 
 ```{r}
 best_fit$coef
+# auto.arima(hours_train, D = 1, d = 1)
 ```
+```{r}
+# auto.arima(hours_train, 
+#            d = 1, D = 1,
+#            max.p = 5, max.P = 5, 
+#            max.q = 5, max.Q = 5, 
+#            start.P = 3, start.p = 5,
+#            start.q = 0, start.Q = 0,
+#            stepwise = FALSE, approximation = TRUE)
+```
+
+<!-- ```{r} -->
+<!-- # TODO -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- auto.arima(hours_train) -->
+<!-- ``` -->
 
