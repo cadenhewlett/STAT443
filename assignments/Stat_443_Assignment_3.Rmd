@@ -4,7 +4,6 @@ subtitle: "Assignment 3: Time Series Models"
 author: Caden Hewlett
 header-includes:
     - \usepackage{bbm}
-    - \usepackage{yfonts}
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
@@ -27,7 +26,7 @@ library(readr)
 library(tidyverse)
 library(lubridate)
 library(xts)
-# tinytex::reinstall_tinytex(repository = "illinois")
+
 ```
 
 # Question 1: El Niño Forecasting
@@ -45,8 +44,8 @@ Import the data into R and create a time-series object for the El Niño 3.4 inde
 
 ```{r, warning=FALSE}
 # import data
-setwd('C:/Users/caden/OneDrive/Desktop/STAT_443/STAT443')
-df <- read.csv("data/NINO34.csv")
+# setwd('C:/Users/caden/OneDrive/Desktop/STAT_443/STAT443')
+df <- read.csv("NINO34.csv")
 
 # raw data is in a bad format, need to pivot it without years
 dflong <- df %>%
@@ -276,7 +275,7 @@ $$
 $$
 We report the coefficients from `HoltWinters` in the table below.
 ```{r}
-hw_no_trend = HoltWinters(nino_train, beta = 0, seasonal = "additive") # no trend
+hw_no_trend = HoltWinters(nino_train, beta = FALSE, seasonal = "additive") # no trend
 hw_results_coefs = (data.frame(
   Alpha = round(hw_no_trend$alpha, 3),
   Beta = paste(0, ".000", sep = ""),
@@ -359,7 +358,7 @@ N = length(nino_test)
 # verify equality in set cardinalities
 stopifnot(all.equal(N, length(hw_predictions$fit)))
 # calculate ms prediction error
-ms_pre_hw = mean( (hw_predictions$fit - nino_test)^2 )
+ms_pre_hw = sum ( (nino_test - hw_predictions$fit )^2 ) /23
 ms_pre_hw
 ```
 
@@ -428,7 +427,7 @@ In this part, we select and fit a $\text{SARIMA}(p, d, q) \times (P, D, Q)_s$ mo
 
 ### Part A: Differencing
 
-Difference the training set time series at lag 1. 
+Difference the training set time series at lag 1. Let $\{X_{t}\}_{t \in \mathbb{Z}}$ be our original series. We define below $Y_t = \nabla^{1}X_t = X_t - X_{t-1}$
 ```{r}
 hours_train_diff = diff(hours_train, lag = 1, differences = 1)
 ```
@@ -489,7 +488,7 @@ While the single-iteration ($d = 1$) of sequential differencing at lag 1 appears
 
 ### Part B: Seasonal Differencing
 
-Apply seasonal differencing to remove seasonal variation. Since we have monthly data, $s = 12$ seems sensible. 
+Apply seasonal differencing to remove seasonal variation. Since we have monthly data, $s = 12$ seems sensible.
 
 ```{r}
 hours_train_diff_s = diff(hours_train_diff, lag = 12, differences = 1)
@@ -497,16 +496,83 @@ hours_train_diff_s = diff(hours_train_diff, lag = 12, differences = 1)
 
 Plot the resulting differenced time series along with its sample acf and pacf. 
 
+\underline{Series}
 ```{r}
-
-acf(hours_train_diff_s, lag.max = 36) # MA at 12, Q = 1, MA at 1, q = 1 
-pacf(hours_train_diff_s, lag.max = 96) # PACF doesn't really show a 
-test = pacf(hours_train_diff_s, lag.max = 96, plot = F)$acf # P = 12 perhaps
-# which( abs(test) > 2/sqrt(n) )
+p8data = fortify.zoo(hours_train_diff_s)
+p8 <- ggplot(p8data, aes(x = Index, y = hours_train_diff_s)) +
+  geom_line(color = "#9e0059", linewidth = 0.1) +
+  labs(
+    title = "Sequential and Seasonal [12] Difference of Monthly Average Hours Worked",
+    subtitle = "In Canada, Across all Industries from January 1987 to December 2020",
+    y = "Monthly Mean Working Time (Hours)",
+    x = "Year"
+  ) + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p8)
 ```
 
+\underline{Sample ACF}
+```{r}
+p9data = data.frame(
+  h = 0:36,
+  rh = acf(hours_train_diff_s, plot = FALSE, lag.max = 36)$acf
+)
+p9 <- ggplot(p9data, aes(x = h, y = rh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#240046") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#240046") +
+  ylim(-0.6, 1) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#9c89b8",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag",  y = "ACF Values",
+       title = "Correlogram of Sequential and Seasonal [12] Differences",
+       subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
+  theme_bw()
+print(p9)
+```
+\underline{Sample PACF}
 
-Comment on what you observe
+```{r}
+p10data = data.frame(
+  h = 1:36,
+  rh = pacf(hours_train_diff_s, plot = FALSE, lag.max = 36)$acf
+)
+p10 <- ggplot(p10data, aes(x = h, y = rh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#aa767c") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#aa767c") +
+  ylim(-0.5, 0.4) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#63474d",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag",  y = "ACF Values",
+       title = "Sample PACF of Sequential and Seasonal [12] Differences",
+       subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
+  theme_bw()
+print(p10)
+```
+Comment on what you observe:
+
+```{r}
+# TODO
+```
 
 ```{r}
 auto.arima(hours_train)
@@ -515,11 +581,18 @@ auto.arima(hours_train)
 ### Part C: Difference Parameters.
 Based on the results of Part II (a) and (b), specify the values of $d$, $D$, and $s$.
 
+From Part II (a), we applied one sequential difference using `diff`, so we know $d = 1$. Then, in Part II (b), we applied one seasonal difference using `lag = 12`, hence $D = 1$ with $s = 12$.
+
 
 ### Part D: SARIMA Parameters
 
 Based on the plots in Part II (b), suggest possible values of $p$, $P$, $q$, and $Q$, justifying your choices.
 
+(idea: use )
+<!-- # acf(hours_train_diff_s, lag.max = 36) # MA at 12, Q = 1, MA at 1, q = 1  -->
+<!-- #pacf(hours_train_diff_s, lag.max = 96) # PACF doesn't really show a  -->
+<!-- #test = pacf(hours_train_diff_s, lag.max = 96, plot = F)$acf # P = 12 perhaps, P = 1 -->
+<!-- # which( abs(test) > 2/sqrt(n) ) -->
 
 ### Part E: Iterative AIC
 
