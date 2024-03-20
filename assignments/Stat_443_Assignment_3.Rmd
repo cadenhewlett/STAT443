@@ -223,28 +223,24 @@ acf_filtered = acf(nino_filtered, lag.max = 30, plot = T)$acf
 pacf_filtered = pacf(nino_filtered, lag.max = 30, plot = T)$acf
 ```
 ```{r}
-# plot(nino_stl)
+# TODO: AR(1) and AR(6) are the two candidate models
 ```
 
 ideas:
 
 ```{r}
-# fit1 = arima(nino_filtered, order = c(6, 0, 0)) # -278.9
-# fit2 = arima(nino_filtered, order = c(17, 0, 0)) # -278.9
-# arima(nino_filtered, order = c(0, 0, 12))
+fit1 = arima(nino_filtered, order = c(6, 0, 0)) # -278.9
+fit2 = arima(nino_filtered, order = c(1, 0, 0)) # -278.9
+
 # ?arima
 ```
 
 ```{r}
-# fit2$loglik
+fit2$loglik
+fit1$loglik
 ```
 
-### Bonus: Stepwise Model Optimization According to AIC
 
-If we wanted to, we can also use the `auto.arima` function from the `forecast` package to pick the best model according to AIC. The function performs stepwise non-approximation for AIC and returns the model corresponding to the minimum. It takes a bit of time to run (since no approxiamtions are done.)
-```{r testzone}
-# bonus_model = auto.arima(nino_train, ic = "aic", stepwise = TRUE, approximation = FALSE)
-```
 
 
 ## Part c
@@ -711,7 +707,6 @@ for (q in 0:5){
                           seasonal = c(P, D, Q))$aic
   }
 }
-
 ```
 
 The AIC results are summarized in the table below.
