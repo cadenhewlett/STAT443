@@ -513,7 +513,7 @@ p4 = ggplot(data = p4data, aes(x = Time)) +
   scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
   # add titles with units
   labs(
-    title = "Forecast and 95% Prediction Interval of Test Data",
+    title = "Forecast and 95% Prediction Interval of Test Data: Holt-Winters",
     subtitle = "El Nino 3.4 Index from Jan. 2022 to Nov. 2023",
     x = "Month and Year",
     y = expression(
