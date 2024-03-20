@@ -4,6 +4,7 @@ subtitle: "Assignment 3: Time Series Models"
 author: Caden Hewlett
 header-includes:
     - \usepackage{bbm}
+    - \usepackage{amsmath}
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: pdf_document
 ---
@@ -26,7 +27,7 @@ library(readr)
 library(tidyverse)
 library(lubridate)
 library(xts)
-
+library(kableExtra)
 ```
 
 # Question 1: El Niño Forecasting
@@ -87,6 +88,8 @@ Plot the training data as well as its acf and pacf.
 
 ```{r plotnino}
 p1data = fortify.zoo(nino_train)
+```
+```{r, include=FALSE}
 p1 <- ggplot(p1data, aes(x = Index, y = nino_train)) +
   geom_line(color = "#0077b6", linewidth = 0.1) +
   labs(
@@ -103,9 +106,10 @@ p1 <- ggplot(p1data, aes(x = Index, y = nino_train)) +
     linetype = "dashed",
     linewidth = 0.5
   ))
+```
+```{r}
 print(p1)
 ```
-
 
 \underline{Autocorrelation Function}
 <!-- ```{r}  acf(nino_train, lag.max = 36)  ``` -->
@@ -114,6 +118,8 @@ p2data = data.frame(
   h = 0:36,
   rh = acf(nino_train, plot = FALSE, lag.max = 36)$acf
 )
+```
+```{r, include = FALSE}
 n = length(nino_train)
 p2 <- ggplot(p2data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
@@ -134,9 +140,10 @@ p2 <- ggplot(p2data, aes(x = h, y = rh)) +
        subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
     
   theme_bw()
+```
+```{r}
 print(p2)
 ```
-
 
 \underline{Partial Autocorrelation Function}
 
@@ -145,7 +152,8 @@ p3data = data.frame(
   h = 1:36,
   rhh = pacf(nino_train, plot = FALSE, lag.max = 36)$acf
 )
-
+```
+```{r, include=FALSE}
 p3 <- ggplot(p3data, aes(x = h, y = rhh)) +
   geom_hline(yintercept = 2/sqrt(n),
              linetype = "dashed",
@@ -165,6 +173,8 @@ p3 <- ggplot(p3data, aes(x = h, y = rhh)) +
        subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
     
   theme_bw()
+```
+```{r}
 print(p3)
 ```
 
@@ -205,41 +215,205 @@ Forecast sea surface temperature for 2022 and 2023 using the Box-Jenkins method 
 
 Remove any seasonal variation and trend from the training data, if there is any, using the `stl` function in R. 
 
-Plot the filtered data set, as well as its acf and pacf.
+We define an object `nino_stl` using `loess` decomposition, and plot each of S, T and L (seasonal, trend and irregular) of the original series below:
 
-
-In experimenting with only de-seasonalizing and only de-trending the data, or both, the best performance (i.e. stationary/near stationary in the ACF) came from removing both season and trend.
-
-```{r deseason}
+```{r}
+# perform loess decomposition
 nino_stl = stl(nino_train, s.window = "periodic")
-plot(nino_stl)
-loess_decomp = data.frame(nino_stl$time.series) 
-nino_filtered =  nino_train - loess_decomp$seasonal # - loess_decomp$trend
-plot(nino_filtered)
-acf_filtered = acf(nino_filtered, lag.max = 30, plot = T)$acf
+# cast to data frame
+decomposition = as.data.frame(nino_stl$time.series)
+decomposition$time = as.numeric(time(nino_train))
+```
+Note that the code to plot the decomposition with ggplot became quite long, so I made the code cell hidden. The complete plots are provided below:
+```{r, include=FALSE}
+# plot all of them (each slightly different so can't make a function)
+pb1 <- ggplot(decomposition, aes(x = time, y = seasonal)) + 
+  geom_line(color = "#cdb4db") + 
+  ggtitle("Seasonal Component") + 
+  labs(y = "Seasonal", subtitle = "Using El Nino Training Data Spanning Jan. 1870 to Dec. 2021") +
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+pb2 <- ggplot(decomposition, aes(x = time, y = trend)) + 
+  geom_line(color = "#ffafcc") + 
+  ggtitle("Trend Component") + 
+  labs(y = "Trend") +
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+pb3 <- ggplot(decomposition, aes(x = time, y = remainder)) + 
+  geom_line(color = "#a2d2ff") + 
+  ggtitle("Remainder Component") + 
+  labs(y = "Remainder") +
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
 ```
 ```{r}
+grid.arrange(pb1, pb2, pb3, ncol = 1)
+```
+
+
+
+Now, we plot the filtered data set, as well as its acf and pacf. It doesn't seem like there is a significant trend component, as our original observations also showed, so we merely de-seasonalize the data.  The removal of $s_t$ and the plot of the filtered data is below:
+
+
+\underline{Filtered Data}
+```{r deseason}
+# remove the season
+nino_filtered =  nino_train - decomposition$seasonal
+# plot the filtered series
+pb4data = fortify.zoo(nino_filtered)
+pb4 <- ggplot(pb4data, aes(x = Index, y = nino_filtered)) +
+  geom_line(color = "#b56576", linewidth = 0.1) +
+  labs(
+    title = "Deseasonalized El Nino 3.4 Index from Jan. 1870 to Dec. 2021",
+    subtitle = "Seasonal Component Identified via Loess Decomposition",
+    y = expression(
+      paste("Average Equatorial Sea Surface Temperature (in ", degree, "C)")),
+    x = "Year"
+  ) + theme_bw() +
+  theme(panel.grid.minor.y = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(pb4)
+```
+\underline{Autocorrelation}
+
+```{r}
+p5bdata = data.frame(
+  h = 0:45,
+  rh = acf(nino_filtered, plot = FALSE, lag.max = 45)$acf
+)
+
+pb5 <- ggplot(p5bdata, aes(x = h, y = rh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#415d43") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#415d43") +
+  ylim(-0.2, 1) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#a1cca5",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag",  y = "PACF Values",
+       title = "Sample ACF of Deseasonalized El Nino 3.4 Index",
+       subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
+    
+  theme_bw()
+print(pb5)
+```
+\underline{Partial Autocorrelation}
+
+```{r}
+p6bdata = data.frame(
+  h = 1:45,
+  rhh = pacf(nino_filtered, plot = FALSE, lag.max = 45)$acf
+)
+```
+```{r, include= FALSE}
+pb6 <- ggplot(p6bdata, aes(x = h, y = rhh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#a1cca5") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#a1cca5") +
+  ylim(-0.2, 1) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#415d43",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag",  y = "PACF Values",
+       title = "Partial ACF of Deseasonalized El Nino 3.4 Index",
+       subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
+  theme_bw()
+```
+```{r}
+print(pb6)
+```
+
+### Part b.2.
+
+In the work to follow, we assume the de-seasonalized time series is stationary, such that the ACF and PACF can be used for model identification.
+
+
+Now, using the standard graphical tools, let's select two models from the pure MA and pure AR family of models for the filtered data set. 
+
+
+Since the ACF follows a (slightly complicated) exponentially decaying sinusoidal pattern, it seems quite likely that the best candidate models will be from the AR family. If this were a pure MA process for some order $q$, we would see the ACF sharply cut off after the value of $q$ is reached. Instead, the ACF slowly decays over time; this is indicative of an AR component to the series. Hence, we'll consider models form the AR family of models.
+
+
+Now, given that we are attempting to find $p$ under the presumption that the series follows some \underline{pure} AR process, we can utilize the PACF to attempt to find a suitable $p$. Unfortunately, it isn't immediately evident which term $p$ in the PACF satisfies the condition we commonly use that $\forall p > k, \;|\hat\alpha_{kk}| < 2 / \sqrt{n}.$ 
+
+
+We will consider two potential candidates, the first being AR$(1)$ process. The justification for deciding upon $p = 1$ is based on the fact that $\hat\alpha_{11}$ is significantly larger than all other PACF values. While it is true that $\exists k > 1 \text{ s. t. }  |\hat\alpha_{kk}| \geq 2 / \sqrt{n}$, there are no other values in the PACF greater than $\hat\alpha_{11}$. In other words, the PACF may not decline into noise; however, 
+$\forall k \in [2, n] \subset \mathbb{Z}, \hat\alpha_{11} > \hat\alpha_{kk}$.
+So, while the PACF doesn't cut off into white noise after $p=1$, it does cut off to significantly smaller values.
+
+
+The second candidate is an AR$(6)$ process. The reasoning is due to the fact that after $\hat\alpha_{66}$, the vast majority of observed $\hat\alpha_{kk}$ values for $k > 6$ seem to be below the white noise threshold. Critically, there isn't an easily distinguishable pattern to those $\hat\alpha_{kk}$ values greater than $\pm \sqrt{2}/n$ after PACF lag 6. This could mean that for $k > 6$ there is simply noise (as we want), however the data could have higher noise values than those commonly assumed by the W.N. threshold. It's important to recall that $\pm \sqrt{2}/n$ is more of a "rule of thumb" rather than a strict rule. 
+
+
+With all of this mind, we fit the models below:
+```{r arvsar}
 # ar(1) vs. ar(6)
-pacf_filtered = pacf(nino_filtered, lag.max = 30, plot = T)$acf
+ar1 = arima(nino_filtered, order = c(1, 0, 0))
+ar6 = arima(nino_filtered, order = c(6, 0, 0))
+```
+Then, we extract the coefficients and show them in the table below, rounding each to three decimal places:
+```{r varcolumn_names, include=FALSE}
+var_col_names =  c("$\\hat{\\mu}$", "$\\hat{\\alpha}_1$", "$\\hat{\\alpha}_2$", "$\\hat{\\alpha}_3$",
+                    "$\\hat{\\alpha}_4$", "$\\hat{\\alpha}_5$", "$\\hat{\\alpha}_6$", "$\\hat{\\sigma}^2$")
 ```
 ```{r}
-# TODO: AR(1) and AR(6) are the two candidate models
+ar_fits = t(round(data.frame(
+  AR1 = c(ar1$coef[-1], head(ar1$coef, -1), rep(NA, times = 5), ar1$sigma2),
+  AR6 = c(tail(ar6$coef, 1), head(ar6$coef, -1), ar6$sigma2)), 3))
+# report with nice latex column names
+kable(ar_fits, "latex", escape = FALSE,  col.names = var_col_names)  %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
 ```
 
-ideas:
 
-```{r}
-fit1 = arima(nino_filtered, order = c(6, 0, 0)) # -278.9
-fit2 = arima(nino_filtered, order = c(1, 0, 0)) # -278.9
+### Part b.3.
 
-# ?arima
-```
 
-```{r}
-fit2$loglik
-fit1$loglik
-```
+Compare the AIC values of your two models. Which would you pick based on AIC?
 
+### Part b.4.
+
+
+Use the `tsdiag` function in R to plot diagnostics for your two models. What do you
+observe?
+
+
+### Part b.5.
+
+
+Predict the sea surface temperature for Jan 2022 through Nov 2023 using both
+candidate models. Calculate the mean squared prediction error (MSPE) for both
+models. Which method performs better?
+
+
+### Part b.6.
+
+On a single plot, display the test set of sea surface temperature, the predictions for
+both models, and their approximate 95% prediction intervals.
 
 
 
@@ -707,6 +881,7 @@ for (q in 0:5){
                           seasonal = c(P, D, Q))$aic
   }
 }
+
 ```
 
 The AIC results are summarized in the table below.
@@ -766,4 +941,3 @@ auto.arima(hours_train, D = 1, d = 1, stepwise = F,
 <!-- ```{r} -->
 <!-- auto.arima(hours_train) -->
 <!-- ``` -->
-
