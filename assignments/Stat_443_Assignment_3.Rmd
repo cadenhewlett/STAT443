@@ -138,8 +138,8 @@ p2 <- ggplot(p2data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Correlogram of El Nino 3.4 Index",
        subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
-    
-  theme_bw()
+  theme_bw() 
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
 ```
 ```{r}
 print(p2)
@@ -172,7 +172,8 @@ p3 <- ggplot(p3data, aes(x = h, y = rhh)) +
        title = "Partial ACF of El Nino 3.4 Index",
        subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
     
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
 ```
 ```{r}
 print(p3)
@@ -232,8 +233,7 @@ pb1 <- ggplot(decomposition, aes(x = time, y = seasonal)) +
   ggtitle("Seasonal Component") + 
   labs(y = "Seasonal", subtitle = "Using El Nino Training Data Spanning Jan. 1870 to Dec. 2021") +
   theme_bw() +
-  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5),
-        axis.title.x = element_blank(),
+  theme(axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
 
@@ -242,8 +242,7 @@ pb2 <- ggplot(decomposition, aes(x = time, y = trend)) +
   ggtitle("Trend Component") + 
   labs(y = "Trend") +
   theme_bw() +
-  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5),
-        axis.title.x = element_blank(),
+  theme(axis.title.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
 
@@ -251,8 +250,7 @@ pb3 <- ggplot(decomposition, aes(x = time, y = remainder)) +
   geom_line(color = "#a2d2ff") + 
   ggtitle("Remainder Component") + 
   labs(y = "Remainder") +
-  theme_bw() +
-  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+  theme_bw() 
 ```
 ```{r}
 grid.arrange(pb1, pb2, pb3, ncol = 1)
@@ -267,8 +265,10 @@ Now, we plot the filtered data set, as well as its acf and pacf. It doesn't seem
 ```{r deseason}
 # remove the season
 nino_filtered =  nino_train - decomposition$seasonal
-# plot the filtered series
+# prepare the filtered series for plotting
 pb4data = fortify.zoo(nino_filtered)
+```
+```{r, include = FALSE}
 pb4 <- ggplot(pb4data, aes(x = Index, y = nino_filtered)) +
   geom_line(color = "#b56576", linewidth = 0.1) +
   labs(
@@ -283,16 +283,20 @@ pb4 <- ggplot(pb4data, aes(x = Index, y = nino_filtered)) +
     linetype = "dashed",
     linewidth = 0.5
   ))
+```
+```{r}
 print(pb4)
 ```
 \underline{Autocorrelation}
 
 ```{r}
+# compute acf values for lags
 p5bdata = data.frame(
   h = 0:45,
   rh = acf(nino_filtered, plot = FALSE, lag.max = 45)$acf
 )
-
+```
+```{r, include = FALSE}
 pb5 <- ggplot(p5bdata, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
              linetype = "dashed",
@@ -310,8 +314,10 @@ pb5 <- ggplot(p5bdata, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "PACF Values",
        title = "Sample ACF of Deseasonalized El Nino 3.4 Index",
        subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
-    
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+```
+```{r}
 print(pb5)
 ```
 \underline{Partial Autocorrelation}
@@ -340,7 +346,8 @@ pb6 <- ggplot(p6bdata, aes(x = h, y = rhh)) +
   labs(x = "Lag",  y = "PACF Values",
        title = "Partial ACF of Deseasonalized El Nino 3.4 Index",
        subtitle = "Using Training Data Spanning Jan. 1870 to Dec. 2021") +
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
 ```
 ```{r}
 print(pb6)
@@ -384,7 +391,8 @@ ar_fits = t(round(data.frame(
   AR1 = c(ar1$coef[-1], head(ar1$coef, -1), rep(NA, times = 5), ar1$sigma2),
   AR6 = c(tail(ar6$coef, 1), head(ar6$coef, -1), ar6$sigma2)), 3))
 # report with nice latex column names
-kable(ar_fits, "latex", escape = FALSE,  col.names = var_col_names)  %>%
+kable(ar_fits, "latex", escape = FALSE,  col.names = var_col_names,
+      caption = "Fitted AR Coefficients")  %>%
   kable_styling(latex_options = "hold_position") %>%
   kable_styling(position = "center")
 ```
@@ -454,8 +462,13 @@ hw_results_coefs = (data.frame(
   Beta = paste(0, ".000", sep = ""),
   Gamma = paste(hw_no_trend$gamma, ".000", sep = "")
 ))
+# format into table
 rownames(hw_results_coefs) = NULL
-kable(hw_results_coefs, caption = "Holt-Winters Coefficients")
+kable(hw_results_coefs, "latex", escape = FALSE,  
+      col.names = c("$\\hat{\\alpha}$", "$\\hat{\\beta}$", "$\\hat{\\gamma}$"), 
+      caption = "Fitted Holt-Winters Coefficients")  %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
 ```
 Our fitted $\hat\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma){I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ - this means that the model is placing a lot of significance on the current level (and period) and much less on levels in the past when fitting.
 
@@ -466,6 +479,7 @@ Our fitted $\hat\gamma = 1$, implying that the model places maximum smoothing we
 Use this model to predict sea surface temperature from Jan 2022 through Nov 2023. 
 
 ```{r}
+# make predictions and format as data frame
 hw_predictions = data.frame(
   predict(hw_no_trend, n.ahead = 23, prediction.interval = TRUE, level = 0.95))
 
@@ -478,7 +492,7 @@ p4data = data.frame(
   Upper = as.numeric(hw_predictions$upr)
 )
 ```
-```{r fancyplot}
+```{r fancyplot, include = FALSE}
 # make fancy as heck plot
 p4 = ggplot(data = p4data, aes(x = Time)) +
   # lines for obsv, pred and interval bounds
@@ -513,6 +527,8 @@ p4 = ggplot(data = p4data, aes(x = Time)) +
     linetype = "dashed"
   ), legend.position = "top", legend.justification = "left", 
   legend.margin = margin(0,0,0,0))
+```
+```{r}
 print(p4)
 ```
 
@@ -531,7 +547,7 @@ N = length(nino_test)
 # verify equality in set cardinalities
 stopifnot(all.equal(N, length(hw_predictions$fit)))
 # calculate ms prediction error
-ms_pre_hw = sum ( (nino_test - hw_predictions$fit )^2 ) /23
+ms_pre_hw = sum ( (nino_test - hw_predictions$fit )^2 ) / N
 ms_pre_hw
 ```
 The observed Mean Square prediction error for the Holt-Withers forecast is approximately $1.972$.
@@ -574,10 +590,12 @@ stopifnot(all.equal(length(hours_test)+length(hours_train),
                     length(na.remove(hours_series))))
 ```
 
-Plot the training data.
+Prepare and plot the training data.
 
 ```{r}
 p5data = fortify.zoo(hours_train)
+```
+```{r, include = FALSE}
 n = length(hours_train)
 p5 <- ggplot(p5data, aes(x = Index, y = hours_train)) +
   geom_line(color = "#410B13", linewidth = 0.1) +
@@ -592,6 +610,8 @@ p5 <- ggplot(p5data, aes(x = Index, y = hours_train)) +
     linetype = "dashed",
     linewidth = 0.5
   ))
+```
+```{r}
 print(p5)
 ```
 
@@ -610,6 +630,8 @@ Plot the new time series and its correlogram.
 \underline{New Series}
 ```{r}
 p6data = fortify.zoo(hours_train_diff)
+```
+```{r, include = FALSE}
 p6 <- ggplot(p6data, aes(x = Index, y = hours_train_diff)) +
   geom_line(color = "#BA1F33", linewidth = 0.1) +
   labs(
@@ -623,6 +645,8 @@ p6 <- ggplot(p6data, aes(x = Index, y = hours_train_diff)) +
     linetype = "dashed",
     linewidth = 0.5
   ))
+```
+```{r}
 print(p6)
 ```
 
@@ -633,6 +657,8 @@ p7data = data.frame(
   h = 0:36,
   rh = acf(hours_train_diff, plot = FALSE, lag.max = 36)$acf
 )
+```
+```{r, include = FALSE}
 p7 <- ggplot(p7data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
              linetype = "dashed",
@@ -650,8 +676,10 @@ p7 <- ggplot(p7data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Correlogram of Differenced Series of Monthly Average Work Hours",
        subtitle = "Using Training Data for Canada, Jan. 1987 to Dec. 2020") +
-    
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+```
+```{r}
 print(p7)
 ```
 
@@ -673,6 +701,8 @@ pure AR only for PACF
 \underline{Series}
 ```{r}
 p8data = fortify.zoo(hours_train_diff_s)
+```
+```{r, include = FALSE}
 p8 <- ggplot(p8data, aes(x = Index, y = hours_train_diff_s)) +
   geom_line(color = "#9e0059", linewidth = 0.1) +
   labs(
@@ -686,6 +716,8 @@ p8 <- ggplot(p8data, aes(x = Index, y = hours_train_diff_s)) +
     linetype = "dashed",
     linewidth = 0.5
   ))
+```
+```{r}
 print(p8)
 ```
 
@@ -695,6 +727,8 @@ p9data = data.frame(
   h = 0:80,
   rh = acf(hours_train_diff_s, plot = FALSE, lag.max = 80)$acf
 )
+```
+```{r, include=FALSE}
 p9 <- ggplot(p9data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
              linetype = "dashed",
@@ -712,7 +746,10 @@ p9 <- ggplot(p9data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Correlogram of Sequential and Seasonal [12] Differences",
        subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+```
+```{r}
 print(p9)
 ```
 \underline{Sample PACF}
@@ -722,6 +759,8 @@ p10data = data.frame(
   h = 1:80,
   rh = pacf(hours_train_diff_s, plot = FALSE, lag.max = 80)$acf
 )
+```
+```{r, include=FALSE}
 p10 <- ggplot(p10data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 2/sqrt(n),
              linetype = "dashed",
@@ -739,13 +778,16 @@ p10 <- ggplot(p10data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Sample PACF of Sequential and Seasonal [12] Differences",
        subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+```
+```{r}
 print(p10)
 ```
 
 Comment on what you observe:
 
-The seasonal differencing paired with the sequential differencing seems to have done a good job in making the series stationary. We see from the plotted data as well as the correlogram that there isn't evidence of a significant season or trend. Further, the visual complexity of both the ACF and the PACF hints at the fact that there may be a blended model (i.e. a mixture of AR and MA) underlying this process. We will discuss in the next sections exaclty what the parameters of the model equation are in this case. 
+The seasonal differencing paired with the sequential differencing seems to have done a good job in making the series stationary. We see from the plotted data as well as the correlogram that there isn't evidence of a significant season or trend. Further, the visual complexity of both the ACF and the PACF hints at the fact that there may be a blended model (i.e. a mixture of AR and MA) underlying this process. We will discuss in the next sections exactly what the parameters of the model equation are in this case. 
 
 
 ### Part C: Difference Parameters.
@@ -810,7 +852,7 @@ $$
 $$
 So, it's a bit more difficult to directly examine the PACF for the largest value of $\hat\alpha_{kk}$ such that $\forall i > k, |\hat\alpha_{ii}| < {2}\sqrt{n}$ as we normally would, since it isn't direct to discern which coefficient in the AR decomposition it actually aligns to in the overall model (i.e. in the full seasonal/sequential differenced with MA.)
 
-Then we find a logical combination of $p$ and $P$, we can informally examine the PACF for what seems "sensible." What immediately jumps out to me is the presence of a large $\hat\alpha_{kk}$ at $k = 12$. This is indicative of a seasonal AR component, i.e. $P \geq 1$. Further, there is an immediate jump at $\hat\alpha_{11}$ as well as other "spikes" across the PACF at $\hat\alpha_{11, 11},  \hat\alpha_{23, 23}$, etc. Since these values $\{1, 11, 23, \dots \}$ are not evenly divisiple by $12$, we know that there must exist one or more sequential AR components, i.e. $p \geq 1$. For the sake of parsimony, my initial suggestion would be to choose $P = p = 1$ as a starting point. 
+Then we find a logical combination of $p$ and $P$, we can informally examine the PACF for what seems "sensible." What immediately jumps out to me is the presence of a large $\hat\alpha_{kk}$ at $k = 12$. This is indicative of a seasonal AR component, i.e. $P \geq 1$. Further, there is an immediate jump at $\hat\alpha_{11}$ as well as other "spikes" across the PACF at $\hat\alpha_{11, 11},  \hat\alpha_{23, 23}$, etc. Since these values $\{1, 11, 23, \dots \}$ are not evenly divisible by $12$, we know that there must exist one or more sequential AR components, i.e. $p \geq 1$. For the sake of parsimony, my initial suggestion would be to choose $P = p = 1$ as a starting point. 
 
 
 Due to the complexity inherent in this particular mixed models, it is difficult to visually determine values of $p$, $P$, $q$, and $Q$, however, from the arguments above, $\{p, P, q, Q \} = \{0, 1, 1, 1\}$ seems plausible.
