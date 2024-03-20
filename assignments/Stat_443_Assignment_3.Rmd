@@ -403,12 +403,96 @@ kable(ar_fits, "latex", escape = FALSE,  col.names = var_col_names,
 
 Compare the AIC values of your two models. Which would you pick based on AIC?
 
+First, we extract the aic values of each fit.
+
+```{r aic_extract}
+kable(
+  t(data.frame(
+    AR1 = round(ar1$aic, 3),
+    AR6 = round(ar6$aic, 3))),
+  col.names = c("Candidate Model", "AIC"),
+  caption = "Akaike Information Criterion"
+)
+```
+
+Let $\text{AIC}(m)$ be the AIC for models $m \in M$, where $M = \{\text{AR}(1), \text{AR}(6)\}$.
+Generally, models with smaller AIC values are preferred.
+
+So, we can select the best model $m_{\text{best}}$ with the following logic:
+$$
+m_{\text{best}} = \underset{m \in M}{\text{argmin}}\big\{\text{AIC}(m)\big\}, \text{ where } M = \big\{\text{AR}(1), \text{AR}(6)\big\}
+$$
+
+Then, using the reported values above, we can select $m_{\text{best}}$ as follows:
+
+$$
+\begin{aligned}
+m_{\text{best}} &= \underset{m \in M}{\text{argmin}}\big\{\text{AIC}(m)\big\} \\
+m_{\text{best}} &= \underset{m \in M}{\text{argmin}}\Big\{\text{AIC}(\text{AR}(1)\big), \text{AIC}\big(\text{AR}(6)\big) \Big\} \\ 
+m_{\text{best}} &= \underset{m \in M}{\text{argmin}}\Big\{ 687.816, 596.045\Big\} \\ 
+m_{\text{best}} &= \text{AR}(6)
+\end{aligned}
+$$
+So, by AIC selection, we prefer the $\text{AR}(6)$ model.
+
+
 ### Part b.4.
 
+We recall that the third plot of `tsdiag` are the $p$-values of the Ljung-Box Version of the Portmanteau Lack-of-Fit test, where informally the following hypotheses are being compared:
 
-Use the `tsdiag` function in R to plot diagnostics for your two models. What do you
-observe?
+$$
+H_0: \text{ The Model is Well-Specified.} \hspace{0.25cm} \text{v.s.} \hspace{0.25cm} H_A: \text{ The Model is Not Well-Specified.}
+$$
+Where the $p$_value is found via the $\chi^2$ distribution and the test statistic, given by the following for a pure AR model (i.e. $q = 0$)
 
+$$
+Q_2 = n(n+2) \sum_{i =1}^h \dfrac{\hat\rho_z(h)^2}{n - h} \sim \chi^2_{h - p}
+$$
+To get a better understanding of the plots to follow, we compute the $Q_2$ values for $h \in [1, 10] \subset \mathbb{Z}$ below. 
+```{r}
+n = length(nino_filtered)
+lb_stats = matrix(0, ncol = 2, nrow = 10)
+M = list(ar1, ar6)
+for(i in 1:length(M)){
+  # get i-th model
+  m = M[[i]]
+  # get rho(h) values of residuals
+  rh_m  = acf(m$residuals, lag.max = 10, plot = F)$acf
+  # compute Ljung-Box stat
+  lb_ar =  sapply(2:11, 
+         function(h){
+           Q = n*(n+2)*sum( rh_m[2:h]^2 / (n - h))
+           p = pchisq(Q, df = h - 1, lower.tail = F) # p = 1 for AR(1)
+           p
+         })
+  lb_stats[, i] = lb_ar
+}
+# lb_stats
+```
+
+
+Now, we the `tsdiag` function in R to plot diagnostics for your two models.
+
+<!-- results=FALSE, fig.show='hide' -->
+```{r, fig.height = 8}
+tsdiag(ar1)
+```
+```{r, fig.height=8}
+tsdiag(ar6)
+```
+
+
+What do you observe?
+
+
+We see that the AR$(1)$ model has Ljung-Box $p$-values below the $\alpha = 0.05$ significance threshold $\forall h > 1$, which is confirmed by out `lb_stats` object, as you can see below:
+```{r}
+which(lb_stats[, 1] < 0.05)
+```
+This tell us that we reject $H_0$ in favour of the alternative that the model is ill-fitting for the AR$(1)$ case in the majority of scenarios. This implies that it may be likely that the AR$(1)$ model is not well-specified for these data. This theory is supported by the ACF of the residuals, which appears to have a vague sinusoidal pattern to it, as well as having values above $\pm 2 / \sqrt{n}$ for quite a few of the lags. All in all, the `tsdiag` results for the AR$(1)$ model shed doubt on our confidence of this candidate being well-fitting for these data.
+
+
+To contrast, 
 
 ### Part b.5.
 
