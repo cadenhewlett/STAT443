@@ -1218,7 +1218,7 @@ p2f = ggplot(data = p2fdata, aes(x = Time)) +
 ```{r}
 print(p2f)
 ```
-**Comments**: While there's no noticeable long-term pattern to the residuals as we would hope if the model is well fitting, there is a sharp increase in the residual values from 2019 onwards. This could be due to the large fluctuations in working hours caused by the COVID-19 pandemic. However, beyond these extreme values, the residuals appear to be randomly distributed about zero, as we would anticipate for a well-fitting model.
+**Comments**: There's no noticeable long-term pattern to the residuals - supporting the theory that the model is well fitting - there is a sharp increase in the residual values from around 2020 onwards. This could be due to the large fluctuations in working hours caused by the COVID-19 pandemic. However, beyond these extreme values, the residuals appear to be randomly distributed about zero, as we would anticipate for a well-fitting model.
 
 
 
@@ -1284,7 +1284,7 @@ abline(h = 0.05)
 # i.e. those between 15, 30 (as noted in the slides.) So, to summarize, the diagnostics shown across the three plots
 # common to tsdiag show that while the SARIMA model selected seems to not have a complete lack-of-fit
 # there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model overall for these data
-# these include but are not limited to the high standardized residuals for 2019-2020, the large residual ACF values at certain lags
+# these include but are not limited to the high standardized residuals for 2020-fwd, the large residual ACF values at certain lags
 # and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 12 lags starting at h = 6. while we fail to reject
 # the null hypothesis (i.e. p > alpha = 0.05) for all lags in [1, 35], this pattern in the p-values is concerning.
 ```
