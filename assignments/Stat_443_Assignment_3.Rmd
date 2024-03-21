@@ -1035,7 +1035,7 @@ p10 <- ggplot(p10data, aes(x = h, y = rh)) +
   geom_hline(yintercept = 0,
              linetype = "dashed",
              color = "darkgray") +
-  labs(x = "Lag",  y = "ACF Values",
+  labs(x = "Lag",  y = "PACF Values",
        title = "Sample PACF of Sequential and Seasonal [12] Differences",
        subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
   theme_bw() 
@@ -1297,6 +1297,22 @@ p2f3 <- ggplot(p2f3data, aes(x = h, y = lb_stats)) +
 print(p2f3)
 ```
 
+**Comments and General Summary**: From the above plot of Ljung-Box Statistic $p$-values, we see a sudden dip of confidence, i.e. $\mathbb{P}(\text{Model} \mid H_0: \text{Well-Fitting})$, around lag $h = 6$, which is quite concerning. This could be indicative of some phenomenon in our data beginning at the first half-season (recalling $s = 12$) that our current SARIMA fit is not capturing. An extended view of the Ljung-Box statistic $p$-values up to Lag 30 shown below demonstrates the continuation of this "dip" in $p$-values every 13-14 lags:
+```{r, fig.height=8}
+#tsdiag(sarima_fit)
+# dip at lag 6 = concerning!  there is a pattern emerging at half-periods, causing a fairly sharp decrease
+# this indicates that there is some phenomenon in our data occuring every period (12 months), 
+# starting at the first half period (6 months) that is causing a large increase in the Q_2 values. 
+# an extended view of the ljung-box statistic plot emphasizes this pattern more clearly
+# this being said, it is still greater than alpha = 0.05 for the common lag values for the portmanteau test
+# i.e. those between 15, 30 (as noted in the slides.) So, to summarize, the diagnostics shown across the three plots
+# common to tsdiag show that while the SARIMA model selected seems to not have a complete lack-of-fit
+# there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model overall for these data
+# these include but are not limited to the high standardized residuals for 2020-fwd, the large residual ACF values at certain lags
+# and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 13-14 lags starting at h = 6. while we fail to reject
+# the null hypothesis (i.e. p > alpha = 0.05) for all lags in [1, 35], this pattern in the p-values is concerning.
+```
+
 ```{r}
 # increase lag and run code again
 lagmax = 30
@@ -1339,18 +1355,5 @@ plot(p2f4)
 plot(lb_s, type = 'o', ylim = c(0, 1))
 abline(h = 0.05)
 ```
-```{r, fig.height=8}
-tsdiag(sarima_fit)
-# dip at lag 6 = concerning!  there is a pattern emerging at half-periods, causing a fairly sharp decrease
-# this indicates that there is some phenomenon in our data occuring every period (12 months), 
-# starting at the first half period (6 months) that is causing a large increase in the Q_2 values. 
-# an extended view of the ljung-box statistic plot emphasizes this pattern more clearly
-# this being said, it is still greater than alpha = 0.05 for the common lag values for the portmanteau test
-# i.e. those between 15, 30 (as noted in the slides.) So, to summarize, the diagnostics shown across the three plots
-# common to tsdiag show that while the SARIMA model selected seems to not have a complete lack-of-fit
-# there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model overall for these data
-# these include but are not limited to the high standardized residuals for 2020-fwd, the large residual ACF values at certain lags
-# and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 13-14 lags starting at h = 6. while we fail to reject
-# the null hypothesis (i.e. p > alpha = 0.05) for all lags in [1, 35], this pattern in the p-values is concerning.
-```
+
 
