@@ -1224,7 +1224,7 @@ print(p2f)
 
 \underline{Residual ACF}
 ```{r}
-# standardized residuals
+# residual acf
 p2f2data = data.frame(
   h = 0:24,
   rh = acf(sarima_fit$residuals, lag.max = 24, plot = F)$acf
@@ -1261,21 +1261,86 @@ print(p2f2)
 \underline{Ljung-Box P-Values}
 
 ```{r}
-n = length(hours_train); lagmax = 35
+n = length(hours_train); lagmax = 10
 # get rho(h) values of residuals
 rh_s  = acf(sarima_fit$residuals, lag.max = lagmax, plot = F)$acf
 # compute Ljung-Box statistic
-lb_s =  sapply(2:lagmax+1, 
+lb_s =  sapply(2:(lagmax+1), 
          function(h){
            Q = n*(n+2)*sum( rh_s[2:h]^2 / (n - h))
            pchisq(Q, df = h - 1, lower.tail = F)})
+# prep data for plotting
+p2f3data = data.frame(
+  h = 1:lagmax,
+  lb_stats = lb_s
+)
+```
+```{r, include=FALSE}
+p2f3 <- ggplot(p2f3data, aes(x = h, y = lb_stats)) +
+  ylim(0, 1) +
+  geom_segment(aes(
+    x = h,
+    xend = h,
+    y = 0.05-1e-3,
+    yend = lb_stats
+  ), col = '#d147a3', lwd = 0.5) +
+  geom_point( color = "#d147a3",
+               pch = 21, size = 3.2, fill = '#ffbae8') +
+    geom_hline(yintercept = 0.05, linetype = "dashed", col = "#2bbd48", lwd = 1) +
+  scale_x_continuous(breaks = seq(from = 1, to = 10, by = 1),  minor_breaks = NULL) +
+  labs(x = "Lag",  y = "p Values",
+       title = "p-Values for Ljung-Box Statistic for Lack-of-Fit Test of SARIMA Model",
+    subtitle =  "Training Set: Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020")+
+  theme_bw()
+```
+```{r}
+print(p2f3)
+```
+
+```{r}
+# increase lag and run code again
+lagmax = 30
+```
+```{r, include = FALSE}
+n = length(hours_train); 
+# get rho(h) values of residuals
+rh_s  = acf(sarima_fit$residuals, lag.max = lagmax, plot = F)$acf
+# compute Ljung-Box statistic
+lb_s =  sapply(2:(lagmax+1), 
+         function(h){
+           Q = n*(n+2)*sum( rh_s[2:h]^2 / (n - h))
+           pchisq(Q, df = h - 1, lower.tail = F)})
+p2f4data = data.frame(
+  h = 1:lagmax,
+  lb_stats = lb_s
+)
+p2f4 <- ggplot(p2f4data, aes(x = h, y = lb_stats)) +
+  ylim(0, 1) +
+  geom_segment(aes(
+    x = h,
+    xend = h,
+    y = 0.05-1e-3,
+    yend = lb_stats
+  ), col = '#ffbae8', lwd = 0.5, alpha = 0.7) +
+  geom_line( color = "#d147a3") +
+  geom_point( color = "#d147a3",
+               pch = 21, size = 1, fill = '#ffbae8') +
+  scale_x_continuous(breaks = seq(from = 1, to = lagmax, by = 1),  minor_breaks = NULL) +
+  geom_hline(yintercept = 0.05, linetype = "solid", col = "#2bbd48", lwd = 0.5) +
+  labs(x = "Lag",  y = "p Values",
+       title = "p-Values for Ljung-Box Statistic for Lack-of-Fit Test of SARIMA Model",
+    subtitle =  "Training Set: Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020")+
+  theme_bw()
+```
+```{r}
+plot(p2f4)
 ```
 ```{r}
 plot(lb_s, type = 'o', ylim = c(0, 1))
 abline(h = 0.05)
 ```
 ```{r, fig.height=8}
-# tsdiag(sarima_fit)
+tsdiag(sarima_fit)
 # dip at lag 6 = concerning!  there is a pattern emerging at half-periods, causing a fairly sharp decrease
 # this indicates that there is some phenomenon in our data occuring every period (12 months), 
 # starting at the first half period (6 months) that is causing a large increase in the Q_2 values. 
@@ -1285,7 +1350,7 @@ abline(h = 0.05)
 # common to tsdiag show that while the SARIMA model selected seems to not have a complete lack-of-fit
 # there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model overall for these data
 # these include but are not limited to the high standardized residuals for 2020-fwd, the large residual ACF values at certain lags
-# and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 12 lags starting at h = 6. while we fail to reject
+# and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 13-14 lags starting at h = 6. while we fail to reject
 # the null hypothesis (i.e. p > alpha = 0.05) for all lags in [1, 35], this pattern in the p-values is concerning.
 ```
 
