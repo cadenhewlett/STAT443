@@ -403,7 +403,7 @@ kable(ar_fits, "latex", escape = FALSE,  col.names = var_col_names,
 
 Compare the AIC values of your two models. Which would you pick based on AIC?
 
-First, we extract the aAICic values of each fit.
+First, we extract the AIC values of each fit.
 ```{r aic_extract}
 kable(
   t(data.frame(
@@ -424,7 +424,6 @@ m_{\text{best}} = \underset{m \in M}{\text{argmin}}\big\{\text{AIC}(m)\big\}, \t
 $$
 
 Then, using the reported values above, we can select $m_{\text{best}}$ as follows:
-
 $$
 \begin{aligned}
 m_{\text{best}} &= \underset{m \in M}{\text{argmin}}\big\{\text{AIC}(m)\big\} \\
@@ -442,8 +441,7 @@ We recall that the third plot of `tsdiag` are the $p$-values of the Ljung-Box Ve
 $$
 H_0: \text{ The Model is Well-Specified.} \hspace{0.25cm} \text{v.s.} \hspace{0.25cm} H_A: \text{ The Model is Not Well-Specified.}
 $$
-Where the $p$_value is found via the $\chi^2$ distribution and the test statistic, given by the following for a pure AR model (i.e. $q = 0$)
-
+Where the $p$-value is found via the $\chi^2$ distribution and the test statistic, given by the following for a pure AR model (i.e. $q = 0$)
 $$
 Q_2 = n(n+2) \sum_{i =1}^h \dfrac{\hat\rho_z(h)^2}{n - h} \sim \chi^2_{h - p}
 $$
@@ -469,7 +467,7 @@ for(i in 1:length(M)){
 ```
 
 
-Now, we the `tsdiag` function in R to plot diagnostics for your two models.
+Now, we the `tsdiag` function in R to plot diagnostics for our two models.
 
 <!-- results=FALSE, fig.show='hide' -->
 ```{r, fig.height = 8}
@@ -483,20 +481,20 @@ tsdiag(ar6)
 What do you observe?
 
 
-We see that the AR$(1)$ model has Ljung-Box $p$-values below the $\alpha = 0.05$ significance threshold $\forall h > 1$, which is confirmed by out `lb_stats` object, as you can see below:
+We see that the AR$(1)$ model has Ljung-Box $p$-values below the $\alpha = 0.05$ significance threshold $\forall h \in[2 ,10]$, which is confirmed by out `lb_stats` object, as you can see below:
 ```{r}
 which(lb_stats[, 1] < 0.05)
 ```
-This tell us that we reject $H_0$ in favour of the alternative that the model is ill-fitting for the AR$(1)$ case in the majority of scenarios. This implies that it may be likely that the AR$(1)$ model is not well-specified for these data. This theory is supported by the ACF of the residuals, which appears to have a vague sinusoidal pattern to it, as well as having values above $\pm 2 / \sqrt{n}$ for quite a few of the lags. All in all, the `tsdiag` results for the AR$(1)$ model shed doubt on our confidence of this candidate being well-fitting for these data.
+This tell us that we reject $H_0$ in favour of the alternative that the model is ill-fitting for the AR$(1)$ case in the majority of scenarios. This implies that that the AR$(1)$ model may not be well-specified for these data. This theory is supported by the ACF of the residuals, which appears to have a vague sinusoidal pattern to it, as well as having values above $\pm 2 / \sqrt{n}$ for quite a few of the lags. All in all, the `tsdiag` results for the AR$(1)$ model shed doubt on our confidence of this candidate being a good fit for these data.
 
 
 To contrast, the Ljung-Box statistic values for the AR$(6)$ model are consistently well above $\alpha = 0.05$, as shown in the table below (for the first five lags to conserve space):
 ```{r}
 kable(t(data.frame(
-           Lag = 1:5,
            AR1 = format(lb_stats[1:5, 1], scientific = TRUE, digits = 5),
            AR6 = format(lb_stats[1:5, 2], scientific = TRUE, digits = 5))),
-      caption = "Ljung-Box Portmanteau Test $p$-Values for Varying Lags")  %>%
+      caption = "Ljung-Box Portmanteau Test $p$-Values for Varying Lags",
+      col.names = paste("Lag", 1:5))  %>%
   kable_styling(latex_options = "hold_position") %>%
   kable_styling(position = "center")
 ```
@@ -509,22 +507,28 @@ This shows that the probability of observing the computed $Q_2$ values given $H_
 Predict the sea surface temperature for Jan 2022 through Nov 2023 using both
 candidate models. Use this to calculate the mean squared prediction error (MSPE) for both models. 
 
-We again let $m \in M$ be the candidate models, for $M = \{\text{AR}(1), \text{AR}(6)\}$. We let $\{y_t\}_{t \in \mathbb{Z}}$  be the observed values from the test set. We let $\hat{y}^{(m)}_t(\ell)$ be the $\ell$-step ahead Box-Jenkins forecast (for $\ell \in \mathbb{Z}$) of model $m$. Let $N_{\ell}$ be the total number of steps ahead. In our case, this is $23$ for both.
+We again let $m \in M$ be the candidate models, for $M = \big\{\text{AR}(1), \text{AR}(6)\big\}$. We let $\{y_t\}_{t \in \mathbb{Z}}$  be the observed values from the test set. We let $\hat{y}^{(m)}_t(\ell)$ be the $\ell$-step ahead Box-Jenkins forecast (for $\ell \in \mathbb{Z}$) of model $m$ (with the seasonal component added back in.) Let $N_{\ell}$ be the total number of steps ahead. In our case, this is $23$ for both.
 
 The set of MSPE value for the candidate models is given by:
 $$
 \text{MSPE} : \bigg\{ m \in M: \frac{1}{N_{\ell}}\sum_{\ell = 1}^{N_{\ell}} \Big( y_{t + \ell} - \hat{y}^{(m)}_t(\ell)\Big)^2 \bigg\}
 $$
+We compute these values in `R` below:
 ```{r}
-N_L = length(nino_test)
+N_L = 23
 # make predictions for held-out test data
-ar1_forecast = predict(ar1, n.ahead = N_L)
-ar6_forecast = predict(ar6, n.ahead = N_L)
+ar1_forecast = predict(ar1, n.ahead = 23) 
+ar6_forecast = predict(ar6, n.ahead = 23) 
+# re-seasonalize the forecasts
+s_test = (decomposition$seasonal)[1:23]
+ar1_fit = ar1_forecast$pred + s_test
+ar6_fit = ar6_forecast$pred + s_test
+# define the models
 mods = c("AR(1)", "AR(6)")
 # compute MSPE for each
-mspes = sapply(list(ar1_forecast, ar6_forecast),
-               function(m){
-                 mean( (nino_test - m$pred)^2 )
+mspes = sapply(list(ar1_fit, ar6_fit),
+               function(m_fit){
+                 mean( (nino_test - m_fit )^2 )
                })
 # report results
 kable(t(round(mspes, 5)), col.names = mods,
@@ -534,7 +538,7 @@ kable(t(round(mspes, 5)), col.names = mods,
 ```
 Then, to determine which method performs better, we select the argmin of the MSPEs set.
 $$
-m_{\text{best}} = \underset{m \in M}{\text{argmin}}\Big\{\text{MSPE}(m)\Big\} = \underset{m \in M}{\text{argmin}}\Big\{ 1.200, 1.016\Big\} = \text{AR}(6)
+m_{\text{best}} = \underset{m \in M}{\text{argmin}}\Big\{\text{MSPE}(m)\Big\} = \underset{m \in M}{\text{argmin}}\Big\{ 0.996,	0.794\Big\} = \text{AR}(6)
 $$
 In our case, this is the AR$(6)$ model.
 ```{r}
@@ -549,9 +553,9 @@ both models, and their approximate 95% prediction intervals.
 
 
 
-**NOTE**: We will include the plotting code for this question, as it specifically asks for it.
+**NOTE**: We will include the plotting code for this question, as it specifically asks for it. 
 
-First, we compute the $95\%$ prediction intervals using the following method: As before, we let $\hat{y}^{(m)}_t({\ell})$ be the $\ell \in \mathbb{Z}$-step ahead Box-Jenkins forecast for model $m \in M$. We let $\text{Z} \sim N(0,1)$ and "PrI" indicate the prediction interval at step $\ell$, given significance level $\alpha$ and model $m$.
+First, we compute the $95\%$ prediction intervals using the following method: As before, we let $\hat{y}^{(m)}_t({\ell})$ be the $\ell \in \mathbb{Z}$-step ahead Box-Jenkins forecast for model $m \in M$. We let $\text{Z} \sim N(0,1)$ and "PrI" indicate the prediction interval at step $\ell$, given significance level $\alpha$ and model $m$. We then define the prediction intervals as follows:
 $$
 \text{PrI}(\ell \mid \{\alpha, m\}) = \hat{y}^{(m)}_t({\ell}) \pm \text{Z}_{\alpha/2}\, \text{se}\big( \hat{y}^{(m)}_t({\ell}) \big)
 $$
@@ -560,19 +564,19 @@ For this question, we employ $\alpha = 0.05$ and $m \in M$ to compute the interv
 alpha = 0.05
 Z = qnorm(1-alpha/2)
 # prediction intervals for AR(1)
-ar1_Low = ar1_forecast$pred - Z*ar1_forecast$se
-ar1_High = ar1_forecast$pred + Z*ar1_forecast$se
+ar1_Low = ar1_fit - Z*ar1_forecast$se
+ar1_High = ar1_fit + Z*ar1_forecast$se
 # prediction intervals for AR(6)
-ar6_Low = ar6_forecast$pred - Z*ar6_forecast$se
-ar6_High = ar6_forecast$pred + Z*ar6_forecast$se
+ar6_Low = ar6_fit- Z*ar6_forecast$se
+ar6_High = ar6_fit + Z*ar6_forecast$se
 # construct the data frame
 bigplot_DF = data.frame(
   Time = as.Date(time(nino_test)),
   Observed = as.numeric(nino_test),
-  Forecast_AR1 = as.numeric(ar1_forecast$pred),
+  Forecast_AR1 = as.numeric(ar1_fit),
   Lower_AR1 = as.numeric(ar1_Low),
   Upper_AR1 = as.numeric(ar1_High),
-  Forecast_AR6 = as.numeric(ar6_forecast$pred),
+  Forecast_AR6 = (ar6_fit),
   Lower_AR6 = as.numeric(ar6_Low),
   Upper_AR6 = as.numeric(ar6_High)
 )
@@ -580,27 +584,33 @@ bigplot_DF = data.frame(
 Now, we make the combined plot (with labels and a legend) below:
 ```{r bigfancyplot}
 pfancy = ggplot(data = bigplot_DF, aes(x = Time)) +
+  # light blue and red fill area between prediction intervals
+  geom_ribbon(aes(ymin = Lower_AR1, ymax = Upper_AR1), fill = "#a7bdfa", alpha = 0.15) +
+  geom_ribbon(aes(ymin = Lower_AR6, ymax = Upper_AR6), fill = "#fa98ac", alpha = 0.15) +
   # lines for observed
   geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
   # lines and prediction interval for AR(1)
   geom_line(aes(y = Forecast_AR1, color = "Forecast AR(1)"),lwd = 1) +
   geom_line(aes(y = Lower_AR1, color = "95% Interval AR(1)"), alpha = 0.75) +
   geom_line(aes(y = Upper_AR1, color = "95% Interval AR(1)"), alpha = 0.75) +
-  # lines and prediction interval for AR(1)
+  # lines and prediction interval for AR(6)
   geom_line(aes(y = Forecast_AR6, color = "Forecast AR(6)"),lwd = 1) +
   geom_line(aes(y = Lower_AR6, color = "95% Interval AR(6)"), alpha = 0.75) +
   geom_line(aes(y = Upper_AR6, color = "95% Interval AR(6)"), alpha = 0.75) +
-  # light blue and red fill area between prediction intervals
-  geom_ribbon(aes(ymin = Lower_AR1, ymax = Upper_AR1), fill = "#caf0f8", alpha = 0.15) +
-  geom_ribbon(aes(ymin = Lower_AR6, ymax = Upper_AR6), fill = "#ff9991", alpha = 0.15) +
+  # add points too
+  geom_point(aes(y = Observed, color = "Actual")) +
+  # points for AR(1)
+  geom_point(aes(y = Forecast_AR1, color = "Forecast AR(1)")) +
+  # points for AR(6)
+  geom_point(aes(y = Forecast_AR6, color = "Forecast AR(6)")) +
   # legend and colour assignment
   scale_color_manual(name = "",
     values = c(
     "Actual" = "#696969",
-    "Forecast AR(1)" = "#02a9ea",
-    "95% Interval AR(1)" = "#9fc8d6",
-    "Forecast AR(6)" = "#ff2e1f",
-    "95% Interval AR(6)" = "#fc796f"
+    "Forecast AR(1)" = "#3057cf",
+    "95% Interval AR(1)" = "#93adfa",
+    "Forecast AR(6)" = "#db2146",
+    "95% Interval AR(6)" = "#ff5c7c"
   )) +
   # customize x-axis for nice dates
   scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
@@ -612,7 +622,7 @@ pfancy = ggplot(data = bigplot_DF, aes(x = Time)) +
     y = expression(
       paste("Average Equatorial Sea Surface Temperature (in ", degree, "C)")
     )
-  ) +
+  ) + ylim(24, 30) +
   # customize theme: gridlines, margins, etc.
   theme_bw() +
   theme(
@@ -621,9 +631,8 @@ pfancy = ggplot(data = bigplot_DF, aes(x = Time)) +
       linewidth  = 0.35,
       linetype = "dashed"
     ), 
-    legend.position = "top", 
-    legend.justification = "left", 
-    legend.margin = margin(0,0,0,0))
+    legend.position = "top", legend.justification = "left", 
+    legend.margin = margin(0,0,0,0),  legend.text = element_text(size = 8))
 print(pfancy)
 ```
 
@@ -636,13 +645,13 @@ Forecast sea surface temperature for 2022 and 2023 using the Holt-Winters method
 
 ### Part c.1.
 
-Use the HoltWinters function in R to fit an appropriate model to the training data. 
+First, we use the `HoltWinters` function in R to fit an appropriate model to the training data. 
 
 
 As in our original series (and with the Box-Jenkins method) we did not observe a significant trend, we will construct a Holt-Winters model with $\beta = 0$.
 
 
-We will use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case, then, $p=12$.
+We will use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case,  $p=12$.
 
 We then have an additive seasonal effect $I_t$ for $t$ given by the following:
 $$
@@ -660,12 +669,13 @@ $$
 We report the coefficients from `HoltWinters` in the table below.
 ```{r}
 hw_no_trend = HoltWinters(nino_train, beta = FALSE, seasonal = "additive") # no trend
+# data frame for nice formatting
 hw_results_coefs = (data.frame(
   Alpha = round(hw_no_trend$alpha, 3),
   Beta = paste(0, ".000", sep = ""),
   Gamma = paste(hw_no_trend$gamma, ".000", sep = "")
 ))
-# format into table
+# show results in a table
 rownames(hw_results_coefs) = NULL
 kable(hw_results_coefs, "latex", escape = FALSE,  
       col.names = c("$\\hat{\\alpha}$", "$\\hat{\\beta}$", "$\\hat{\\gamma}$"), 
@@ -673,7 +683,7 @@ kable(hw_results_coefs, "latex", escape = FALSE,
   kable_styling(latex_options = "hold_position") %>%
   kable_styling(position = "center")
 ```
-Our fitted $\hat\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma){I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ - this means that the model is placing a lot of significance on the current level (and period) and much less on levels in the past when fitting.
+Our fitted $\hat\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma){I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ implies the model is placing a lot of significance on the current level (and period) and much less on levels in the past when fitting.
 
 
 ### Part c.2.
@@ -698,19 +708,20 @@ p4data = data.frame(
 ```{r fancyplot, include = FALSE}
 # make fancy as heck plot
 p4 = ggplot(data = p4data, aes(x = Time)) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "#b0f5bc", alpha = 0.15) +
   # lines for obsv, pred and interval bounds
   geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
   geom_line(aes(y = Forecast, color = "Forecast"),lwd = 1) +
+  geom_point(aes(y = Observed, color = "Actual")) +
+  geom_point(aes(y = Forecast, color = "Forecast")) +
   geom_line(aes(y = Lower, color = "95% Interval"), alpha = 0.75) +
   geom_line(aes(y = Upper, color = "95% Interval"), alpha = 0.75) +
-  # light blue fill area between prediction intervals
-  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "#caf0f8", alpha = 0.15) +
   # legend and colour assignment
   scale_color_manual(name = "",
     values = c(
     "Actual" = "#696969",
-    "Forecast" = "#02a9ea",
-    "95% Interval" = "#9fc8d6"
+    "Forecast" = "#126620",
+    "95% Interval" = "#9bf2aa"
   )) +
   # customize x-axis for nice dates
   scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
@@ -722,7 +733,7 @@ p4 = ggplot(data = p4data, aes(x = Time)) +
     y = expression(
       paste("Average Equatorial Sea Surface Temperature (in ", degree, "C)")
     )
-  ) +
+  ) +  ylim(22, 30) +
   theme_bw() +
   theme(panel.grid.minor =  element_line(
     color = "grey90",
@@ -735,8 +746,7 @@ p4 = ggplot(data = p4data, aes(x = Time)) +
 print(p4)
 ```
 
-
-### Part c.3.
+\pagebreak### Part c.3.
 
 Calculate the mean squared prediction error.
 
@@ -756,12 +766,34 @@ ms_pre_hw
 The observed Mean Square prediction error for the Holt-Withers forecast is approximately $1.972$.
 
 
+
 ### Part c.4.
 
 How does it compare to the Box-Jenkins models above?
 
 ```{r}
 # TODO: Comparison code goes here...
+
+## Qualitative ##
+# NOTE: HW appears quite close to the true values for \ell small, but becomes worse as time progresses.
+# Further, it begins to have a much wider prediction interval (i.e. become more uncertain) as the steps ahead increase
+# While the Box-Jenkins methods also exhibit this increase in uncertainty, it is less extreme (noting that the lower end 
+# of the Holt-Winter PrI is near 22, which is completely outside of the range of the BJ approach)
+
+# when comparing to the squared prediction error to that of the
+# better-performing AR(6) Box-Jenkins model, we see for smaller values 
+# of \ell there are actually cases in which the HW-Model has a smaller
+# squared prediction error. However, as the plot below demonstrates, 
+# that error skyrockets as the prediction distance increases. 
+# while the Box-Jenkins model also has a sharp squared error increase, 
+# it is much smaller than that of the Holt-Winters model
+err_HW = (nino_test - hw_predictions$fit )^2
+err_BJ = (nino_test - ar6_fit)^2
+plot(err_HW, ylim = c(-1, 10))
+lines(err_BJ, col = 'red')
+
+## Quantitative ##
+## HW has higher mean Squared prediction Error
 ```
 
 
@@ -879,8 +911,7 @@ p7 <- ggplot(p7data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Correlogram of Differenced Series of Monthly Average Work Hours",
        subtitle = "Using Training Data for Canada, Jan. 1987 to Dec. 2020") +
-  theme_bw() +
-  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+  theme_bw() 
 ```
 ```{r}
 print(p7)
@@ -900,7 +931,8 @@ hours_train_diff_s = diff(hours_train_diff, lag = 12, differences = 1)
 ```
 
 Plot the resulting differenced time series along with its sample acf and pacf. 
-pure AR only for PACF
+
+
 \underline{Series}
 ```{r}
 p8data = fortify.zoo(hours_train_diff_s)
@@ -949,8 +981,7 @@ p9 <- ggplot(p9data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Correlogram of Sequential and Seasonal [12] Differences",
        subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
-  theme_bw() +
-  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+  theme_bw() 
 ```
 ```{r}
 print(p9)
@@ -981,8 +1012,7 @@ p10 <- ggplot(p10data, aes(x = h, y = rh)) +
   labs(x = "Lag",  y = "ACF Values",
        title = "Sample PACF of Sequential and Seasonal [12] Differences",
        subtitle = "Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020") +
-  theme_bw() +
-  theme(panel.grid.minor = element_line(color = "grey90", linetype = "dashed", linewidth = 0.5))
+  theme_bw() 
 ```
 ```{r}
 print(p10)
@@ -994,13 +1024,14 @@ The seasonal differencing paired with the sequential differencing seems to have 
 
 
 ### Part C: Difference Parameters.
+
+
 Based on the results of Part II (a) and (b), specify the values of $d$, $D$, and $s$.
 
 From Part II (a), we applied one sequential difference using `diff`, so we know $d = 1$. Then, in Part II (b), we applied one seasonal difference using `lag = 12`, hence $D = 1$ with $s = 12$.
 
 
-# PACF ONLY FOR PURE AR 
-# TAKE SOME MA MODEL
+
 ### Part D: SARIMA Parameters
 
 Based on the plots in Part II (b), suggest possible values of  justifying your choices.
@@ -1012,9 +1043,9 @@ Firstly, let's discuss the presence of an MA component. We henceforth assume sta
 
 In the ACF, we see a fairly large $r_h$ value at $h = 12$, that significantly cuts off for $h > 12$. Unlike a pure MA plot where we would see an expect a very sharp cutoff, in a blended model there will still be other components at work after the MA component. 
 
-All of the lags after $h = 12$ for $h \in [0, 36] \subset \mathbb{Z}$ are noteably smaller, as the Sample ACF shows.
+All of the lags after $h = 12$ for $h \in [13, 80] \subset \mathbb{Z}$ are notably smaller, as the Sample ACF shows.
 
-This would imply that either we have a sequential MA with $q = 12$ or a seasonal MA with $Q = 1$. By the prinicple of parsimony, we prefer the latter. Also, this conclusion would imply that it is unlikely that there is a $p$ component.
+This would imply that either we have a sequential MA with $q = 12$ or a seasonal MA with $Q = 1$. By the prinicple of parsimony, we prefer the latter. Also, this conclusion would imply that it is likely that there is a $q$ component.
 
 To explain, we recall the right-hand side of a SARIMA model, assuming $Q=1$.
 $$
@@ -1026,7 +1057,8 @@ $$
 $$
 This would help explain the decently large "spike" at lag $12$ (also perhaps suggesting that $\tilde\beta < 0$.)
 
-However, is there a sequential component $q > 0$? By the above, under the assumption that $Q = 1$, if $\theta(B)$ was of an order greater than zero, there would be additional components in the right-hand side that we'd expect to see reflected in the ACF. 
+However, is there a sequential component $q > 0$? By the above, under the assumption that $Q = 1$, if $\theta(B)$ was of an order greater than zero, there would be additional components to the model associated with $Z_{t-1}$ and $Z_{t - s - 1}$, which we would expect to see reflected in the lags of the ACF. 
+
 
 The most likely visually is that $q = 1$. An explanation of why is facilitated by the equation below: 
 $$
@@ -1035,78 +1067,19 @@ $$
 \text{RHS } &= Z_t + \beta Z_{t-1} +\tilde{\beta}Z_{t - 12} + \beta\tilde{\beta}Z_{t - 13}  \\
 \end{aligned}
 $$
-In other words, from our understanding of MA models, we would see large in magnitude $r_1$ and (slightly less large) $r_{13}$. In the sample ACF, with a spike at lag 1 less than $-2/\sqrt{n}$ and a shorter spike at lag 13, slightly above $2/\sqrt{n}$, however, it is difficult to discern whether or not these are caused by the AR components of the model. 
-
-I am more inclined to favour the AR components causing these observed $r_h$ values than additional MA components due to the fact that there is a large autocorrelation at lag $11$, which isn't described by this sort of MA formulation. Notably, the fact that visually $|r_{11}| \approx |r_1|$ lends informal credence to the hypothesis that it is AR components rather than MA causing the $r_1$ and $r_{13}$ observations. If there were a $q>0$, I would expect it to have a notable magnitude outside of the general AR pattern. So, while it's theoretically plausible that $q>0$, by this reasoning we settle onto $q = 0$ in favour of a more robust AR components.
+In other words, from our understanding of MA models, we would see large in magnitude $r_1$ and (slightly less large) $r_{13}$; this isn't explainable by additional $Q$ components, as they can only increase $Z_{t-h}$ by a factor of $12$. To support this theory we see in the sample ACF a "spike" at lag $1$ less than $-2/\sqrt{n}$ and a shorter spike at lag $13$, slightly above $2/\sqrt{n}$, supporting our idea of a sequential MA component. For this reason, $q = 1$ seems plausible (noting that other $q > 0$ are also plausible.)
 
 
-Now let's consider whether or not there are AR components to the series. Visually, the slowly-decaying oscillating pattern is indicative of one or more AR components. Further, since the lag doesn't cut off to white noise immediately after the MA components (we see it sometimes creep above the $\pm 2 / \sqrt{n}$) this tells us there is very likely an AR component of some variety. 
+But what about AR components?  It would be a bit challenging to use the PACF to identify the order $p$ of any AR components, as in this course we only know graphical methods for this interpretation from \underline{pure} AR models. Regardless of if the PACF can be used for blended models, it is very difficult to tell from the ACF whether or not an AR component *actually exists.* Importantly, the PACF is a tool to quantify the parameters of an AR model once we've identified one using the ACF of the stationary time series. There doesn't seem to be any decaying exponential pattern to the ACF, nor does there seem to be a dampened sine curve - these are the two telltale signs of an AR component. While it is tempting to examine spikes in the PACF, they can be utilized do identify $p$ or $P$ if and only if we know from the ACF that AR component(s) exist. From the plots above, such a scenario doesn't seem plausible as it exhibits none of the characteristic patterns described previously. Hence, we can reason it's likely that $P = p = 0$.
 
 
-To figure out exactly what order these components are, we utilize the PACF, recalling the assumption of stationarity. 
-
-However, we first must recall the left-hand side of the SARIMA equation, so we have a better understanding of the PACF Values
-$$
-\begin{aligned}
-\text{LHS } &= \Psi(B^s)\psi(B)W_t \\
-\text{LHS } &= \Psi(B^s)\psi(B)(\nabla^{12}_1 \nabla^1X_t) \\
-\text{LHS } &= \Psi(B^s)\psi(B)(X_t-X_{t-12} - X_{t-1} + X_{t-13}) \\
-\end{aligned}
-$$
-So, it's a bit more difficult to directly examine the PACF for the largest value of $\hat\alpha_{kk}$ such that $\forall i > k, |\hat\alpha_{ii}| < {2}\sqrt{n}$ as we normally would, since it isn't direct to discern which coefficient in the AR decomposition it actually aligns to in the overall model (i.e. in the full seasonal/sequential differenced with MA.)
-
-Then we find a logical combination of $p$ and $P$, we can informally examine the PACF for what seems "sensible." What immediately jumps out to me is the presence of a large $\hat\alpha_{kk}$ at $k = 12$. This is indicative of a seasonal AR component, i.e. $P \geq 1$. Further, there is an immediate jump at $\hat\alpha_{11}$ as well as other "spikes" across the PACF at $\hat\alpha_{11, 11},  \hat\alpha_{23, 23}$, etc. Since these values $\{1, 11, 23, \dots \}$ are not evenly divisible by $12$, we know that there must exist one or more sequential AR components, i.e. $p \geq 1$. For the sake of parsimony, my initial suggestion would be to choose $P = p = 1$ as a starting point. 
-
-
-Due to the complexity inherent in this particular mixed models, it is difficult to visually determine values of $p$, $P$, $q$, and $Q$, however, from the arguments above, $\{p, P, q, Q \} = \{0, 1, 1, 1\}$ seems plausible.
-
-<!-- We extract the value of $k$ below: -->
-<!-- ```{r} -->
-<!-- tail(p10data$h[abs(p10data$rh) >= 2/sqrt(n)], 1) -->
-<!-- 41/12 -->
-<!-- ``` -->
-<!-- This value of $k = 54$ supports the observed PACF. However, since we already have a difference of $13$ from $W_t$, we consider $\kappa = k-13 = 41$ as our "target" for combination of AR components. -->
-
-
-<!-- Moreover, since $41 \not \equiv 0\text{mod}(12)$, recalling $s = 12$, it suggests the presence of both sequential AR $p$ and seasonal AR $P$. For the simplest possible combination of coefficients, we first consider the maximum number of seasonal AR components we can add. -->
-
-<!-- Mathematically, this is found as: -->
-<!-- $$ -->
-<!-- P =  \lfloor \kappa \div s\rfloor  =  \lfloor41 \div 12\rfloor =  3 -->
-<!-- $$ -->
-<!-- So, this suggests that there are $P = 4$ seasonal AR components. A hypothesized number of sequential AR components can be found directly as: -->
-<!-- $$ -->
-<!-- p = \kappa - P\cdot s = 41 -  -->
-<!-- $$ -->
-
-
-```{r}
-# n = length(hours_train_diff_s)
-# # (p,d,q): the AR order, the degree of differencing, and the MA order.
-# p9data$rh[p9data$h]
-# all_lags = acf(hours_train_diff_s, plot = FALSE, lag.max = n)$acf
-# twelves = (all_lags[seq(from = 0, to = n, by = 1) %% 11 == 0])
-# 
-# plot(0:(length(twelves)-1), twelves, type="n",
-#      xlab="Index", ylab="Value", main="Lags at Step 12")
-# segments(x0=0:(length(twelves)-1), y0=0, x1=0:(length(twelves)-1), y1=twelves)
-# abline(h = 0)
-```
-<!-- # acf(hours_train_diff_s, lag.max = 36) # MA at 12, Q = 1, MA at 1, q = 1  -->
-<!-- #pacf(hours_train_diff_s, lag.max = 96) # PACF doesn't really show a  -->
-<!-- #test = pacf(hours_train_diff_s, lag.max = 96, plot = F)$acf # P = 12 perhaps, P = 1 -->
-<!-- # which( abs(test) > 2/sqrt(n) ) -->
 
 ### Part E: Iterative AIC
 
-Now use the Akaike’s Information Criterion (AIC) to select the model based on the training dataset in Part I. Fix the values of p and P as your suggestions in Part II (d),
+Now, we see the Akaike’s Information Criterion (AIC) to select the model based on the training dataset in Part I. We fix the values of $p$ and $P$ to $0$ as suggested in Part II (d),
 
 
-Consider $q \in [0, 5]$ and $Q \in [0, 5]$.
-
-Select the values of q and Q according to the AIC values. 
-
-Fit the model you choose and print the values of the estimated parameters along with the AIC value for the model.
+We will consider $q \in [0, 5]$ and $Q \in [0, 5]$ and compute all AIC values and then select the values of $q$ and $Q$ according to these computations. 
 
 
 First, we declare our fixed $p$, $P$, $s$, $d$ and $D$ values, then iterate through the different 25 models that can be developed and report the AIC for each. 
@@ -1131,44 +1104,21 @@ for (q in 0:5){
 
 The AIC results are summarized in the table below.
 ```{r}
-kable(round(results, 3), caption = "AIC Values for Varying (q, Q)")
+kable(round(results, 3), caption = "AIC Values for Varying $(q, Q)$")  
 ```
+
+ 
+Now, we fit the model the model chosen according to the AIC Table and print the values of the estimated parameters and report the AIC value for the model.
+
 
 According to this table, the best model corresponds to:
 ```{r}
 which(results == min(results), arr.ind = TRUE)
-
-# arima(hours_train, order = c(1, 1, 0), seasonal = c(1, 1, 0))$aic
-# arima(hours_train, order = c(1, 1, 0), seasonal = c(1, 1, 1))$aic
 min(results)
 ```
-Which corresponds to $q = 4$ and $Q = 5$. It has an AIC of $-627.61$
+Which corresponds to $q = 4$ and $Q = 5$. It has an AIC of approximately $-625.63$.
 
-Hence, we will use a model of the form:
+Hence, we will fit a model of the form:
 $$
 \text{SARIMA}({\underset{p}{0}}, {\underset{d}{1}}, {\underset{q}{4}}) \times({\underset{P}{0}}, {\underset{D}{1}}, {\underset{Q}{5}})_{{\underset{s}{12}}}
 $$
-The full model is given below:
-```{r}
-#best_fit = arima(hours_train, order = c(0, 1, 1), seasonal = c(1, 1, 5))
-#?auto.arima(hours_train)
-```
-
-```{r}
-# Series: hours_train 
-# ARIMA(1,0,0)(0,1,4)[12] with drift 
-# auto.arima(hours_train, trace = F, ic = "aic",
-#            start.p = 1, start.P = 1, stepwise = F, 
-#            max.Q = 5, max.q = 5, max.d = 1, max.D = 1)
-
-# predict(best_fit, prediction.interval = T, level = 0.95)
-```
-
-
-<!-- ```{r} -->
-<!-- # TODO -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- auto.arima(hours_train) -->
-<!-- ``` -->
