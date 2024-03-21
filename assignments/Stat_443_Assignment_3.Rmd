@@ -403,8 +403,7 @@ kable(ar_fits, "latex", escape = FALSE,  col.names = var_col_names,
 
 Compare the AIC values of your two models. Which would you pick based on AIC?
 
-First, we extract the aic values of each fit.
-
+First, we extract the aAICic values of each fit.
 ```{r aic_extract}
 kable(
   t(data.frame(
@@ -412,9 +411,10 @@ kable(
     AR6 = round(ar6$aic, 3))),
   col.names = c("Candidate Model", "AIC"),
   caption = "Akaike Information Criterion"
-)
+)  %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
 ```
-
 Let $\text{AIC}(m)$ be the AIC for models $m \in M$, where $M = \{\text{AR}(1), \text{AR}(6)\}$.
 Generally, models with smaller AIC values are preferred.
 
@@ -438,8 +438,7 @@ So, by AIC selection, we prefer the $\text{AR}(6)$ model.
 
 ### Part b.4.
 
-We recall that the third plot of `tsdiag` are the $p$-values of the Ljung-Box Version of the Portmanteau Lack-of-Fit test, where informally the following hypotheses are being compared:
-
+We recall that the third plot of `tsdiag` are the $p$-values of the Ljung-Box Version of the Portmanteau Lack-of-Fit test, where the following hypotheses are being compared:
 $$
 H_0: \text{ The Model is Well-Specified.} \hspace{0.25cm} \text{v.s.} \hspace{0.25cm} H_A: \text{ The Model is Not Well-Specified.}
 $$
@@ -467,7 +466,6 @@ for(i in 1:length(M)){
          })
   lb_stats[, i] = lb_ar
 }
-# lb_stats
 ```
 
 
@@ -492,21 +490,142 @@ which(lb_stats[, 1] < 0.05)
 This tell us that we reject $H_0$ in favour of the alternative that the model is ill-fitting for the AR$(1)$ case in the majority of scenarios. This implies that it may be likely that the AR$(1)$ model is not well-specified for these data. This theory is supported by the ACF of the residuals, which appears to have a vague sinusoidal pattern to it, as well as having values above $\pm 2 / \sqrt{n}$ for quite a few of the lags. All in all, the `tsdiag` results for the AR$(1)$ model shed doubt on our confidence of this candidate being well-fitting for these data.
 
 
-To contrast, 
+To contrast, the Ljung-Box statistic values for the AR$(6)$ model are consistently well above $\alpha = 0.05$, as shown in the table below (for the first five lags to conserve space):
+```{r}
+kable(t(data.frame(
+           Lag = 1:5,
+           AR1 = format(lb_stats[1:5, 1], scientific = TRUE, digits = 5),
+           AR6 = format(lb_stats[1:5, 2], scientific = TRUE, digits = 5))),
+      caption = "Ljung-Box Portmanteau Test $p$-Values for Varying Lags")  %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
+```
+This shows that the probability of observing the computed $Q_2$ values given $H_0$ that the model is well-specified is much higher for the AR$(6)$ model than the AR$(1)$ alternative. Further, the ACF of the residuals of the AR$(6)$ model seem to quickly decay towards white noise, and shows far less extremity and patterning than the AR$(1)$ ACF. So, if we were deciding the best candidate $m_{\text{best}}$ purely from these results, we would again prefer the AR$(6)$ model.
+
 
 ### Part b.5.
 
 
 Predict the sea surface temperature for Jan 2022 through Nov 2023 using both
-candidate models. Calculate the mean squared prediction error (MSPE) for both
-models. Which method performs better?
+candidate models. Use this to calculate the mean squared prediction error (MSPE) for both models. 
 
+We again let $m \in M$ be the candidate models, for $M = \{\text{AR}(1), \text{AR}(6)\}$. We let $\{y_t\}_{t \in \mathbb{Z}}$  be the observed values from the test set. We let $\hat{y}^{(m)}_t(\ell)$ be the $\ell$-step ahead Box-Jenkins forecast (for $\ell \in \mathbb{Z}$) of model $m$. Let $N_{\ell}$ be the total number of steps ahead. In our case, this is $23$ for both.
+
+The set of MSPE value for the candidate models is given by:
+$$
+\text{MSPE} : \bigg\{ m \in M: \frac{1}{N_{\ell}}\sum_{\ell = 1}^{N_{\ell}} \Big( y_{t + \ell} - \hat{y}^{(m)}_t(\ell)\Big)^2 \bigg\}
+$$
+```{r}
+N_L = length(nino_test)
+# make predictions for held-out test data
+ar1_forecast = predict(ar1, n.ahead = N_L)
+ar6_forecast = predict(ar6, n.ahead = N_L)
+mods = c("AR(1)", "AR(6)")
+# compute MSPE for each
+mspes = sapply(list(ar1_forecast, ar6_forecast),
+               function(m){
+                 mean( (nino_test - m$pred)^2 )
+               })
+# report results
+kable(t(round(mspes, 5)), col.names = mods,
+      caption = "Observed MSPE of Candidates") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
+```
+Then, to determine which method performs better, we select the argmin of the MSPEs set.
+$$
+m_{\text{best}} = \underset{m \in M}{\text{argmin}}\Big\{\text{MSPE}(m)\Big\} = \underset{m \in M}{\text{argmin}}\Big\{ 1.200, 1.016\Big\} = \text{AR}(6)
+$$
+In our case, this is the AR$(6)$ model.
+```{r}
+mods[which.min(mspes)]
+```
+Hence, by MSPE, the best model of the candidate models $m_{\text{best}}$ remains the AR$(6)$ model.
 
 ### Part b.6.
 
 On a single plot, display the test set of sea surface temperature, the predictions for
 both models, and their approximate 95% prediction intervals.
 
+
+
+**NOTE**: We will include the plotting code for this question, as it specifically asks for it.
+
+First, we compute the $95\%$ prediction intervals using the following method: As before, we let $\hat{y}^{(m)}_t({\ell})$ be the $\ell \in \mathbb{Z}$-step ahead Box-Jenkins forecast for model $m \in M$. We let $\text{Z} \sim N(0,1)$ and "PrI" indicate the prediction interval at step $\ell$, given significance level $\alpha$ and model $m$.
+$$
+\text{PrI}(\ell \mid \{\alpha, m\}) = \hat{y}^{(m)}_t({\ell}) \pm \text{Z}_{\alpha/2}\, \text{se}\big( \hat{y}^{(m)}_t({\ell}) \big)
+$$
+For this question, we employ $\alpha = 0.05$ and $m \in M$ to compute the intervals. The `R` code to do this is below. We define the lower and upper intervals separately so that all of the values can be stored in a data frame for plotting.
+```{r}
+alpha = 0.05
+Z = qnorm(1-alpha/2)
+# prediction intervals for AR(1)
+ar1_Low = ar1_forecast$pred - Z*ar1_forecast$se
+ar1_High = ar1_forecast$pred + Z*ar1_forecast$se
+# prediction intervals for AR(6)
+ar6_Low = ar6_forecast$pred - Z*ar6_forecast$se
+ar6_High = ar6_forecast$pred + Z*ar6_forecast$se
+# construct the data frame
+bigplot_DF = data.frame(
+  Time = as.Date(time(nino_test)),
+  Observed = as.numeric(nino_test),
+  Forecast_AR1 = as.numeric(ar1_forecast$pred),
+  Lower_AR1 = as.numeric(ar1_Low),
+  Upper_AR1 = as.numeric(ar1_High),
+  Forecast_AR6 = as.numeric(ar6_forecast$pred),
+  Lower_AR6 = as.numeric(ar6_Low),
+  Upper_AR6 = as.numeric(ar6_High)
+)
+```
+Now, we make the combined plot (with labels and a legend) below:
+```{r bigfancyplot}
+pfancy = ggplot(data = bigplot_DF, aes(x = Time)) +
+  # lines for observed
+  geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
+  # lines and prediction interval for AR(1)
+  geom_line(aes(y = Forecast_AR1, color = "Forecast AR(1)"),lwd = 1) +
+  geom_line(aes(y = Lower_AR1, color = "95% Interval AR(1)"), alpha = 0.75) +
+  geom_line(aes(y = Upper_AR1, color = "95% Interval AR(1)"), alpha = 0.75) +
+  # lines and prediction interval for AR(1)
+  geom_line(aes(y = Forecast_AR6, color = "Forecast AR(6)"),lwd = 1) +
+  geom_line(aes(y = Lower_AR6, color = "95% Interval AR(6)"), alpha = 0.75) +
+  geom_line(aes(y = Upper_AR6, color = "95% Interval AR(6)"), alpha = 0.75) +
+  # light blue and red fill area between prediction intervals
+  geom_ribbon(aes(ymin = Lower_AR1, ymax = Upper_AR1), fill = "#caf0f8", alpha = 0.15) +
+  geom_ribbon(aes(ymin = Lower_AR6, ymax = Upper_AR6), fill = "#ff9991", alpha = 0.15) +
+  # legend and colour assignment
+  scale_color_manual(name = "",
+    values = c(
+    "Actual" = "#696969",
+    "Forecast AR(1)" = "#02a9ea",
+    "95% Interval AR(1)" = "#9fc8d6",
+    "Forecast AR(6)" = "#ff2e1f",
+    "95% Interval AR(6)" = "#fc796f"
+  )) +
+  # customize x-axis for nice dates
+  scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
+  # add titles with units
+  labs(
+    title = "Box-Jenkins Forecasts and 95% Prediction Intervals",
+    subtitle = "El Nino 3.4 Index from Jan. 2022 to Nov. 2023",
+    x = "Month and Year",
+    y = expression(
+      paste("Average Equatorial Sea Surface Temperature (in ", degree, "C)")
+    )
+  ) +
+  # customize theme: gridlines, margins, etc.
+  theme_bw() +
+  theme(
+    panel.grid.minor =  element_line(
+      color = "grey90",
+      linewidth  = 0.35,
+      linetype = "dashed"
+    ), 
+    legend.position = "top", 
+    legend.justification = "left", 
+    legend.margin = margin(0,0,0,0))
+print(pfancy)
+```
 
 
 ## Part c
@@ -1031,7 +1150,7 @@ $$
 $$
 The full model is given below:
 ```{r}
-best_fit = arima(hours_train, order = c(0, 1, 1), seasonal = c(1, 1, 5))
+#best_fit = arima(hours_train, order = c(0, 1, 1), seasonal = c(1, 1, 5))
 #?auto.arima(hours_train)
 ```
 
