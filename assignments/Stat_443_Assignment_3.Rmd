@@ -746,7 +746,8 @@ p4 = ggplot(data = p4data, aes(x = Time)) +
 print(p4)
 ```
 
-\pagebreak### Part c.3.
+\pagebreak
+### Part c.3.
 
 Calculate the mean squared prediction error.
 
@@ -771,31 +772,57 @@ The observed Mean Square prediction error for the Holt-Withers forecast is appro
 
 How does it compare to the Box-Jenkins models above?
 
+
+The Holt-Winters forecast appears quite close to the true values small values of $\ell$ small, but becomes much worse at prediction as the time predicted into the future grows. Further,  the prediction interval of the Holt-Withers method becomes much wider over time, when compared to the two Box-Jenkins forecasts. While the Box-Jenkins methods also exhibit this increase in uncertainty, it is notably less significant (noting that the lower end of the interval for H.W. is near $22$, which is completely outside of the range of the B.J. approach.)
+
+
+When comparing the Holt-Winters squared prediction errors to the better performing of the two Box-Jenkins models, we see that for smaller vallues of $\ell$ there are cases in which the H.W. Forecast has a smaller MSPE than AR$(6)$ Box-Jenkins. However, as the plot below demonstrates, the squared error skyrockets in the Holt-Winters method as $\ell$ grows. 
 ```{r}
-# TODO: Comparison code goes here...
-
-## Qualitative ##
-# NOTE: HW appears quite close to the true values for \ell small, but becomes worse as time progresses.
-# Further, it begins to have a much wider prediction interval (i.e. become more uncertain) as the steps ahead increase
-# While the Box-Jenkins methods also exhibit this increase in uncertainty, it is less extreme (noting that the lower end 
-# of the Holt-Winter PrI is near 22, which is completely outside of the range of the BJ approach)
-
-# when comparing to the squared prediction error to that of the
-# better-performing AR(6) Box-Jenkins model, we see for smaller values 
-# of \ell there are actually cases in which the HW-Model has a smaller
-# squared prediction error. However, as the plot below demonstrates, 
-# that error skyrockets as the prediction distance increases. 
-# while the Box-Jenkins model also has a sharp squared error increase, 
-# it is much smaller than that of the Holt-Winters model
-err_HW = (nino_test - hw_predictions$fit )^2
-err_BJ = (nino_test - ar6_fit)^2
-plot(err_HW, ylim = c(-1, 10))
-lines(err_BJ, col = 'red')
-
-## Quantitative ##
-## HW has higher mean Squared prediction Error
+squared_errors = data.frame(
+  Time =  as.Date(time(nino_test)),
+  err_HW = as.numeric((nino_test - hw_predictions$fit )^2),
+  err_BJ = as.numeric((nino_test - ar6_fit)^2)
+  )
+```
+```{r, include=FALSE}
+squared_errors$color_condition = ifelse(squared_errors$err_HW > squared_errors$err_BJ,  "HW Higher", "BJ Higher")
+p13 = ggplot(squared_errors, aes(x = Time)) +
+  geom_segment(aes(
+    x = Time,
+    xend = Time,
+    y = err_HW,
+    yend = err_BJ,
+    color = color_condition
+  ),
+  size = 0.75) +
+  geom_line(aes(y = err_HW, color = "Holt-Winters"), lwd = 1) +
+  geom_line(aes(y = err_BJ, color = "Box-Jenkins AR(6)"), lwd = 1) +
+  scale_color_manual(
+    name = "",
+    values = c(
+      "Holt-Winters" = "#126620",
+      "Box-Jenkins AR(6)" = "#db2146",
+      "HW Higher" = "#bed1c1",
+      "BJ Higher" = "#fa98ac"
+    )
+  ) +
+  labs(
+    title = "Squared Prediction Errors of Forecasting Methods",
+    subtitle = "Test Set of El Nino Data from January 2022 to November 2023",
+    y = "Squared Prediction Error",
+    x = "Month, Year"
+  ) +
+  theme_bw() +
+  scale_x_date(date_breaks = "4 month", date_labels = "%b, %Y") +
+  theme(legend.position = "top", legend.justification = "left", 
+  legend.margin = margin(0,0,0,0))
+```
+```{r}
+print(p13)
 ```
 
+ 
+As the plot above shows, while the Box-Jenkins model also has a sharp squared error increase, it is much smaller than that of the Holt-Winters model. Quantitatively, this is why the MSPE is much larger for Holt-Winters (MSPE $\approx 1.972$) than either of the AR(1) and AR(6) Box-Jenkins methods (MSPE $\approx 0.996$ and $0.794$ respectively.) So, for these particular data, some variation on the Box-Jenkins approach may be preferred. 
 
 
 # Question 2 : Hours Worked Forecasting
@@ -814,8 +841,7 @@ hDF = read.csv("usual_hours_worked_ca.csv")
 hours_series = ts(hDF$Hours, start = c(1987, 1), frequency = 12)
 ```
 
-Separate the data into train and test. The training dataset should include all observations up to and including December
-2020; The test dataset should include all observations from January 2021 to December 2023
+Separate the data into train and test. The training dataset should include all observations up to and including December 2020; The test dataset should include all observations from January 2021 to December 2023
 
 ```{r}
 hours_train = window(hours_series, end = c(2020, 12))
@@ -1085,7 +1111,7 @@ We will consider $q \in [0, 5]$ and $Q \in [0, 5]$ and compute all AIC values an
 First, we declare our fixed $p$, $P$, $s$, $d$ and $D$ values, then iterate through the different 25 models that can be developed and report the AIC for each. 
 
 ```{r, all_AIC}
-p = 0; P = 0; s = 12; d = 1; D = 1
+p = 0; P = 0; s = 12; d = 1; D = 1; s = 12
 # declare empty matrix
 results = matrix(0, nrow = 6, ncol = 6)
 # with legible names
@@ -1095,8 +1121,8 @@ colnames(results) = c("Q=0", "Q=1", "Q=2","Q=3","Q=4","Q=5")
 for (q in 0:5){
   for (Q in 0:5){
     results[q+1, Q+1] = arima(hours_train,
-                          order = c(p, d, q),
-                          seasonal = c(P, D, Q))$aic
+                              order = c(p, d, q),
+                              seasonal = c(P, D, Q))$aic
   }
 }
 
@@ -1113,8 +1139,7 @@ Now, we fit the model the model chosen according to the AIC Table and print the 
 
 According to this table, the best model corresponds to:
 ```{r}
-which(results == min(results), arr.ind = TRUE)
-min(results)
+as.numeric(which(results == min(results), arr.ind = TRUE))-1 ; q = 4; Q = 5
 ```
 Which corresponds to $q = 4$ and $Q = 5$. It has an AIC of approximately $-625.63$.
 
@@ -1122,3 +1147,145 @@ Hence, we will fit a model of the form:
 $$
 \text{SARIMA}({\underset{p}{0}}, {\underset{d}{1}}, {\underset{q}{4}}) \times({\underset{P}{0}}, {\underset{D}{1}}, {\underset{Q}{5}})_{{\underset{s}{12}}}
 $$
+
+```{r}
+sarima_fit = arima(hours_train,
+                   order = c(p, d, q), 
+                   seasonal = list(order = c(P, D, Q), period = s))
+```
+
+Finally, we print the values of the estimated parameters along with the AIC value for the model. We let $\hat\beta_i$ be the $i$-th estimated standard MA coefficient for $i \in [1,4]$ and ${\breve{\beta}}_j$ be the $j$-th estimated seasonal MA component for $j \in [1, 5]$. We let $\hat\sigma^2$ be the estimated variance of the process.
+
+For conciseness, we round each estimate to three decimal places. 
+```{r fancycolnames, include=FALSE}
+fancycolnames = c(
+  "$\\hat{\\beta}_1$",
+  "$\\hat{\\beta}_2$",
+  "$\\hat{\\beta}_3$",
+  "$\\hat{\\beta}_4$",
+  "$\\breve{\\beta}_1$",
+  "$\\breve{\\beta}_2$",
+  "$\\breve{\\beta}_3$",
+  "$\\breve{\\beta}_4$",
+  "$\\breve{\\beta}_5$",
+  "$\\hat{\\sigma}^2$",
+  "AIC"
+)
+```
+
+```{r}
+# get all the desired coefficients into a data frame
+sarima_coefs = t(data.frame(Est = round(
+  c( sarima_fit$coef[1:4], sarima_fit$coef[5:9],
+     sarima_fit$sigma2, sarima_fit$aic), 3 )))
+# produce a nice table
+kable(sarima_coefs, "latex", escape = FALSE,
+      col.names = fancycolnames, caption = "Fitted SARIMA Coefficients")  %>%
+      kable_styling(latex_options = "hold_position") %>%
+      kable_styling(position = "center")
+```
+
+### Part F: Model Diagnostics:
+
+Perform the model diagnostics for the model above and comment on the goodness of fit for your chosen model.
+
+Again, we compute the Ljung-Box $p$-values by the process detailed in the previous question. We manually replicate the results of `tsdiag` by providing plots of the standardized residuals, residual acf and Ljung-Box statistics. As we create these plots, comments on them will be provided. 
+
+\underline{Standardized Residuals}
+```{r}
+# standardized residuals
+p2fdata = data.frame(
+  Time = as.Date(time(hours_train)),
+  resids = sarima_fit$residuals / sd(sarima_fit$residuals))
+```
+```{r, include = FALSE}
+p2f = ggplot(data = p2fdata, aes(x = Time)) +
+  geom_segment(aes(x = Time, xend = Time, y = 0, yend = resids), color = "#768948") +
+  scale_x_date(date_breaks = "5 year",  date_labels = "%Y") +
+  labs(
+    title = "Standardized Residuals of SARIMA Model",
+    subtitle =  "Training Set: Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020",
+    x = "Time", y = "Standardized Residuals") +  ylim(-5, 5) +
+  theme_bw() +
+  geom_hline(yintercept = 0, linetype = "solid", color = "black") +
+  theme(panel.grid.minor =  element_line(
+    color = "grey90",
+    linewidth  = 0.35,
+    linetype = "dashed"
+  ))
+```
+
+```{r}
+print(p2f)
+```
+**Comments**: While there's no noticeable long-term pattern to the residuals as we would hope if the model is well fitting, there is a sharp increase in the residual values from 2019 onwards. This could be due to the large fluctuations in working hours caused by the COVID-19 pandemic. However, beyond these extreme values, the residuals appear to be randomly distributed about zero, as we would anticipate for a well-fitting model.
+
+
+
+\underline{Residual ACF}
+```{r}
+# standardized residuals
+p2f2data = data.frame(
+  h = 0:24,
+  rh = acf(sarima_fit$residuals, lag.max = 24, plot = F)$acf
+)
+```
+```{r include=FALSE}
+p2f2 <- ggplot(p2f2data, aes(x = h, y = rh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#774936") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#774936") +
+  ylim(-0.2, 1) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#264032",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "solid",
+             color = "grey60") +
+  labs(x = "Lag",  y = "ACF Values",
+       title = "Correlogram of Residuals of SARIMA Model",
+    subtitle =  "Training Set: Monthly Avg. Work Hours, Canada, Jan. 1987 to Dec. 2020")+
+  theme_bw()
+```
+```{r}
+print(p2f2)
+```
+
+**Comments**: The ACF of the residuals seems to be mostly white noise, as most observations are below the $\pm 2 / \sqrt{n}$ boundaries. This is what we would expect to see for a well-fitting model. The fact that there are ACF values slightly beyond the white noise boundaries for lags $6$ and $19$ may be a cause for some concern; however, there isn't a consistent enough pattern to suggest lack-of-fit.
+
+
+
+\underline{Ljung-Box P-Values}
+
+```{r}
+n = length(hours_train); lagmax = 35
+# get rho(h) values of residuals
+rh_s  = acf(sarima_fit$residuals, lag.max = lagmax, plot = F)$acf
+# compute Ljung-Box statistic
+lb_s =  sapply(2:lagmax+1, 
+         function(h){
+           Q = n*(n+2)*sum( rh_s[2:h]^2 / (n - h))
+           pchisq(Q, df = h - 1, lower.tail = F)})
+```
+```{r}
+plot(lb_s, type = 'o', ylim = c(0, 1))
+abline(h = 0.05)
+```
+```{r, fig.height=8}
+# tsdiag(sarima_fit)
+# dip at lag 6 = concerning!  there is a pattern emerging at half-periods, causing a fairly sharp decrease
+# this indicates that there is some phenomenon in our data occuring every period (12 months), 
+# starting at the first half period (6 months) that is causing a large increase in the Q_2 values. 
+# an extended view of the ljung-box statistic plot emphasizes this pattern more clearly
+# this being said, it is still greater than alpha = 0.05 for the common lag values for the portmanteau test
+# i.e. those between 15, 30 (as noted in the slides.) So, to summarize, the diagnostics shown across the three plots
+# common to tsdiag show that while the SARIMA model selected seems to not have a complete lack-of-fit
+# there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model overall for these data
+# these include but are not limited to the high standardized residuals for 2019-2020, the large residual ACF values at certain lags
+# and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 12 lags starting at h = 6. while we fail to reject
+# the null hypothesis (i.e. p > alpha = 0.05) for all lags in [1, 35], this pattern in the p-values is concerning.
+```
+
