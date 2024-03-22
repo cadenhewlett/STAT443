@@ -635,6 +635,8 @@ pfancy = ggplot(data = bigplot_DF, aes(x = Time)) +
     legend.margin = margin(0,0,0,0),  legend.text = element_text(size = 8))
 print(pfancy)
 ```
+**Comments**: The AR$(6)$ model seems to do a slightly better job than the AR$(1)$ alternative in terms of closeness to the true Average Equatorial Sea Surface Temperature for the test set from Jan. 2022 to Nov. 2023, however, for larger lead times neither model seems to perform extremely well. It is interesting to note that the $95\%$ prediction interval for the AR$(1)$ is lower than that of the AR$(6)$ model; however, there is quite a bit of overlap between the intervals and a distinct similarity to the overall pattern of forecast values. Summarizing all of our analyses thusfar, it seems that the AR$(6)$ model is best from the pure AR/MA candidates at our disposal. This being said, it still doesn't seem to precisely capture the overall pattern of the data, suggesting that some more complicated method (such as SARIMA) may better in future investigations.
+
 
 
 ## Part c
@@ -643,12 +645,12 @@ print(pfancy)
 Forecast sea surface temperature for 2022 and 2023 using the Holt-Winters method and the data from 1870-2021. 
 
 
-### Part c.1.
+### Part c.i.1.
 
 First, we use the `HoltWinters` function in R to fit an appropriate model to the training data. 
 
 
-As in our original series (and with the Box-Jenkins method) we did not observe a significant trend, we will construct a Holt-Winters model with $\beta = 0$.
+As in our original series (and with the Box-Jenkins method) we did not observe a significant trend, hence we will construct a Holt-Winters model with $\beta = 0$.
 
 
 We will use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case,  $p=12$.
@@ -686,7 +688,7 @@ kable(hw_results_coefs, "latex", escape = FALSE,
 Our fitted $\hat\gamma = 1$, implying that the model places maximum smoothing weight on the current state of the season (i.e. the $(1 - \gamma){I}_{t-p}$ component has zero weight according to the fitting process.) Further, our fitted $\hat\alpha \approx 0.96$ implies the model is placing a lot of significance on the current level (and period) and much less on levels in the past when fitting.
 
 
-### Part c.2.
+### Part c.i.2.
 
 
 Use this model to predict sea surface temperature from Jan 2022 through Nov 2023. 
@@ -747,7 +749,7 @@ print(p4)
 ```
 
 \pagebreak
-### Part c.3.
+### Part c.i.3.
 
 Calculate the mean squared prediction error.
 
@@ -768,7 +770,7 @@ The observed Mean Square prediction error for the Holt-Withers forecast is appro
 
 
 
-### Part c.4.
+### Part c.i.4.
 
 How does it compare to the Box-Jenkins models above?
 
@@ -822,7 +824,83 @@ print(p13)
 ```
 
  
-As the plot above shows, while the Box-Jenkins model also has a sharp squared error increase, it is much smaller than that of the Holt-Winters model. Quantitatively, this is why the MSPE is much larger for Holt-Winters (MSPE $\approx 1.972$) than either of the AR(1) and AR(6) Box-Jenkins methods (MSPE $\approx 0.996$ and $0.794$ respectively.) So, for these particular data, some variation on the Box-Jenkins approach may be preferred. 
+**Comments**: As the plot above shows, while the Box-Jenkins model also has a sharp squared error increase, it is much smaller than that of the Holt-Winters model. Quantitatively, this is why the MSPE is much larger for Holt-Winters (MSPE $\approx 1.972$) than either of the AR(1) and AR(6) Box-Jenkins methods (MSPE $\approx 0.996$ and $0.794$ respectively.) So, for these particular data, some variation on the Box-Jenkins approach may be preferred. 
+
+
+### Part c.ii.
+
+On a single plot, display the test set of sea surface temperature, the predictions from your preferred Box-Jenkins model, the predictions from your Holt-Winters model, and relevant 95% prediction intervals. Which method performs better?
+
+We will select the AR$(6)$ model and compare it to the Holt-Winters model.
+
+```{r}
+# format all plotting data
+p1c2data = data.frame(
+  Time = as.Date(time(nino_test)),
+  Observed = as.numeric(nino_test),
+  Forecast_HW = as.numeric(hw_predictions$fit),
+  Lower_HW = as.numeric(hw_predictions$lwr),
+  Upper_HW = as.numeric(hw_predictions$upr),
+  Forecast_AR6 = (ar6_fit),
+  Lower_AR6 = as.numeric(ar6_Low),
+  Upper_AR6 = as.numeric(ar6_High)
+)
+```
+We omit the code used to make this plot, as it is quite long. It is a nearly-identical process to the other plots in this assignment. 
+```{r, include=FALSE}
+p1c2 = ggplot(data = p1c2data, aes(x = Time)) +
+    # fill
+    geom_ribbon(aes(ymin = Lower_AR6, ymax = Upper_AR6), fill = "#fa98ac", alpha = 0.15) +
+    geom_ribbon(aes(ymin = Lower_HW,  ymax = Upper_HW), fill = "#FFEE70", alpha = 0.15) +
+    # lines for obsv, pred and interval bounds
+    geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
+    geom_line(aes(y = Forecast_HW, color = "Holt-Winters Forecast"),lwd = 1) +
+    geom_line(aes(y = Forecast_AR6, color = "Box-Jenkins Forecast"),lwd = 1) +
+    # points, too
+    geom_point(aes(y = Observed, color = "Actual")) +
+    geom_point(aes(y = Forecast_HW, color = "Holt-Winters Forecast")) +
+    geom_point(aes(y = Forecast_AR6, color = "Box-Jenkins Forecast")) +
+    # confidence intervals
+    geom_line(aes(y = Lower_HW, color = "95% HW Prediction Interval"), alpha = 0.75) +
+    geom_line(aes(y = Upper_HW, color = "95% HW Prediction Interval"), alpha = 0.75) +
+    geom_line(aes(y = Lower_AR6, color = "95% BJ Prediction Interval"), alpha = 0.75) +
+    geom_line(aes(y = Upper_AR6, color = "95% BJ Prediction Interval"), alpha = 0.75) +
+    # legend and colour assignment
+    scale_color_manual(name = "",
+      values = c(
+      "Actual" = "#250902",
+      "Holt-Winters Forecast" = "#f7b801",
+      "95% HW Prediction Interval" = "#FFEE70",
+      "Box-Jenkins Forecast" = "#db2146",
+      "95% BJ Prediction Interval" = "#fa98ac"
+    )) +
+    # customize x-axis for nice dates
+    scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
+    # add titles with units
+    labs(
+    title = "Forecasts of El Nino 3.4 Index from Jan. 2022 to Nov. 2023",
+    subtitle = expression(
+      paste("Index Represents Average Equatorial Sea Surface Temperature (in ", 
+          degree, "C)")),
+      x = "Month and Year",
+      y = expression(
+        paste("Average Equatorial Sea Surface Temperature (in ", degree, "C)")
+      )
+    ) +  ylim(22, 30) +
+    theme_bw() +
+    theme(panel.grid.minor =  element_line(
+      color = "grey90",
+      linewidth  = 0.35,
+      linetype = "dashed"
+    ), legend.position = "top", legend.justification = "left", 
+    legend.margin = margin(0,0,0,0),
+    legend.text = element_text(size = 6))
+```
+```{r}
+print(p1c2)
+```
+**Comments**: In addition to our previous computations and analyses, the above plot emphasizes the better performance of the Box-Jenkins model when compared to the Holt-Winters model at predicting the test set of sea surface temperatures. The Holt-Winters fit severely underestimates the truth, and the prediction interval is far wider than the Box-Jenkins interval and descends far lower than anywhere near the true average equatorial temperature. In addition, the Box-Jenkins prediction interval is far narrower and precise (only occasionally creeping above the Holt-Winters interval.) With this plot alongside the comparison of MSPE and visual Squared-Error plots, I would recommend the Box-Jenkins model over the Holt-Winters model for forecasting the El Nino 3.4 index. 
+
 
 
 # Question 2 : Hours Worked Forecasting
@@ -1044,9 +1122,9 @@ p10 <- ggplot(p10data, aes(x = h, y = rh)) +
 print(p10)
 ```
 
-Comment on what you observe:
+\underline{Comment on what you observe:}
 
-The seasonal differencing paired with the sequential differencing seems to have done a good job in making the series stationary. We see from the plotted data as well as the correlogram that there isn't evidence of a significant season or trend. Further, the visual complexity of both the ACF and the PACF hints at the fact that there may be a blended model (i.e. a mixture of AR and MA) underlying this process. We will discuss in the next sections exactly what the parameters of the model equation are in this case. 
+The seasonal differencing paired with the sequential differencing seems to have done a good job in making the series roughly stationary. We see from the plotted data as well as the correlogram that there isn't evidence of a significant season or trend. Further, the visual complexity of both the ACF and the PACF hints at the fact that there may be a blended model (i.e. a mixture of AR and MA) underlying this process. We will discuss in the next sections exactly what the parameters of the model equation are in this case. 
 
 
 ### Part C: Difference Parameters.
@@ -1108,7 +1186,7 @@ Now, we see the Akaike’s Information Criterion (AIC) to select the model based
 We will consider $q \in [0, 5]$ and $Q \in [0, 5]$ and compute all AIC values and then select the values of $q$ and $Q$ according to these computations. 
 
 
-First, we declare our fixed $p$, $P$, $s$, $d$ and $D$ values, then iterate through the different 25 models that can be developed and report the AIC for each. 
+First, we declare our fixed $p$, $P$, $s$, $d$ and $D$ values, then iterate through the different 36 models that can be developed and report the AIC for each. 
 
 ```{r, all_AIC}
 p = 0; P = 0; s = 12; d = 1; D = 1; s = 12
@@ -1297,21 +1375,8 @@ p2f3 <- ggplot(p2f3data, aes(x = h, y = lb_stats)) +
 print(p2f3)
 ```
 
-**Comments and General Summary**: From the above plot of Ljung-Box Statistic $p$-values, we see a sudden dip of confidence, i.e. $\mathbb{P}(\text{Model} \mid H_0: \text{Well-Fitting})$, around lag $h = 6$, which is quite concerning. This could be indicative of some phenomenon in our data beginning at the first half-season (recalling $s = 12$) that our current SARIMA fit is not capturing. An extended view of the Ljung-Box statistic $p$-values up to Lag 30 shown below demonstrates the continuation of this "dip" in $p$-values every 13-14 lags:
-```{r, fig.height=8}
-#tsdiag(sarima_fit)
-# dip at lag 6 = concerning!  there is a pattern emerging at half-periods, causing a fairly sharp decrease
-# this indicates that there is some phenomenon in our data occuring every period (12 months), 
-# starting at the first half period (6 months) that is causing a large increase in the Q_2 values. 
-# an extended view of the ljung-box statistic plot emphasizes this pattern more clearly
-# this being said, it is still greater than alpha = 0.05 for the common lag values for the portmanteau test
-# i.e. those between 15, 30 (as noted in the slides.) So, to summarize, the diagnostics shown across the three plots
-# common to tsdiag show that while the SARIMA model selected seems to not have a complete lack-of-fit
-# there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model overall for these data
-# these include but are not limited to the high standardized residuals for 2020-fwd, the large residual ACF values at certain lags
-# and the sudden "shock" experienced in the Ljung-Box Portmanteau p-values every 13-14 lags starting at h = 6. while we fail to reject
-# the null hypothesis (i.e. p > alpha = 0.05) for all lags in [1, 35], this pattern in the p-values is concerning.
-```
+**Comments and General Summary**: From the above plot of Ljung-Box Statistic $p$-values, we see a sudden dip of confidence, i.e. $\mathbb{P}(\text{Model} \mid H_0: \text{Well-Fitting})$, around lag $h = 6$, which is quite concerning. This could be indicative of some phenomenon in our data beginning at the first half-season (recalling $s = 12$) that our current SARIMA fit is not capturing. An extended view of the Ljung-Box statistic $p$-values up to Lag 30 shown below demonstrates that this "dip" in the $p$-values isn't just a one time occurrence:
+
 
 ```{r}
 # increase lag and run code again
@@ -1351,9 +1416,222 @@ p2f4 <- ggplot(p2f4data, aes(x = h, y = lb_stats)) +
 ```{r}
 plot(p2f4)
 ```
+As the above shows, there may be some additional unidentified periodic component causing these occasional "shocks" to the confidence of our model. However, the observed $p$-values for all of the lags between $15$ and $30$ (common values for these tests according to the slides) are still comfortably above $\alpha = 0.05$ implying that there is not a significant lack-of-fit to the SARIMA model. This pattern of sudden decreases in $p$-values is concerning, as well as the overall decline in the $p$-values over time. Notably, the Ljung-Box portmanteau test is robust for different lag lengths, and hence under $H_0$ the $p$-values should be greater than $\alpha$ regardless of the lag, so this gradual decline may indicate that there is something about our current SARIMA model is missing and would warrant further investigation. 
+
+
+
+To summarize, the diagnostics shown across the three plots equivalent to the standard model diagnostics of `tsdiag` show that while the SARIMA model selected seems to not have a significant lack-of-fit, there are some concerning patterns in the diagnostic that may shed doubt on whether this is the best model *overall* for these data. To me, the diagnostics indicate that there are likely to be better-performing models out there; however, the chosen one isn't completely mis-specified. 
+
+### Part G: Plot and Results
+
+Now, we predict the mean monthly working hours records for the period from January 2021 to December 2023 based on the model fitted in Part II (f). 
+
+**NOTE**: Again because we are tasked to create a detailed plot, the plotting code will not be hidden. 
+
+
+We construct the $95\%$ prediction intervals and forecasts by the same method discussed in detail in the previous question. In this case, our largest value ahead is $36$, so we make forecasts $\forall \ell \in \{1, 2, \dots, 36\}\subset \mathbb{Z}$.
 ```{r}
-plot(lb_s, type = 'o', ylim = c(0, 1))
-abline(h = 0.05)
+# declare constants
+alpha = 0.05
+Z = qnorm(1-alpha/2)
+# make forecast object
+s_forecast = predict(sarima_fit, n.ahead = length(hours_test))
+# get point forecasts 
+s_point = s_forecast$pred
+# prediction intervals 
+s_Low = s_point - Z*s_forecast$se
+s_High = s_point + Z*s_forecast$se
+
+# put everything into a data frame for plotting
+p2edata =  data.frame(
+  Time = as.Date(time(hours_test)),
+  Observed = as.numeric(hours_test),
+  Forecast = as.numeric(s_point),
+  Lower = as.numeric(s_Low),
+  Upper = as.numeric(s_High)
+)
+```
+Now that the data is formatted nicely, we can create the plot. Note that we have consistency in our naming conventions such that the code is easily translatable from previous forecasting plots.
+```{r}
+p2e = ggplot(data = p2edata, aes(x = Time)) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "#FF9B54", alpha = 0.15) +
+  # lines for obsv, pred and interval bounds
+  geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
+  geom_line(aes(y = Forecast, color = "Forecast"),lwd = 1) +
+  geom_point(aes(y = Observed, color = "Actual")) +
+  geom_point(aes(y = Forecast, color = "Forecast")) +
+  geom_line(aes(y = Lower, color = "95% Prediction Interval"), alpha = 0.75) +
+  geom_line(aes(y = Upper, color = "95% Prediction Interval"), alpha = 0.75) +
+  # legend and colour assignment
+  scale_color_manual(name = "",
+    values = c(
+    "Actual" = "#4F000B",
+    "Forecast" = "#FF7F51",
+    "95% Prediction Interval" = "#FF9B54"
+  )) +
+  # customize x-axis for nice dates
+  scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
+  # add titles with units
+  labs(
+    title = "Box-Jenkins Forecast of Monthly Average of Usual Hours Worked in Canada",
+    subtitle = "Across all Industries from January 2021 to December 2023",
+    x = "Month and Year",
+    y = "Monthly Mean Working Time (Hours)"
+  ) +
+  theme_bw() + ylim(34, 37.5)+
+  theme(panel.grid.minor =  element_line(
+    color = "grey90",
+    linewidth  = 0.35,
+    linetype = "dashed"
+  ), legend.position = "top", legend.justification = "left", 
+  legend.margin = margin(0,0,0,0))
+
+# show results
+print(p2e)
 ```
 
+**Comments**: Overall, the forecasting procedure seems to perform very well! For the vast majority of the test data, the forecasted values are very near the actual values and the actual values are almost always within the 95% prediction interval. While there are the occasional instances in which the Box-Jenkins method over-estimates the mean monthly working time, it seems to slightly underestimate more often.  The only instances in which the forecast and the interval do not capture the truth is near the beginning of the forecast (early 2021.) As we discussed in the plot of standardized residuals, the overall time series was disrupted from late 2019 to early 2021 as the patterns of the global workforce were changed significantly by the COVID-19 pandemic. So, it's not surprising that the forecast misses the true values for early 2021. It is encouraging to see that as time progresses, and many people returned to work after the pandemic, that the Box-Jenkins forecast continues to perform quite well. Notably, when compared to our "naive" forecasting procedure from Assignment 1, the Box-Jenkins forecast is far superior.
+
+
+## Part 3: Holt-Winters Method
+
+
+### Part A: Model Specification
+
+When we determining the parameters of the model in the Box-Jenkins method, observed removed both trend *and* seasonality (by sequential and seasonal differencing), hence we will use a nonzero $\beta$ in the Holt-Winters model to keep the comparisons in the next section consistent.
+
+Further, we will again use an additive seasonal effect, which inherits the `Frequency` of the time series as the period. In this case,  $p=12$.
+
+Since we now have a trend component to the model, we define the following set of equations for our Holt-Winters model given $\{x_t\}_{t = 1}^N$ for discrete (integer-valued) $t$:
+$$
+\begin{aligned}
+\text{Trend: }& T_t = \beta(L_t - L_{t-1}) + (1-\beta)T_{t-1} \\
+\text{Seasonal: }& I_t = \gamma(x_t - L_t) + (1 - \gamma)I_{t-p}\\
+\text{Level: }& L_t = \alpha(x_t - I_{t-p}) + (1 - \alpha)(L_{t-1} + T_{t-1})\\
+\text{Forecast: }&  \hat x_{t}(\ell) = L_t + \ell \, T_t + I_{t - p + \ell}\\
+\text{Where: }& \{\beta, \alpha, \gamma\} \in [0,1] \subseteq\mathbb{R}
+\end{aligned}
+$$
+We use the `HoltWinters()` function to estimate $\{\beta, \alpha, \gamma\}$ and report them below. While not explicitly specified in the table title (for brevity) this fit is for the Canada Mean Hours Worked Dataset.
+
+```{r}
+hw_hours = HoltWinters(hours_train, seasonal = "additive")
+# data frame for nice formatting
+hw_hours_results_coefs = (data.frame(
+  Alpha = round(hw_hours$alpha, 4),
+  Beta  = round(hw_hours$beta, 4),
+  Gamma = round(hw_hours$gamma, 4)
+))
+# show results in a table
+rownames(hw_hours_results_coefs) = NULL
+kable(hw_hours_results_coefs, "latex", escape = FALSE,  
+      col.names = c("$\\hat{\\alpha}$", "$\\hat{\\beta}$", "$\\hat{\\gamma}$"), 
+      caption = "Fitted Holt-Winters Coefficients")  %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
+```
+
+### Part B: Prediction and Plotting
+
+
+
+Now, we the predict mean monthly working hours for the period from January 2021 to December 2023 based on the Holt-Winters filtering. 
+
+```{r}
+# make forecast
+hw_f_hours = data.frame(predict(hw_hours, n.ahead = 36,
+                        prediction.interval = TRUE, level = 0.95))
+# format into data frame
+p3bdata = data.frame(
+  Time = as.Date(time(hours_test)),
+  Observed = as.numeric(hours_test),
+  Forecast = as.numeric(hw_f_hours$fit),
+  Lower = as.numeric(hw_f_hours$lwr),
+  Upper = as.numeric(hw_f_hours$upr)
+)
+```
+
+In one figure, we will plot the test dataset along with the forecasts and corresponding 95% prediction intervals. We use the same general plotting structure we've been using throughout the assignment.
+
+```{r}
+# make fancy as heck plot
+p3b = ggplot(data = p3bdata, aes(x = Time)) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "#C8B1E4", alpha = 0.15) +
+  # lines for obsv, pred and interval bounds
+  geom_line(aes(y = Observed, color = "Actual"),  lwd = 1) +
+  geom_line(aes(y = Forecast, color = "Forecast"),lwd = 1) +
+  geom_point(aes(y = Observed, color = "Actual")) +
+  geom_point(aes(y = Forecast, color = "Forecast")) +
+  geom_line(aes(y = Lower, color = "95% Prediction Interval"), alpha = 0.75) +
+  geom_line(aes(y = Upper, color = "95% Prediction Interval"), alpha = 0.75) +
+  # legend and colour assignment
+  scale_color_manual(name = "",
+    values = c(
+    "Actual" = "#2F184B",
+    "Forecast" = "#9B72CF",
+    "95% Prediction Interval" = "#C8B1E4"
+  )) +
+  # customize x-axis for nice dates
+  scale_x_date(date_breaks = "4 month",  date_labels = "%b, %Y") +
+  # add titles with units
+  labs(
+    title = "Holt-Winters Forecast of Monthly Average of Usual Hours Worked in Canada",
+    subtitle = "Across all Industries from January 2021 to December 2023",
+    x = "Month and Year",
+    y = "Monthly Mean Working Time (Hours)") +  
+  theme_bw() + ylim(34, 37.5)+
+  theme(panel.grid.minor =  element_line(
+    color = "grey90",
+    linewidth  = 0.35,
+    linetype = "dashed"
+  ), legend.position = "top", legend.justification = "left", 
+  legend.margin = margin(0,0,0,0),
+  plot.title = element_text(size = 13))
+print(p3b)
+```
+**Comments**: The Holt-Winters forecasting procedure also seems to perform well! Visually, it sticks quite close to the true results throughout the test set, although it seems to be under-estimating the monthly mean working time slightly. Unlike the Box-Jenkins forecast which occasionally over-estimated the truth, the fitted Holt-Winters forecast doesn't seem to noticeably over-estimate at all, which is interesting. In addition, the 95% prediction interval for the Holt-Winters method is wider than that of the Box-Jenkins method, especially as $\ell$ increases. In all, however, it seems that this model is capturing the truth well. Except for at the beginning of the forecast (an anomalous time discussed in the previous question) the true average of usual hours worked in Canada between January 2021 and December 2023 seems to be captured by the interval. 
+
+
+
+### Part C: Model Comparison
+
+Let $x_t$ be the true value of the test time series at time $t$, for $t \in \{(t+1), (t + 2), \dots, (t + \varkappa) \}$ (assuming the training set ends at time $t$ and is contiguous with the test set), where $\varkappa \in \mathbb{N}$ is the lead at the end of the test set, i.e. $\ell \in [1, \varkappa]$ for the $\ell$-step ahead forecast methods. In our case, $\varkappa = 36 = |\text{Test Set}|$ as we have 36 predictions. 
+
+
+Similarly, we let $\hat{x}^{\text{H}}_t(\ell)$ be the $\ell$-step ahead Holt-Winters forecast and $\hat{x}^{\text{B}}_t(\ell)$ be the Box-Jenkins forecasted value at time $t + \ell$.
+
+Then, the MSPE of the two models are given by the set:
+
+$$
+\text{MSPE} = \bigg\{\text{M} \in \{\text{H}, \text{B}\}:\frac{1}{\varkappa}\sum_{\ell = 1}^{\varkappa}\big(\,x_{t+\ell} - \hat{x}^{\text{M}}_t(\ell)\, \big)^2 \bigg\}
+$$
+```{r}
+mspe_H = mean( (as.numeric(hw_f_hours$fit) -  as.numeric(hours_test))^2 )
+mspe_B = mean( (as.numeric(s_point) -  as.numeric(hours_test))^2 )
+```
+
+Then, we report these findings in the table below:
+```{r}
+# define the models
+mods_p2 = c("Holt-Winters", "Box-Jenkins")
+# compute MSPE for each
+mspes_p2 = c(mspe_H, mspe_B)
+# report results
+kable(t(round(mspes_p2, 5)), col.names = mods_p2,
+      caption = "Observed MSPE for Forecasts, Hours Worked Data") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
+```
+
+Since the Box-Jenkins method as the smaller MSPE, i.e. for the set of MSPEs defined earlier:
+
+$$
+m_{\text{best}} = \underset{\text{M} \in  \,\{\text{H}, \text{B}\}}{\text{argmin}}\big\{\text{MSPE}(\text{M})\big\} = \underset{\text{M} \in  \,\{\text{H}, \text{B}\}}{\text{argmin}}\big\{0.0437,	0.0351\big\} = \text{B}
+$$
+In more informal terms, the Box-Jenkins has the smaller MSPE. Since it has the smaller mean-squared prediction error, I would recommend Box-Jenkins. Further, we saw from the plots earlier that the Box-Jenkins method has a narrower prediction interval, which is helpful if we want to be more confident in our forecast. 
+
+
+In addition, the Holt-Winters method consistently underestimates the truth, while the Box-Jenkins method underestimates a bit less frequently and has a balance of under and over estimation around the true values. However, it should be noted that both methods perform very well, and so I would be comfortable recommending either. 
+
+It should be noted that if the target audience (i.e. who we are presenting the forecasts to) is not extremely well-versed in the technical side of time series, the Holt-Winters method could be preferable as an understanding of model equations isn't required to understand the source of the forecast. However, this is a purely informal selection method. Purely from MSPE and the plots, the Box-Jenkins model seems better. 
 
