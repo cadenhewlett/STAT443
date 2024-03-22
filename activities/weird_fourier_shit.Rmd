@@ -1,0 +1,43 @@
+---
+title: "Fourier Transform Activity"
+author: "STAT 443"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Definition 1
+
+Let $h(t)$ be a function of a real varaible $t$.The \underline{Fourier transform} (FT) of $h$ is defined as:
+
+$$
+H(\omega) = \int_{-\infty}^{\infty}h(t)e^{-\text{i} \omega t}dt
+$$
+The \underline{inverse Fourier Transform} is given by:
+$$
+h(t)  = \dfrac{1}{2\pi}  \int_{-\infty}^{\infty}H(\omega)e^{\text{i} \omega t}d\omega
+$$
+The transform $H(\omega)$ is finite if
+$$
+ \int_{-\infty}^{\infty} |h(t)|
+ dt \text{ is finite.}
+$$
+
+Show that 
+$$h(t) = h(-t) \implies H(\omega) \propto  \int_{-\infty}^{\infty}h(t)\cos(t\omega ) \;\text{d}t$$
+
+
+$$
+\begin{aligned}
+H(\omega) &= \int_{-\infty}^{\infty}h(t)e^{-\text{i} \omega t} \;\text{d}t \\
+H(\omega) &= \int_{-\infty}^{\infty}h(t)[\cos(-\omega t) + \text{i} \sin(-\omega t)] \;\text{d}t \\
+H(\omega) &= \int_{-\infty}^{\infty}h(t)[\cos(\omega t) - \text{i} \sin(-\omega t)] \;\text{d}t \\
+H(\omega) &= \int_{-\infty}^{\infty}h(t)\cos(\omega t)\text{d}t - \text{i}\int_{-\infty}^{\infty}h(t) \sin(-\omega t) \;\text{d}t \\
+H(\omega) &= \int_{-\infty}^{\infty}h(t)\cos(\omega t)\text{d}t - 0 \\
+H(\omega) &= \int_{0}^{\infty}h(t)\cos(\omega t)\text{d}t +  \int_{-\infty}^{0}h(t)\cos(\omega t)\text{d}t\\
+H(\omega) &= 2\int_{0}^{\infty}h(t)\cos(\omega t)\text{d}t \hspace{0.5cm}\square
+\end{aligned}
+$$
