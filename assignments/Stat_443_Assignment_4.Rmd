@@ -66,7 +66,7 @@ $$
 $$
 
 
-Now, we evaluate given $\rho$, recalling that for $\omega \in (0,1)$ and $h \in \mathbb{Z} \setminus \{0\}$ the normalized spectral density is given by:
+Now, we evaluate given $\rho$, recalling that for $\omega \in (0,1)$ and even functions, the normalized spectral density is given by:
 $$
 f^{\star}(\omega) = \dfrac{1}{\pi}\bigg(\rho(0) + 2\sum_{h = 1}^{\infty} \rho(h) \cos(\omega h)\bigg), \hspace{0.5cm} \omega \in (0,1)
 $$
