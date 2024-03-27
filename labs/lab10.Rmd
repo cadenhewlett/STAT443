@@ -235,6 +235,15 @@ f <- function(omega){
 }
 ```
 
+
+So, the theoretical plot of $f(w)$ looks like:
+```{r}
+omega = seq(from = 0, to = pi, length.out = 10*N)
+
+plot(omega, f(omega), main = "Theoretical Spectral Density", type = 'l')
+```
+
+
 ## Part b
 ```{r}
 set.seed(443)
@@ -244,6 +253,17 @@ plot(y = f_w_AR$spec / pi, x = f_w_AR$freq*(2*pi), type = 'l',
      ylab = "f(w)", xlab = "w", main = "Simulated AR Periodogram (N = 100)")
 lines(x = f_w_AR$freq*(2*pi), y = f(f_w_AR$freq*(2*pi)), col = 'red')
 ```
+## Part c
+```{r}
+set.seed(443)
+AR = arima.sim(model = list(ar = -0.8), n = 1000, sd = 1)
+f_w_AR = spec.pgram(AR, log = "no", plot = F)
+plot(y = f_w_AR$spec / pi, x = f_w_AR$freq*(2*pi), type = 'l', 
+     ylab = "f(w)", xlab = "w", main = "Simulated AR Periodogram (N = 100)")
+lines(x = f_w_AR$freq*(2*pi), y = f(f_w_AR$freq*(2*pi)), col = 'red')
+```
+
+
 ## Part d
 
 
