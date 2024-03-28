@@ -13,7 +13,6 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(zoo)
 library(tseries)
 library(ggplot2)
 library(gridExtra)
@@ -29,6 +28,13 @@ library(tidyverse)
 library(lubridate)
 library(xts)
 library(kableExtra)
+library(extraDistr)
+library(pracma)
+library(distr)
+library(latex2exp)
+library(rstan)
+library(reticulate)
+require(dplyr, quietly = TRUE)
 ```
 
 
@@ -73,24 +79,61 @@ $$
 Where, trivially, $\rho(0) = 1$.
 
 
-We will evaluate the infinite sum and substitute the result into the equation above. We will re-instate coefficients $A_1$ and $A_2$ from the previous assignment during intermediate steps for simplicity. 
+We will evaluate the infinite sum and substitute the result into the equation above. We will re-instate coefficients $A_1$ and $A_2$ from the previous assignment during intermediate steps for simplicity. In addition, we will let $d_1 = 1/2$ and $d_2 = 1/5$, noting that the geometric series equation is usable here as $|d_1|$ and $|d_2|$ are both less than $1$.
 $$
 \begin{aligned}
 \sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \sum_{h = 1}^\infty \bigg(\frac{16}{11}\Big(\frac{1}{2}\Big)^{|h|}-\frac{5}{11}\Big(\frac{1}{5}\Big)^{|h|}\bigg)\cos(\omega h) \\
-\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \sum_{h = 1}^\infty \bigg(A_1\Big(\frac{1}{2}\Big)^{|h|}-A_2\Big(\frac{1}{5}\Big)^{|h|}\bigg)\cos(\omega h) \\
-\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \underbrace{\sum_{h = 1}^\infty \bigg(A_1\Big(\frac{1}{2}\Big)^{|h|}\cos(\omega h)  \bigg)}_{\text{Term 1}}- \underbrace{\sum_{h = 1}^\infty \bigg(A_2\Big(\frac{1}{5}\Big)^{|h|}\cos(\omega h) \bigg)}_{\text{Term 2}}
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}-A_2(d_2)^{|h|}\bigg)\cos(\omega h), \hspace{0.25cm} \text{ using variable form.}\\
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \underbrace{\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg)}_{\text{Term 1}}- \underbrace{\sum_{h = 1}^\infty \bigg(A_2(d_2)^{|h|}\cos(\omega h) \bigg)}_{\text{Term 2}}
 \end{aligned}
 $$
-We will evaluate Term 1 and Term 2 separately. We will use the following identity without proof:
-$$\cos(\omega h) = \frac{1}{2}\Big(e^{\mathfrak{i} h \omega} +  e^{-\mathfrak{i} h \omega}\Big), \hspace{0.5cm} \mathfrak{i} = \sqrt{-1}$$
+We will evaluate Term 1 and Term 2 separately. We will use the following identities without proof:
+$$\cos(\omega h) = \frac{1}{2}\Big(e^{\mathfrak{i} h \omega} +  e^{-\mathfrak{i} h \omega}\Big), \hspace{0.5cm} \mathfrak{i} = \sqrt{-1} \tag{1}$$
+$$
+\sum_{n = 1}^{\infty} a\cdot r^{n} = \frac{ar}{(1-r)}, \hspace{0.5cm} |r| < 1, \; a \in \mathbb{R} \tag{2}
+$$
 
 Evaluating Term 1, noting that $|h| = h$ since the summation spans $h \in \mathbb{Z}^{+}$.
 $$
 \begin{aligned}
-\sum_{h = 1}^\infty \bigg(A_1\Big(\frac{1}{2}\Big)^{|h|}\cos(\omega h)  \bigg) &= A_1 \sum_{h = 1}^\infty \Big(\frac{1}{2}\Big)^{h}\Big(\frac{1}{2}\Big(e^{\mathfrak{i} h \omega} +  e^{-\mathfrak{i} h \omega}\Big)\Big) \\
-\sum_{h = 1}^\infty \bigg(A_1\Big(\frac{1}{2}\Big)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2} \sum_{h = 1}^\infty \Big(\frac{1}{2}\Big)^{h}\Big(e^{\mathfrak{i} h \omega} +  e^{-\mathfrak{i} h \omega}\Big)\\
-\sum_{h = 1}^\infty \bigg(A_1\Big(\frac{1}{2}\Big)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \sum_{h = 1}^\infty \Big(\frac{1}{2}\Big)^{h}e^{\mathfrak{i} h \omega} +  \sum_{h = 1}^\infty \Big(\frac{1}{2}\Big)^{h}e^{-\mathfrak{i} h \omega}\bigg)\\
-\sum_{h = 1}^\infty \bigg(A_1\Big(\frac{1}{2}\Big)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \sum_{h = 1}^\infty \Big(\frac{1}{2}\,e^{\mathfrak{i} \omega}\Big)^{h} +  \sum_{h = 1}^\infty \Big(\frac{1}{2}e^{-\mathfrak{i} \omega}\Big)^{h}\bigg)\\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= A_1 \sum_{h = 1}^\infty (d_1)^{|h|}\Big(\frac{1}{2}\Big(e^{\mathfrak{i} h \omega} +  e^{-\mathfrak{i} h \omega}\Big)\Big), \hspace{0.5cm} \text{by  (1)} \\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2} \sum_{h = 1}^\infty (d_1)^{h}\Big(e^{\mathfrak{i} h \omega} +  e^{-\mathfrak{i} h \omega}\Big)\\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \sum_{h = 1}^\infty (d_1)^{h}e^{\mathfrak{i} h \omega} +  \sum_{h = 1}^\infty (d_1)^{h}e^{-\mathfrak{i} h \omega}\bigg)\\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \sum_{h = 1}^\infty \Big(d_1\,e^{\mathfrak{i} \omega}\Big)^{h} +  \sum_{h = 1}^\infty \Big(d_1e^{-\mathfrak{i} \omega}\Big)^{h}\bigg)\\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \frac{d_1e^{\mathfrak{i}\omega}}{1 - d_1e^{\mathfrak{i}\omega}} + \frac{d_1e^{-\mathfrak{i}\omega}}{1 - d_1e^{-\mathfrak{i}\omega}} \bigg), \hspace{0.5cm} \text{by  (2)}\\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \frac{d_1e^{\mathfrak{i}\omega}(1 - d_1e^{-\mathfrak{i}\omega})+ d_1e^{-\mathfrak{i}\omega}(1 - d_1e^{\mathfrak{i}\omega} )}{(1 - d_1e^{\mathfrak{i}\omega} )(1 - d_1e^{-\mathfrak{i}\omega})} \bigg) \\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \frac{d_1(e^{\mathfrak{i} \omega} + e^{-\mathfrak{i} \omega}) - 2d_1^2}{1 - d_1(e^{\mathfrak{i} \omega} + e^{-\mathfrak{i} \omega}) + d_1^2} \bigg) \\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1}{2}\bigg( \frac{2d_1\cos(\omega) - 2d_1^2}{1 - 2d_1\cos(\omega) + d_1^2} \bigg) \\
+\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg) &= \frac{A_1(d_1\cos(\omega) - d_1^2)}{1 - 2d_1\cos(\omega) + d_1^2} \\
 \end{aligned}
 $$
+Similarly, if we repeat this exact same process with $A_2$ and $d_2$, noting that $|d_2| < 1$ and $A_2 \in \mathbb{R}$ also satisfy the requirements of $(1)$ and $(2)$, we arrive at Term 2:
+$$
+\sum_{h = 1}^\infty \bigg(A_2(d_2)^{|h|}\cos(\omega h)  \bigg) = \frac{A_2(d_2\cos(\omega) - d_2^2)}{1 - 2d_2\cos(\omega) + d_2^2} 
+$$
+Then, we can recombine these into our original expression for the infinite sum:
+$$
+\begin{aligned}
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= {\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg)}- {\sum_{h = 1}^\infty \bigg(A_2(d_2)^{|h|}\cos(\omega h) \bigg)} \\
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &=  \frac{A_1(d_1\cos(\omega) - d_1^2)}{1 - 2d_1\cos(\omega) + d_1^2}- \frac{A_2(d_2\cos(\omega) - d_2^2)}{1 - 2d_2\cos(\omega) + d_2^2}  \\
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \Big(\frac{16}{11} \Big)\frac{(\frac{1}{2}\cos(\omega) - \big(\frac{1}{2}\big)^2)}{1 - 2\big(\frac{1}{2}\big)\cos(\omega) + \big(\frac{1}{2}\big)^2}- \Big( \Big)\frac{(d_2\cos(\omega) - d_2^2)}{1 - 2d_2\cos(\omega) + d_2^2} \\
+\end{aligned}
+$$
+```{python}
+from sympy import *
+from pytexit import py2tex
+
+
+w = symbols('w')
+# numerator and denominator
+numerator = 16 * ( (1/2)*cos(w) - (1/2)**(2) )
+denominator = 11 * (1 - 2*(1/2)*cos(w) + (1/2)**2)
+# simplify first term
+term_1 = nsimplify(numerator / denominator)
+# pytex_obj = py2tex(str(term_1))
+together(term_1)
+```
+
+
+
 <!-- \cos\left( k\omega \right) =\left( e^{\mathbf{i}k\omega}+e^{-\mathbf{i}k\omega }\right) /2, -->
