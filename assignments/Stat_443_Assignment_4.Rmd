@@ -76,7 +76,7 @@ Now, we evaluate given $\rho$, recalling that for $\omega \in (0,1)$ and even fu
 $$
 f^{\star}(\omega) = \dfrac{1}{\pi}\bigg(\rho(0) + 2\sum_{h = 1}^{\infty} \rho(h) \cos(\omega h)\bigg), \hspace{0.5cm} \omega \in (0,1)
 $$
-Where, trivially, $\rho(0) = 1$.
+Where  $\rho(0) = 1$.
 
 
 We will evaluate the infinite sum and substitute the result into the equation above. We will re-instate coefficients $A_1$ and $A_2$ from the previous assignment during intermediate steps for simplicity. In addition, we will let $d_1 = 1/2$ and $d_2 = 1/5$, noting that the geometric series equation is usable here as $|d_1|$ and $|d_2|$ are both less than $1$.
@@ -116,24 +116,171 @@ $$
 \begin{aligned}
 \sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= {\sum_{h = 1}^\infty \bigg(A_1(d_1)^{|h|}\cos(\omega h)  \bigg)}- {\sum_{h = 1}^\infty \bigg(A_2(d_2)^{|h|}\cos(\omega h) \bigg)} \\
 \sum_{h = 1}^\infty \rho(h)\cos(\omega h) &=  \frac{A_1(d_1\cos(\omega) - d_1^2)}{1 - 2d_1\cos(\omega) + d_1^2}- \frac{A_2(d_2\cos(\omega) - d_2^2)}{1 - 2d_2\cos(\omega) + d_2^2}  \\
-\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \Big(\frac{16}{11} \Big)\frac{(\frac{1}{2}\cos(\omega) - \big(\frac{1}{2}\big)^2)}{1 - 2\big(\frac{1}{2}\big)\cos(\omega) + \big(\frac{1}{2}\big)^2}- \Big( \Big)\frac{(d_2\cos(\omega) - d_2^2)}{1 - 2d_2\cos(\omega) + d_2^2} \\
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \Big(\frac{16}{11} \Big)\frac{(\frac{1}{2}\cos(\omega) - \big(\frac{1}{2}\big)^2)}{1 - 2\big(\frac{1}{2}\big)\cos(\omega) + \big(\frac{1}{2}\big)^2}- \Big( \frac{5}{11} \Big)\frac{(\frac{1}{5}\cos(\omega) - (\frac{1}{5})^2)}{1 - 2(\frac{1}{5})\cos(\omega) + (\frac{1}{5})^2} \\
+\sum_{h = 1}^\infty \rho(h)\cos(\omega h) &= \Big(\frac{16}{11} \Big)\frac{2\cos(\omega) - 1}{5 - 4\cos(\omega)}- \Big(\frac{5}{11}  \Big)\dfrac{5\cos(\omega) - 1}{2(13 - 5\cos(\omega))}
 \end{aligned}
 $$
+
+Then, combining the expressions we can get the final expression for the normalized spectral density:
+$$
+\begin{aligned}
+f^{\star}(\omega) &= \dfrac{1}{\pi}\bigg(1 + 2\sum_{h = 1}^{\infty} \rho(h) \cos(\omega h)\bigg) \\
+f^{\star}(\omega) &= \dfrac{1}{\pi}\bigg(1 + 2\bigg(\Big(\frac{16}{11} \Big)\frac{2\cos(\omega) - 1}{5 - 4\cos(\omega)}- \Big(\frac{5}{11}  \Big)\dfrac{5\cos(\omega) - 1}{2(13 - 5\cos(\omega))}\bigg) \bigg)\\
+f^{\star}(\omega) &= \boxed{\dfrac{1}{\pi} + \frac{32}{11 \pi} \bigg(\frac{2\cos(\omega) - 1}{5 - 4\cos(\omega)}\bigg)- \frac{5}{11 \pi}  \bigg(\dfrac{5\cos(\omega) - 1}{13 - 5\cos(\omega)}\bigg)}
+\end{aligned}
+$$
+We can verify these results below:
+```{r}
+w = pi/4
+# define acf
+rho <- function(h){  (16/11)*((1/2)^h) - (5/11)*((1/5)^h) }
+# define the "infinite sum"
+sum_vals = sum(sapply(1:1000, function(h){
+  rho(h)*cos(w*h)
+}))
+# from the equation... 
+eqnval = (1/pi)*(rho(0) + 2*sum_vals)
+
+# from our simplification
+fw1 = 1/pi 
+fw2 = (32/(11*pi)) * ( (2 * cos(w) - 1) / (5 - 4*cos(w)) )
+fw3 = (5/(11*pi)) * ( (5 * cos(w) - 1) / (13 - 5*cos(w)) )
+# comparison
+c(eqnval, fw1 + fw2 - fw3)
+```
+We see that the values are identical for at least the first $10,000$ lags at fixed $\omega = \pi/4$.
+
+\newpage
+## Part B
+
+Write down the power spectral density function of $\{X_t\}_{t \in \mathbb{Z}}$.
+
+
+**Solution**
+
+We recall from the definition of normalized spectral density that
+$$
+f^{\star}(\omega) = \dfrac{f(\omega)}{\sigma^2_X}
+$$
+Where $\sigma^2_X$ is the variance of $\{X_t\}_{t \in \mathbb{Z}}$.
+
+Directly, then, we can write $f(\omega)$ as:
+$$
+f(\omega) = \sigma^2_Xf^{\star}(\omega)  = \gamma(0)f^{\star}(\omega)
+$$
+
+We re-establish the Yule-Walker equations, where $\alpha_1 = 7/10$ and $\alpha_2 = -1/10$ 
+
+$$
+\begin{aligned}
+\mathbb{E}(X_tX_{t})  &= \alpha_1\mathbb{E}(X_{t}X_{t-1}) - \alpha_2\mathbb{E}(X_{t}X_{t-2}) + \mathbb{E}(X_t Z_t)\\
+\mathbb{E}(X_tX_{t-1}) &= \alpha_1\mathbb{E}(X_{t-1}X_{t-1}) - \alpha_2\mathbb{E}(X_{t-1}X_{t-2}) + \mathbb{E}(Z_tX_{t-1}) \\
+\mathbb{E}(X_tX_{t-2}) &= \alpha_1\mathbb{E}(X_{t-1}X_{t-2}) - \alpha_2\mathbb{E}(X_{t-2}X_{t-2}) + \mathbb{E}(Z_tX_{t-2})
+\end{aligned}
+$$
+Which becomes the following system of three equations: 
+$$
+\begin{aligned}
+\gamma(0)  &= \alpha_1 \gamma(1) + \alpha_2 \gamma(2) + \sigma^2\\
+\gamma(1)  &= \alpha_1\gamma(0) + \alpha_2\gamma(1) \\
+\gamma(2)  &= \alpha_1\gamma(1) + \alpha_2\gamma(0) \\
+\end{aligned}
+$$
+test area:
+$$
+\begin{aligned}
+\gamma(1) = \alpha_1 \gamma(0) + \alpha_2 \gamma(1) \\
+\gamma(1) = \frac{\alpha_1}{1-\alpha_2} \gamma(0)
+\end{aligned}
+$$
+then
+$$
+\begin{aligned}
+\gamma(2) = \alpha_1 \gamma(1) + \alpha_2 \gamma(0) \\
+\gamma(2) = \alpha_1 \Big(\frac{\alpha_1}{1-\alpha_2} \gamma(0)\Big)+ \alpha_2 \gamma(0)  \\
+\gamma(2) = \Big(\frac{\alpha_1^2 + \alpha_2 - \alpha_2^2}{1-\alpha_2} \Big)\gamma(0)
+\end{aligned}
+$$
+finally
+$$
+\begin{aligned}
+&\gamma(0) =\alpha_1 \gamma(1) + \alpha_2 \gamma(2) + \sigma^2 \\
+&\gamma(0) =\alpha_1  \Big(\frac{\alpha_1}{1-\alpha_2}\Big) \gamma(0)+ \alpha_2\Big(\frac{\alpha_1^2 + \alpha_2 - \alpha_2^2}{1-\alpha_2} \Big)\gamma(0) + \sigma^2 \\
+&\gamma(0) = \Big(\frac{\alpha_1^2 +\alpha_1^2\alpha_2 + \alpha_2^2 - \alpha_2^3}{1-\alpha_2} \Big)\gamma(0) + \sigma^2 \\
+&\gamma(0)\Big(1 -\frac{\alpha_1^2 +\alpha_1^2\alpha_2 + \alpha_2^2 - \alpha_2^3}{1-\alpha_2} \Big) =   \sigma^2 \\
+&\gamma(0)\Big( \frac{(1 - \alpha_2)-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3}{1-\alpha_2} \Big) =   {\sigma^2}\\
+&\gamma(0) =   \frac{\sigma^2(1-\alpha_2)}{{1 - \alpha_2-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3} }
+\end{aligned}
+$$
+Then, we can evaluate at our given $\alpha_1$ and $\alpha_2$, simplifying the fraction using Python.
 ```{python}
 from sympy import *
-from pytexit import py2tex
 
+alpha_1, alpha_2, sigma_sq = symbols('alpha_1 alpha_2 sigma_sq')
 
-w = symbols('w')
-# numerator and denominator
-numerator = 16 * ( (1/2)*cos(w) - (1/2)**(2) )
-denominator = 11 * (1 - 2*(1/2)*cos(w) + (1/2)**2)
-# simplify first term
-term_1 = nsimplify(numerator / denominator)
-# pytex_obj = py2tex(str(term_1))
-together(term_1)
+gamma_0_expr = ( sigma_sq * (1 - alpha_2) / 
+    (1 - alpha_2 - alpha_1**2 - alpha_1**2 * alpha_2 - alpha_2**2 + alpha_2**3))
+
+alpha_1_val = Rational(7, 10)
+alpha_2_val = Rational(-1, 10)
+
+gamma_0_eval = gamma_0_expr.subs({alpha_1: alpha_1_val, alpha_2: alpha_2_val})
+
+gamma_0_simplified = nsimplify(gamma_0_eval)
+print(gamma_0_simplified)
 ```
+Then, we can verify both our results and Python's simplification as follows:
+```{r}
+set.seed(3)
+alpha_1 <- 7/10
+alpha_2 <- -1/10
+sigma_sq <- 1 
+
+gamma_0 <- (sigma_sq * (1 - alpha_2) / 
+        (1 - alpha_2 - alpha_1^2 - alpha_1^2 * alpha_2 - alpha_2^2 + alpha_2^3))
+
+ar_params <- c(alpha_1, alpha_2)
+simulated_data <- arima.sim(n = 5000000, 
+                            model = list(ar = c(7/10, -1/10)))
+
+simulated_gamma_0 <- var(simulated_data)
+# use both regular and simplified fraction version
+cat("Computed Variance Using Computation:", 275/162, "\n")
+cat("Computed Variance Using Computation:", gamma_0, "\n")
+cat("Variance of Simulated ARIMA process:", simulated_gamma_0, "\n")
+```
+It seems the computation very closely approximates the truth. Hence, we conclude that:
+$$
+f(\omega) = \gamma(0)f^{\star}(\omega) = \frac{275\sigma^2}{162}\Bigg( \dfrac{1}{\pi} + \frac{32}{11 \pi} \bigg(\frac{2\cos(\omega) - 1}{5 - 4\cos(\omega)}\bigg)- \frac{5}{11 \pi}  \bigg(\dfrac{5\cos(\omega) - 1}{13 - 5\cos(\omega)}\bigg) \Bigg)
+$$
+\newpage
+## Part C
 
 
+Plot the normalized spectral density and comment on its behaviour.
+<!-- import numpy as np -->
+
+<!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
+<!-- A1 = 16 / 11 -->
+<!-- A2 = 5 / 11 -->
+<!-- d1 = 1 / 2 -->
+<!-- d2 = 1 / 5 -->
+<!-- omega = np.pi / 4  # Example fixed frequency -->
+
+<!-- # Function to compute the sum of the first N terms for both parts of the sum -->
+<!-- def sum_first_N_terms(N, omega): -->
+<!--     sum_term1 = sum(A1 * (d1 ** abs(h)) * np.cos(omega * h) for h in range(1, N + 1)) -->
+<!--     sum_term2 = sum(A2 * (d2 ** abs(h)) * np.cos(omega * h) for h in range(1, N + 1)) -->
+<!--     return sum_term1 - sum_term2 -->
+
+<!-- # Compute the sum of the first few terms -->
+<!-- N = 100  # Number of terms to sum -->
+<!-- sum_approx = sum_first_N_terms(N, omega) -->
+
+<!-- # Compute the expression directly for comparison -->
+<!-- expr_direct = (A1 * ((d1 * np.cos(omega)) - d1**2)) / (1 - 2 * d1 * np.cos(omega) + d1**2) - \ -->
+<!--               (A2 * ((d2 * np.cos(omega)) - d2**2)) / (1 - 2 * d2 * np.cos(omega) + d2**2) -->
+
+<!-- sum_approx, expr_direct -->
 
 <!-- \cos\left( k\omega \right) =\left( e^{\mathbf{i}k\omega}+e^{-\mathbf{i}k\omega }\right) /2, -->
