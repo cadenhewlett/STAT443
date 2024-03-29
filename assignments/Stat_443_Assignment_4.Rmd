@@ -319,6 +319,134 @@ f(omega)
 
 # Question 2
 
+Given the spectral density function
+
+$$
+f(\omega) = \frac{1}{\pi}\Big(62 - 70 \cos(\omega) + 12\cos(2w) \Big), \hspace{0.5cm} \omega \in (0, 1)
+$$
+compute the autocovariance function $\gamma(h)$ and autocorrelation function $\rho(h)$ of the underlying
+stochastic process, where $h \in \mathbb{Z}$.
+
+
+We will begin with computing the autocovariance function $\gamma(h)$ at lag  $h = 0$, then at $h = 1$, $k = 2$ and finally $k > 2$.
+
+
+
+
+
+
+## Part D: Lags Greater than 2
+
+
+
+Before we evaluate lags $h > 2 \subset \mathbb{Z}$, we will establish the following lemma:
+
+
+
+\textit{\underline{Lemma 1}}: Let $m \in \mathbb{Z}, n \in \mathbb{Z}^{+}$ We will show that:
+$$
+\forall (m,n) \in \mathbb{Z}^{+} \text { s.t. } m \neq n, \; \int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega = 0
+$$
+\textit{\underline{Proof}}: In order to show this equality holds, we will use the following product-to-sum identity of cosines without proof. Let $\theta, \vartheta \in \mathbb{R}$.
+$$
+\cos(\theta)\cos(\vartheta) = \frac{1}{2}\cos(\theta +\vartheta) + \frac{1}{2}\cos(\theta -\vartheta) \tag{2.1}
+$$
+We will use $(2.1)$ to evaluate the integral.
+$$
+\begin{aligned}
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \int_0^{\pi} \bigg( \frac{1}{2}\cos(m \omega + n\omega) +  \frac{1}{2}\cos(m \omega - n\omega)\bigg)\,\text{d}\omega \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2}\int_0^{\pi} \underbrace{\cos\big((m + n)\omega\big)}_{\text{Let } q = (m+n)\omega}\,\text{d}\omega + \frac{1}{2}\int_0^{\pi} \underbrace{\cos\big((m - n)\omega\big)}_{\text{Let } \nu = (m-n)\omega}\,\text{d}\omega \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2(m+n)}\int_0^{\pi} \cos(q) \,\text{d}q + \frac{1}{2(m - n)}\int_0^{\pi} \cos(\nu)\,\text{d}\nu, \hspace{0.75cm} \text{requires } m \neq n\\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2(m+n)}\Big( \sin(q)\Big|_{\omega = 0}^{\pi}\Big)+ \frac{1}{2(m - n)} \Big( \sin(\nu)\Big|_{\omega = 0}^{\pi}\Big) \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2(m+n)}\Big( \sin(m\omega + n\omega)\Big|_{0}^{\pi}\Big)+ \frac{1}{2(m - n)} \Big( \sin(m\omega - n\omega)\Big|_{0}^{\pi}\Big) \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2(m+n)}\Big( \sin\big((m+n)\pi\big) - \sin(0)\Big)+ \frac{1}{2(m - n)} \Big( \sin\big((m-n)\pi\big) - \sin(0)\Big)\Big) \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2(m+n)}\sin\big((m+n)\pi\big) + \frac{1}{2(m - n)} \sin\big((m-n)\pi\big) 
+\end{aligned}
+$$
+We note that $m \in \mathbb{Z}$ and $n \in \mathbb{Z}$. Hence, by properties of integers, we know that $m + n \in \mathbb{Z}$ and $m - n \in \mathbb{Z}$. 
+
+We can hence note that:
+$$
+(m \in \mathbb{Z} \land n \in \mathbb{Z}) \implies \exists \ell \in \mathbb{Z} \text{ s.t. } \ell = m + n
+$$
+Since $(m, n) \in \mathbb{Z}^{+}$ and $m \neq n$, we know that $m + n > 0, \; \therefore \ell > 0$ .
+
+
+Similarly, we have that:
+$$
+(m \in \mathbb{Z} \land n \in \mathbb{Z}) \implies \exists \varrho \in \mathbb{Z} \text{ s.t. } \varrho = m - n
+$$
+Further, since $(m, n) \in \mathbb{Z}^{+}$ and $m \neq n$, we know that $\varrho \neq 0$. We also note by properties of sine that $\forall k \in \mathbb{Z}, \sin(k \cdot \pi) = 0.$
+
+
+
+Finally, we can rewrite our simplified integral in terms of $\ell$ and $\varrho$ and solve.
+$$
+\begin{aligned}
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2\ell}\sin(\ell \pi) + \frac{1}{2 \varrho} \sin(\varrho \pi) \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2\ell}(0) + \frac{1}{2 \varrho}(0), \hspace{0.25cm} \text{ since } \forall k \in \mathbb{Z}, \sin(k \cdot \pi) = 0 \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= (0) + (0), \hspace{1.45cm} \text{ since }  \ell \neq 0 \text{ and } \varrho \neq 0 \\
+\int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= 0
+\end{aligned}
+$$
+Hence, we conclude that
+$$
+\forall (m,n) \in \mathbb{Z}^{+} \text { s.t. } m \neq n, \; \int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega = 0, \hspace{0.25cm}\text{ as required.} \;\;\square
+$$
+
+
+
+**Application of the Lemma**
+
+
+Now, we can show that $\forall h > 2 \subseteq \mathbb{Z}^{+}$ that:
+$$
+\gamma(h) = \int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega = 0
+$$
+\textit{\underline{Proof}}: We begin by expanding $f(\omega)$ with our previous variable assignments:
+$$
+\begin{aligned}
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \int_0^{\pi} \bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2w) \Big)\bigg]\cos(h \omega) \text{d}\omega \\
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \frac{a}{\pi}\int_0^{\pi} \cos(h \omega) \text{d}\omega - \frac{b}{\pi}\int_0^{\pi} \cos(\omega)\cos(h \omega)  \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(2\omega)\cos(h \omega)  \text{d}\omega \\
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \frac{a}{\pi}\int_0^{\pi} \cos(0 \cdot\omega)\cos(h \cdot\omega) \text{d}\omega - \frac{b}{\pi}\int_0^{\pi} \cos(1 \cdot\omega)\cos(h \cdot\omega)  \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(2 \cdot\omega)\cos(h \cdot\omega)  \text{d}\omega
+\end{aligned}
+$$
+Now, from the expansion on the third line, we can draw an interesting parallel to the lemma established previously. Let $M = \{0, 1, 2\}$ and $N = \{n \in \mathbb{Z} : n >2\}$. 
+
+We see by construction of these sets $M \cap N = \emptyset$. Importantly,
+$$
+M \cap N = \emptyset \; \implies \; \forall n \in N, \forall m \in M, \; m \neq n
+$$
+Now, if we let $M =  \{m_1, m_2, m_3\} = \{0, 1, 2\}$ and $n \in N := \{h \in \mathbb{Z} :  h>2\}$, we can rewrite our integral in terms of $m$ and $n$ and simplify using our lemma. 
+
+$$
+\begin{aligned}
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \frac{a}{\pi}\int_0^{\pi} \underbrace{ \cos(m_1 \cdot\omega)\cos(n \cdot\omega) }_{\forall n \in N,  \, m_1 \neq n } \text{d}\omega - \frac{b}{\pi}\int_0^{\pi} \underbrace{\cos(m_2 \cdot\omega)\cos(n \cdot\omega)}_{\forall n \in N,  \, m_2 \neq n }  \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \underbrace{\cos(m_2 \cdot\omega)\cos(n \cdot\omega)}_{\forall n \in N,  \, m_3 \neq n }  \text{d}\omega \\
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \frac{a}{\pi}(0)- \frac{b}{\pi}(0)+ \frac{c}{\pi}(0), \text{ by set construction and Lemma 1.} \\
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \boxed{0}
+\end{aligned}
+$$
+So, we can conclude that:
+$$
+\forall h > 2, \gamma(h) = \int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega = 0, \text{ as required.} \hspace{0.25cm} \square
+$$
+
+
+## Autocovariance Function
+
+Hence, bringing all the previous parts together, we can conclude that for $h \in \mathbb{Z}$:
+
+$$
+\gamma(h) = \begin{cases} \gamma(-h), & h < 0 \\
+\dots, & h = 0 \\
+\dots, & h = 1 \\
+\dots, & h = 2 \\
+0 & \text{otherwise}
+\end{cases}
+$$
+## Autocorrelation Function
+
+
 <!-- import numpy as np -->
 
 <!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
