@@ -316,26 +316,99 @@ f(omega)
 ```
 
 
-
+\newpage
 # Question 2
 
 Given the spectral density function
 
 $$
-f(\omega) = \frac{1}{\pi}\Big(62 - 70 \cos(\omega) + 12\cos(2w) \Big), \hspace{0.5cm} \omega \in (0, 1)
+f(\omega) = \frac{1}{\pi}\Big(62 - 70 \cos(\omega) + 12\cos(2 \omega) \Big), \hspace{0.5cm} \omega \in (0, 1)
 $$
 compute the autocovariance function $\gamma(h)$ and autocorrelation function $\rho(h)$ of the underlying
 stochastic process, where $h \in \mathbb{Z}$.
 
 
-We will begin with computing the autocovariance function $\gamma(h)$ at lag  $h = 0$, then at $h = 1$, $k = 2$ and finally $k > 2$.
+We will begin with computing the autocovariance function $\gamma(h)$ at lag  $h = 0$, then at $h = 1$, $k = 2$ and finally $h > 2$.
+
+
+Further, for notational simplicity, we let $a = 62$, $b = 70$ and $c = 12$, meaning that:
+$$
+f(\omega) = \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big), \hspace{0.5cm} \omega \in (0, 1)
+$$
+
+## Part A: Lag 0
+
+For $h = 0$, we have the following:
+
+$$
+\gamma(0) = \int_0^{\pi} f(\omega)\cos(h \omega)\text{d}\omega =\int_0^{\pi} \bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(0 \times \omega) \text{d}\omega 
+$$
+Let's evaluate this integral to find the autocovariance at lag zero.
+$$
+\begin{aligned}
+\gamma(0) &= \int_0^{\pi}\bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(0) \text{d}\omega \\
+\gamma(0) &=  \frac{a}{\pi}\int_0^{\pi} \text{d}\omega - \frac{b}{\pi}\int_0^{\pi}  \cos(\omega)\text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(2 \omega) \text{d}\omega \\
+\gamma(0) &=  \frac{a}{\pi}\Big(\omega \, \Big|_{0}^{\pi}\Big)- \frac{b}{\pi}\Big(\sin(\omega) \, \Big|_{0}^{\pi}\Big) + \frac{c}{\pi}\Big(\frac{1}{2}\sin(2\omega) \, \Big|_{0}^{\pi}\Big) \\
+\gamma(0) &=  \frac{a}{\pi}(\pi - 0)- \frac{b}{\pi}\Big(\sin(\pi) - \sin(0)\Big) + \frac{c}{2\pi}\Big(\sin(2\pi) - \sin(0)\Big) \\
+\gamma(0) &=  a- \frac{b}{\pi}\Big(0 -0\Big) + \frac{c}{2\pi}\Big(0 - 0\Big) \\
+\gamma(0) &=  \boxed{a = 62}
+\end{aligned}
+$$
 
 
 
+## Part B: Lag 1
+
+We repeat these calculations, but now for $h = 1$. We retain  $a = 62$, $b = 70$ and $c = 12$.
+
+For $h = 1$, we have the following:
+
+$$
+\gamma(1) = \int_0^{\pi} f(\omega)\cos(h \omega)\text{d}\omega =\int_0^{\pi} \bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(1 \times \omega) \text{d}\omega 
+$$
+
+As before, we expand and evaluate this integral. 
+
+
+We will use the following trigonometric identities without proof:
+$$
+\cos^2(\theta) = 1 - \sin^2(\theta) \tag{3}
+$$
+$$
+\sin^2(\theta) = \frac{1}{2}\big(1 - \cos(2\theta) \big) \tag{4}
+$$
+
+
+$$
+\begin{aligned}
+\gamma(1) &= \int_0^{\pi}\bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(\omega) \text{d}\omega \\
+\gamma(1) &=  \frac{a}{\pi}\int_0^{\pi} \cos(\omega) \text{d}\omega - \frac{b}{\pi}\int_0^{\pi}  \cos(\omega)\cos(\omega)\text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(2 \omega)\cos(\omega) \text{d}\omega \\
+\gamma(1) &=  \frac{a}{\pi}\Big(\sin(\omega) \, \Big|_{0}^{\pi}\Big)- \frac{b}{\pi}\int_0^{\pi}  \cos^2(\omega)\text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2 \omega)\text{d}\omega \\
+\gamma(1) &= 0 - \frac{b}{\pi}\int_0^{\pi}  \big(1 - \sin^2(\omega) \big)\text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2 \omega)\text{d}\omega \hspace{0.65cm} \text{ applying } (3) \\
+\gamma(1) &= -\frac{b}{\pi}\int_0^{\pi}\text{d}\omega  + \frac{b}{\pi}\int_0^{\pi}\sin^2(\omega) \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2 \omega)\text{d}\omega \\
+\gamma(1) &= -{b} + \frac{b}{\pi}\int_0^{\pi}\frac{1}{2}\big(1 - \cos(2\theta) \big)  \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2 \omega)\text{d}\omega \hspace{0.65cm} \text{ applying } (4) \\
+\gamma(1) &= -{b} + \frac{b}{\pi}\int_0^{\pi}\frac{1}{2}\text{d}\omega - \frac{b}{2\pi}\underbrace{\int_0^{\pi} \cos(2\theta)\text{d}\omega}_{\text{shown to be 0 in Part A}} + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2 \omega)\text{d}\omega \\
+\gamma(1) &= -{b} + \frac{b}{\pi}\int_0^{\pi}\frac{1}{2}\text{d}\omega  + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2\omega)\text{d}\omega \\
+\gamma(1) &= -{b} + \frac{b}{2}  + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2\omega)\text{d}\omega
+\end{aligned}
+$$
+We apply a manipulation of equation (4) to evaluate the final integral:
+$$
+\begin{aligned}
+\gamma(1) &= -\frac{b}{2}  + \frac{c}{\pi}\int_0^{\pi} \cos(\omega) \cos(2\omega)\text{d}\omega \\
+\gamma(1) &= -\frac{b}{2}  + \frac{c}{\pi}\int_0^{\pi} \cos(\omega)\Big(1 - 2\sin^2(\omega)\Big)\text{d}\omega \\
+\gamma(1) &= -\frac{b}{2}  + \frac{c}{\pi}\int_0^{\pi} \cos(\omega)\text{d}\omega - \frac{2c}{\pi}\int_0^{\pi} \cos(\omega)\sin^2(\omega)\text{d}\omega \\
+\gamma(1) &= -\frac{b}{2}  + \frac{c}{\pi}\Big(\sin(\omega) \, \Big|_{0}^{\pi}\Big) - \underbrace{\frac{2c}{\pi}\int_0^{\pi} \cos(\omega)\sin^2(\omega)\text{d}\omega}_{\text{let } q\, = \,\sin(\omega)} \\
+\gamma(1) &= -\frac{b}{2}  + 0 - \frac{2c}{\pi} \int_0^{\pi} \cos(\omega)q^2\Big(\frac{1}{\cos(\omega)}\Big)\text{d}q \\
+\gamma(1) &= -\frac{b}{2} - \frac{2c}{3\pi} \bigg( q^3 \Big|_{\omega = 0}^{\pi} \bigg) \\ 
+\gamma(1) &= -\frac{b}{2} - \frac{2c}{3\pi} \bigg( \sin^3(\pi) - \sin^3(0) \bigg) \\
+\gamma(1) &= -\frac{b}{2} = -\frac{70}{2} = \boxed{-35}
+\end{aligned}
+$$
 
 
 
-## Part D: Lags Greater than 2
+## Part D: Lags Greater Than 2
 
 
 
@@ -406,7 +479,7 @@ $$
 \textit{\underline{Proof}}: We begin by expanding $f(\omega)$ with our previous variable assignments:
 $$
 \begin{aligned}
-\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \int_0^{\pi} \bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2w) \Big)\bigg]\cos(h \omega) \text{d}\omega \\
+\int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \int_0^{\pi} \bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(h \omega) \text{d}\omega \\
 \int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \frac{a}{\pi}\int_0^{\pi} \cos(h \omega) \text{d}\omega - \frac{b}{\pi}\int_0^{\pi} \cos(\omega)\cos(h \omega)  \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(2\omega)\cos(h \omega)  \text{d}\omega \\
 \int_0^{\pi}f(\omega)\cos(h \omega) \text{d}\omega &= \frac{a}{\pi}\int_0^{\pi} \cos(0 \cdot\omega)\cos(h \cdot\omega) \text{d}\omega - \frac{b}{\pi}\int_0^{\pi} \cos(1 \cdot\omega)\cos(h \cdot\omega)  \text{d}\omega + \frac{c}{\pi}\int_0^{\pi} \cos(2 \cdot\omega)\cos(h \cdot\omega)  \text{d}\omega
 \end{aligned}
@@ -438,7 +511,7 @@ Hence, bringing all the previous parts together, we can conclude that for $h \in
 
 $$
 \gamma(h) = \begin{cases} \gamma(-h), & h < 0 \\
-\dots, & h = 0 \\
+62, & h = 0 \\
 \dots, & h = 1 \\
 \dots, & h = 2 \\
 0 & \text{otherwise}
