@@ -212,7 +212,7 @@ $$
 &\gamma(0) =   \frac{\sigma^2(1-\alpha_2)}{{1 - \alpha_2-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3} }
 \end{aligned}
 $$
-Then, we can evaluate at our given $\alpha_1$ and $\alpha_2$, simplifying the fraction using Python.
+Then, we can evaluate at our given $\alpha_1$ and $\alpha_2$, simplifying the fraction above using Python to avoid human error.
 ```{python}
 from sympy import *
 
@@ -229,7 +229,7 @@ gamma_0_eval = gamma_0_expr.subs({alpha_1: alpha_1_val, alpha_2: alpha_2_val})
 gamma_0_simplified = nsimplify(gamma_0_eval)
 print(gamma_0_simplified)
 ```
-Then, we can verify both our results and Python's simplification as follows:
+Then, we can verify both our results and Python's simplification as follows, assuming $\sigma^2 = 1$. 
 ```{r}
 set.seed(3)
 alpha_1 <- 7/10
@@ -245,7 +245,7 @@ simulated_data <- arima.sim(n = 5000000,
 
 simulated_gamma_0 <- var(simulated_data)
 # use both regular and simplified fraction version
-cat("Computed Variance Using Computation:", 275/162, "\n")
+cat("Computed Variance Using Simplified Fraction:", 275/162, "\n")
 cat("Computed Variance Using Computation:", gamma_0, "\n")
 cat("Variance of Simulated ARIMA process:", simulated_gamma_0, "\n")
 ```
@@ -254,10 +254,71 @@ $$
 f(\omega) = \gamma(0)f^{\star}(\omega) = \frac{275\sigma^2}{162}\Bigg( \dfrac{1}{\pi} + \frac{32}{11 \pi} \bigg(\frac{2\cos(\omega) - 1}{5 - 4\cos(\omega)}\bigg)- \frac{5}{11 \pi}  \bigg(\dfrac{5\cos(\omega) - 1}{13 - 5\cos(\omega)}\bigg) \Bigg)
 $$
 \newpage
+
+
 ## Part C
 
 
 Plot the normalized spectral density and comment on its behaviour.
+
+
+The normalized spectral density ended up being quite long, so we'll define each term one-by-one in the function below:
+```{r}
+f = function(w){
+  term_1 = 1
+  term_2 = (32/11)*((2*cos(w) - 1) / (5 - 4*cos(w)))
+  term_3 = (5 /11)*((5*cos(w) - 1) / (13 - 5*cos(w)))
+  return ( (1/pi)*(term_1 + term_2 - term_3) )
+}
+omega = seq(from = 0, to = pi, length.out = 1e4)
+# define data frame for values
+p1df = data.frame(omega = omega,
+           f_star_omega = f(omega))
+# buld plot
+p1 <- ggplot(p1df, aes(x = omega, y = f_star_omega)) +
+  geom_line(color = "#ff8600", linewidth = 0.1) +
+  labs(
+    title = "Normalized Spectral Density for AR(2) Process",
+    subtitle = TeX(paste(
+      "$X_t = \\alpha_1 X_{t-1} + \\alpha_2 X_{t-2} + Z_t$",
+      "where",
+      "$\\{\\,Z_t\\,\\}_{t \\in {Z}} \\sim WN(0, \\sigma^2)$",
+      "and $\\alpha_1 =$7/10, $\\alpha_2 =-$1/10")),
+    y = TeX("Normalized Spectral Density   $f^{*}(\\omega)$"),
+    x = TeX("Frequency  $\\omega \\in (0, \\pi)$")
+  ) + theme_bw() +
+  geom_hline(yintercept = 0, lty = 'dashed', col = "darkgrey")+
+  scale_x_continuous(
+    breaks = c(0, pi/4, pi/2, 3*pi/4, pi), 
+    labels = c(TeX("0"), TeX("$\\pi$/4"), TeX("$\\pi$/2"),
+               TeX("$3\\pi$/4"), TeX("$\\pi$")))+
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p1)
+```
+**Comments**: It appears that the normalized spectral density plot is largely dominated by low frequencies. We can tell this is the case due to the fact that the largest values of $f^{\star}(\omega)$ is for small $\omega \in (0, \pi)$ specifically for $\omega \in (0, \pi/4)$ we see the majority of frequencies with observed normalized density greater than $0.5$. This tells us that a greater proportion of the variance inherent in the process $X_t$ can be attributed to the lower frequencies. As we would expect of a normalized spectral density dominated by low $\omega$ values, we see that $f^{\star}(\omega)$ is strictly decreasing as $\omega \rightarrow \pi$.
+
+```{r, include=FALSE}
+#h = -1000:-1
+omega <- pi/4
+inf <- 10000
+sum_neg <- sum(sapply(-inf:-1, function(k) rho(-k) * exp(-1i * omega * k)))
+sum_pos <- sum(sapply(1:inf, function(k) rho(k) * exp(-1i * omega * k)))
+F_omega <- (1 / pi) * (1 + sum_neg + sum_pos)
+Re(F_omega)
+f(omega)
+
+test = seq(from = 0, to = 8*pi, length.out = 1000)
+plot(test, f(test), type = 'l')
+```
+
+
+
+# Question 2
+
 <!-- import numpy as np -->
 
 <!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
