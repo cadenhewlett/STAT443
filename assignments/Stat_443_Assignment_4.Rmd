@@ -247,7 +247,7 @@ simulated_gamma_0 <- var(simulated_data)
 # use both regular and simplified fraction version
 cat("Computed Variance Using Simplified Fraction:", 275/162, "\n")
 cat("Computed Variance Using Computation:", gamma_0, "\n")
-cat("Variance of Simulated ARIMA process:", simulated_gamma_0, "\n")
+cat("Variance of Simulated AR(2) process:", simulated_gamma_0, "\n")
 ```
 It seems the computation very closely approximates the truth. Hence, we conclude that:
 $$
