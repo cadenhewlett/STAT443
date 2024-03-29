@@ -212,7 +212,7 @@ $$
 &\gamma(0) =   \frac{\sigma^2(1-\alpha_2)}{{1 - \alpha_2-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3} }
 \end{aligned}
 $$
-Then, we can evaluate at our given $\alpha_1$ and $\alpha_2$, simplifying the fraction above using Python to avoid human error.
+Then, we can evaluate at our given $\alpha_1$ and $\alpha_2$, simplifying the fraction using Python to avoid human error.
 ```{python}
 from sympy import *
 
@@ -262,7 +262,7 @@ $$
 Plot the normalized spectral density and comment on its behaviour.
 
 
-The normalized spectral density ended up being quite long, so we'll define each term one-by-one in the function below:
+The normalized spectral density equation ended up being quite long, so we'll define each term one-by-one in the function below:
 ```{r}
 f = function(w){
   term_1 = 1
@@ -270,6 +270,9 @@ f = function(w){
   term_3 = (5 /11)*((5*cos(w) - 1) / (13 - 5*cos(w)))
   return ( (1/pi)*(term_1 + term_2 - term_3) )
 }
+```
+Then, we plot the function for a long sequence of $\omega$ values in $(0, \pi)$:
+```{r}
 omega = seq(from = 0, to = pi, length.out = 1e4)
 # define data frame for values
 p1df = data.frame(omega = omega,
@@ -310,9 +313,6 @@ sum_pos <- sum(sapply(1:inf, function(k) rho(k) * exp(-1i * omega * k)))
 F_omega <- (1 / pi) * (1 + sum_neg + sum_pos)
 Re(F_omega)
 f(omega)
-
-test = seq(from = 0, to = 8*pi, length.out = 1000)
-plot(test, f(test), type = 'l')
 ```
 
 
