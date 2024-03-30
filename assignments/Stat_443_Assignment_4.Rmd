@@ -351,7 +351,7 @@ $$
 \gamma(0) &=  \frac{a}{\pi}\Big(\omega \, \Big|_{0}^{\pi}\Big)- \frac{b}{\pi}\Big(\sin(\omega) \, \Big|_{0}^{\pi}\Big) + \frac{c}{\pi}\Big(\frac{1}{2}\sin(2\omega) \, \Big|_{0}^{\pi}\Big) \\
 \gamma(0) &=  \frac{a}{\pi}(\pi - 0)- \frac{b}{\pi}\Big(\sin(\pi) - \sin(0)\Big) + \frac{c}{2\pi}\Big(\sin(2\pi) - \sin(0)\Big) \\
 \gamma(0) &=  a- \frac{b}{\pi}\Big(0 -0\Big) + \frac{c}{2\pi}\Big(0 - 0\Big) \\
-\gamma(0) &=  \boxed{a = 62}
+\gamma(0) &=  a = \boxed{62}
 \end{aligned}
 $$
 
@@ -406,6 +406,33 @@ $$
 \end{aligned}
 $$
 
+
+\newpage
+## Part C: Lag 2
+
+We repeat these calculations, but now for $h = 2$. We retain  $a = 62$, $b = 70$ and $c = 12$.
+
+For $h = 2$, we have the following:
+
+$$
+\gamma(2) = \int_0^{\pi} f(\omega)\cos(h \omega)\text{d}\omega =\int_0^{\pi} \bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(2 \times \omega) \text{d}\omega 
+$$
+
+As before, we expand $f(\omega)$ and evaluate this integral. 
+$$
+\begin{aligned}
+\gamma(2) &= \int_0^{\pi}\bigg[  \frac{1}{\pi}\Big(a - b \cos(\omega) + c\cos(2 \omega) \Big)\bigg]\cos(2\omega) \text{d}\omega \\
+\gamma(2) &=  \frac{a}{\pi}\int_0^{\pi} \cos(2\omega) \text{d}\omega - \frac{b}{\pi}\underbrace{\int_0^{\pi}  \cos(\omega)\cos(2\omega)\text{d}\omega}_{\text{Shown in Part B to be zero.}} + \frac{c}{\pi}\int_0^{\pi} \cos(2 \omega)\cos(2\omega) \text{d}\omega \\
+\gamma(2) &=  \frac{a}{2\pi}\Big( \sin(2\omega) \Big|_{0}^{\pi}\Big) - \frac{b}{\pi}(0)+ \frac{c}{\pi}\int_0^{\pi} \cos^2(2 \omega)\text{d}\omega, \hspace{0.65cm} \text{ applying } (3) \\
+\gamma(2) &=  \frac{a}{2\pi}\Big( \sin(2\pi) - \sin(0)\Big) + \frac{c}{\pi}\int_0^{\pi} \Big(1 - \sin^2( 2\omega) \Big)\text{d}\omega  \\
+\gamma(2) &=  \frac{a}{2\pi}( 0) + \frac{c}{\pi}\int_0^{\pi}1\text{d}\omega - \frac{c}{\pi}\int_0^{\pi}\sin^2( 2\omega)\text{d}\omega  \\
+\gamma(2) &=  \frac{c}{\pi}(\pi)- \frac{c}{\pi}\int_0^{\pi}\frac{1}{2}\Big(1 - \cos(2\cdot2\omega)\Big)\text{d}\omega,  \hspace{0.65cm} \text{ applying } (4)\\
+\gamma(2) &=  c - \frac{c}{2\pi}\int_0^{\pi}1\text{d}\omega + \frac{c}{2\pi}\int_0^{\pi} \cos(4\omega)\text{d}\omega \\
+\gamma(2) &=  c - \frac{c}{2\pi}(\pi)+ \frac{c}{2\pi}\Big( \frac{1}{4} \sin(4\omega) \Big|_{0}^{\pi}\Big) \\
+\gamma(2) &=  c - \frac{c}{2}+ \frac{c}{8\pi}\Big(\sin(4\pi) - \sin(0)\Big) \\
+\gamma(2) &=  \frac{c}{2}  = \frac{12}{2} = \boxed{6}
+\end{aligned}
+$$
 
 
 ## Part D: Lags Greater Than 2
@@ -505,21 +532,49 @@ $$
 $$
 
 
-## Autocovariance Function
+## Conclusions
 
 Hence, bringing all the previous parts together, we can conclude that for $h \in \mathbb{Z}$:
 
 $$
 \gamma(h) = \begin{cases} \gamma(-h), & h < 0 \\
 62, & h = 0 \\
-\dots, & h = 1 \\
-\dots, & h = 2 \\
-0 & \text{otherwise}
+-35, & h = 1 \\
+6, & h = 2 \\
+0, & \text{otherwise}
 \end{cases}
 $$
-## Autocorrelation Function
+Similarly, we find $\rho(h)$ for $h \in \mathbb{Z}$ by dividing $\gamma(h)$ by $\sigma^2_{X} = \gamma(0)= 62$.
+$$
+\rho(h) = \begin{cases} \rho(-h), & h < 0 \\
+1, & h = 0 \\
+-35/62, & h = 1 \\
+3/31, & h = 2 \\
+0, & \text{otherwise}
+\end{cases}
+$$
+We can also provide a plot of the theoretical ACF to get a more easily interpretable idea of how the autocorrelation of $X_t$ changes for lags $h \in \mathbb{Z}$.
 
-
+```{r}
+p2DF = data.frame(
+  h = 0:9,
+  rh = c(1, -35/62, 3/31, rep(0, times = 7))
+)
+p2 <- ggplot(p2DF, aes(x = h, y = rh)) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#FF70A6",
+               linewidth = 1.1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "darkgray") +
+  labs(x = "Lag",  y = TeX("Theoretical $\\rho(h)$ Values"),
+       title =  TeX(paste("Theoretical ACF Given Spectral Density $f(\\omega)$", 
+       "for $\\omega \\in (0, 1)$ and $h \\in Z$")) )+
+  theme_bw() +
+  theme(panel.grid.minor = element_line(color = "grey90", 
+                                        linetype = "dashed", linewidth = 0.5))
+print(p2)
+```
 <!-- import numpy as np -->
 
 <!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
