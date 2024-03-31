@@ -277,7 +277,7 @@ omega = seq(from = 0, to = pi, length.out = 1e4)
 # define data frame for values
 p1df = data.frame(omega = omega,
            f_star_omega = f(omega))
-# buld plot
+# build plot
 p1 <- ggplot(p1df, aes(x = omega, y = f_star_omega)) +
   geom_line(color = "#ff8600", linewidth = 0.1) +
   labs(
@@ -575,6 +575,189 @@ p2 <- ggplot(p2DF, aes(x = h, y = rh)) +
                                         linetype = "dashed", linewidth = 0.5))
 print(p2)
 ```
+
+
+# Question 3
+
+
+The data file `accel_watch.csv` contains three axes of accelerometer data for a test subject
+that was walking at a steady pace while wearing a biologging watch. The accelerometer data
+was recorded in meters per second squared and measured every 0.05 seconds (i.e., at a rate of
+20 observations per second)
+
+
+## Part A: Data Preprocessing and Investigation
+
+### Part A.1.
+
+
+Read the data into R.
+
+```{r part_a1}
+df = read.csv("accel_watch.csv")
+```
+
+### Part A.2.
+Create a vector that contains the magnitude of acceleration at each time index.
+
+We will use the following to define the column:
+$$
+\| \vec{a}\| = \sqrt{a_x^2 + a_y^2 + a_z^2}
+$$
+
+```{r part_a2}
+df$Mag = sqrt(df$Ax^2 + df$Ay^2 + df$Az^2)
+kable( t( head(df$Mag) ), caption = "Preview of $\\| \\vec{a} \\|$ Vector")
+```
+### Part A.3.
+
+
+Coerce the vector into a time series object. 
+
+
+
+We are told that the accelerometer data was recorded in meters per second squared and measured every 0.05 seconds (i.e., at a rate of
+20 observations per second.) Hence, we set `frequency = 20`, as `?ts` informs us that the `frequency` parameter is "the number of observations per unit of time."
+
+```{r, part_a3}
+accel_ts = ts(df$Mag, frequency = 20)
+```
+
+### Part A.4.
+
+
+Plot the resulting time series and its sample acf. (Make sure to properly label the
+axes and provide titles for the plots.)
+
+
+\underline{Time Series Plot}
+
+```{r, part_a4_1}
+# coerce time series into a plottable object
+p3DF = fortify.zoo(accel_ts)
+# build plot
+p3 <- ggplot(p3DF, aes(x = Index, y = accel_ts)) +
+  geom_line(color = "#70D6FF", linewidth = 0.8) +
+  labs(
+    title = TeX(paste("Acceleration Magnitude",
+    "$\\| \\textbf{a} \\|$ of Subject over Time, in $(m / s^2)$")),
+    subtitle = "Test Subject Walking at Steady Pace, Wearing a Biologging watch.",
+    y = TeX("Acceleration Magnitude  $\\| \\textbf{a} \\|$  in $(m / s^2)$"),
+    x = TeX("Elapsed Time (seconds)")
+  ) + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+# show results
+print(p3)
+```
+
+\underline{Sample ACF}
+
+
+```{r part_a4_2}
+# get sample acf values
+p5DF = data.frame(
+  h = 0:36,
+  rh = acf(accel_ts, plot = FALSE, lag.max = 36)$acf
+)
+# find n for WN bound calculation
+n = length(accel_ts)
+# create plot
+p5 <- ggplot(p5DF, aes(x = h, y = rh)) +
+  geom_hline(yintercept = 2/sqrt(n),
+             linetype = "dashed",
+             col = "#59054d") +
+  geom_hline(yintercept = -2/sqrt(n),
+             linetype = "dashed",
+             col = "#59054d") +
+  ylim(-0.4, 1) +
+  geom_segment(aes(xend = h, yend = 0),
+               color = "#b846a7",
+               linewidth = 1) +
+  geom_hline(yintercept = 0,
+             linetype = "dashed",
+             color = "#33172f") +
+  labs(x = "Lag",  y = "ACF Values",
+   title = TeX(paste("Correlogram of Acceleration Magnitude",
+    "$\\| \\textbf{a} \\|$ of Subject")),
+  subtitle = paste("Test Subject Walking at Steady Pace for appx.",
+  "Six Seconds, Wearing a Biologging Watch")) +
+  theme_bw()
+print(p5)
+```
+
+### Part A.5.
+
+
+Comment on what you observe.
+
+<!-- Periodicity, perhaps due to natural swinging of arm as the subject was walking contributing to periodic $z$-axis acceleration 
+also a slight negative trend, perhaps due to the subject slowing down their walking as the experiment window drew closer to the end (decreasing x and y axis acceleration slightly.-->
+
+## Part B
+
+### Part B.1.
+
+Plot the raw periodogram for the series.
+
+```{r, part_b1}
+# compute raw periodogram
+raw_pdg = spec.pgram(accel_ts, log = "no", plot = F)
+# coerce to data frame
+p6DF = data.frame(
+  Frequency = raw_pdg$freq,
+  Spectrum =  raw_pdg$spec
+)
+# plot
+p6 <- ggplot(p6DF, aes(x = Frequency, y = Spectrum)) +
+  geom_hline(yintercept = 0,  linetype = "dashed", color = "#909342") +
+  geom_segment(aes(
+    x = Frequency,   xend = Frequency,
+    y = 0,  yend = Spectrum,
+  ), color = "#d4d692")+
+  geom_line(color = "#909342", linewidth = 0.5) +
+  geom_point(color = "#909342", fill = "#ebeda6", pch = 21) +
+  labs(
+    title = "Raw Periodogram of Acceleration Magnitude Time Series",
+    subtitle = paste(
+      "Test Subject Walking at Steady Pace,",
+      "Wearing a Biologging Watch for appx. 6s."
+    ),
+    y = TeX("Observed Spectrum"),
+    x = TeX("Frequency")
+  ) +
+  theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p6)
+```
+
+**Comments**: Dominated by low frequencies, two peaks in spectrum magnitude at (...) and (...), tails off into noise as $f \uparrow$, for higher frequencies. Thereby we know a (... larger proportion of the total variation in the series is attributed to the lower frequencies in the series (?))
+
+
+
+
+### Part B.2.
+
+
+```{r}
+LOC = which.max(raw_pdg$spec)
+
+# all relevant data for this maximum
+
+print(paste("Spectrum at Max:", raw_pdg$spec[LOC]))
+print(paste("Angular Frequency at Max:", 2*pi*raw_pdg$freq[LOC]))
+print(paste("Acceleration at Max:",  accel_ts[LOC]))
+print(paste("Elapsed Time at Max:", time(accel_ts)[LOC]))
+```
+
+Angular Frequency: $\omega = (2\pi)/T$ where $T$ is period, and  $\omega = 2\pi f$ where $f$ is frequency.
 <!-- import numpy as np -->
 
 <!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
