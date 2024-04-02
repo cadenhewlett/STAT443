@@ -749,13 +749,13 @@ print(p6)
 
 ```{r}
 LOC = which.max(raw_pdg$spec)
-length(accel_ts)
+N = length(accel_ts)
 # all relevant data for this maximum
-
-print(paste("Spectrum at Max:", raw_pdg$spec[LOC]))
-print(paste("Angular Frequency at Max:", 2*pi*raw_pdg$freq[LOC]))
-print(paste("Acceleration at Max:",  accel_ts[LOC]))
-print(paste("Elapsed Time at Max:", time(accel_ts)[LOC]))
+# 
+# print(paste("Spectrum at Max:", raw_pdg$spec[LOC]))
+# print(paste("Angular Frequency at Max:", 2*pi*raw_pdg$freq[LOC]))
+# print(paste("Acceleration at Max:",  accel_ts[LOC]))
+# print(paste("Elapsed Time at Max:", time(accel_ts)[LOC]))
 ```
 
 To estimate the angular frequency and wavelength of the dominating frequency, we must first determine which frequency dominates the raw periodogram. Let $f^{\text{p}}(\omega)$ be the periodogram spectrum. Let $\Omega$ be the set of 
@@ -767,11 +767,16 @@ In this case, the dominating frequency is found via the following:
 ```{r}
 LOC = which.max(raw_pdg$spec)
 dfreq = raw_pdg$freq[LOC]
-dfreq
+# using 2* pi * p / N
+dfreq*2*pi / (N)
 ```
+The the Angular Frequency from can be found by converting back to its corresponding Fourier Frequency (in radians.)
+$$
+\varpi_{\otimes} = \frac{2\pi \varpi}{N} = \dfrac{2 \pi (1)}{100} = \frac{\pi}{50}
+$$
 
-To get the Angular Frequency from this value, we (... WHAT??) $\lambda = v / f$
-Angular Frequency: $\omega = (2\pi)/T$ where $T$ is period, and  $\omega = 2\pi f$ where $f$ is frequency.
+
+Then, we recall that the wavelength is found with $1/\phi$, where $\phi$ is the location of the peak in spectrum. In our case, this is $\varpi = 1$.  Hence, the wavelength is approximately $1/\phi = 1/\varpi = 1$ second(s).
 
 ## Part C
 
