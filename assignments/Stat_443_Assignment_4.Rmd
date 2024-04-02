@@ -756,7 +756,6 @@ print(paste("Spectrum at Max:", raw_pdg$spec[LOC]))
 print(paste("Angular Frequency at Max:", 2*pi*raw_pdg$freq[LOC]))
 print(paste("Acceleration at Max:",  accel_ts[LOC]))
 print(paste("Elapsed Time at Max:", time(accel_ts)[LOC]))
-raw_pdf$
 ```
 
 To estimate the angular frequency and wavelength of the dominating frequency, we must first determine which frequency dominates the raw periodogram. Let $f^{\text{p}}(\omega)$ be the periodogram spectrum. Let $\Omega$ be the set of 
@@ -779,11 +778,57 @@ Angular Frequency: $\omega = (2\pi)/T$ where $T$ is period, and  $\omega = 2\pi 
 Build a function in `R` that generates the Fourier frequency $\omega_p$ for a given time series and
 given constant $p \in \{0, 1, \dots N/2\}$.
 
+We will use the equation:
+$$
+\omega_p := \frac{2 \pi p}{N}, \hspace{0.25cm} p \in \{0, 1, \dots N/2\}
+$$
 
 Document the inputs and outputs of this function so that another person would be able to understand how to use your function. 
 
+The full function definition is below:
+```{r}
+#' @param ts A `ts` object of length `N`, where `N` is even.
+#' @param p A numeric $p \in \{0, 1, \dots N/2\}$
+#' @return the Fourier Frequency `omega_p` for the given p and time series
+gen_freq <- function(ts, p){
+  # check that the function is being given a time series
+  if (!is.ts(ts)) {
+    stop("Input `ts` must be a time series object.")
+  }
+  # get the time series length if the above check passes
+  N <- length(ts)
+  # then validate that this is even
+  if (N %% 2 != 0){
+    warning("Detected Odd-Length ts. Using Floor...")
+    N <- N - 1 # this will cause N/2 to be floor(N/2)
+  }
+  # check that the input p is a numeric
+  if (!is.numeric(p)) {
+    stop("Input `p` must be numeric.")
+  }
+  # check that the input p is within [0, N/2]
+  if (p < 0 || p > (N / 2)) {
+    stop("Input `p` must be in the range 0 to N/2.")
+  }
+  # check that the input p is an integer
+  if (round(p) != p){
+    p = round(p)
+    warning("Input `p` is not an integer. Using Rounded Value")
+  }
+  # now that all tests pass...
+  omega_p = (2*pi*p)/N
+  # return p-th Fourier Frequency
+  return(omega_p)
+}
+```
 
 What is the output of your function for $p = 10$?
+
+
+When $p=10$, the function return $\pi/5$.
+```{r unit_tests}
+gen_freq(accel_ts, 10) # == (pi / 5)
+```
 <!-- import numpy as np -->
 
 <!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
