@@ -705,6 +705,7 @@ also a slight negative trend, perhaps due to the subject slowing down their walk
 Plot the raw periodogram for the series.
 
 ```{r, part_b1}
+N = length(accel_ts)
 # compute raw periodogram
 raw_pdg = spec.pgram(accel_ts, log = "no", plot = F)
 # coerce to data frame
@@ -739,24 +740,12 @@ p6 <- ggplot(p6DF, aes(x = Frequency, y = Spectrum)) +
 print(p6)
 ```
 
-**Comments**: Dominated by low frequencies, two peaks in spectrum magnitude at (...) and (...), tails off into noise as $f \uparrow$, for higher frequencies. Thereby we know a (... larger proportion of the total variation in the series is attributed to the lower frequencies in the series (?))
+**Comments**: Dominated by low frequencies, two peaks in spectrum magnitude at (...) and (...), tails off into noise as $f \uparrow$, for higher frequencies. Thereby we know a (... larger proportion of the total variation in the series is attributed to the lower frequencies in the series (?).) There may also be signs of harmonics, as we can see roughly equidistant peaks at (... values go here for those first three after big peak)
 
 
 
 
 ### Part B.2.
-
-
-```{r}
-LOC = which.max(raw_pdg$spec)
-N = length(accel_ts)
-# all relevant data for this maximum
-# 
-# print(paste("Spectrum at Max:", raw_pdg$spec[LOC]))
-# print(paste("Angular Frequency at Max:", 2*pi*raw_pdg$freq[LOC]))
-# print(paste("Acceleration at Max:",  accel_ts[LOC]))
-# print(paste("Elapsed Time at Max:", time(accel_ts)[LOC]))
-```
 
 To estimate the angular frequency and wavelength of the dominating frequency, we must first determine which frequency dominates the raw periodogram. Let $f^{\text{p}}(\omega)$ be the periodogram spectrum. Let $\Omega$ be the set of 
 cardinality $N/2$ containing the frequency values. We hence denote the dominating frequency as $\varpi$, where:
@@ -767,8 +756,7 @@ In this case, the dominating frequency is found via the following:
 ```{r}
 LOC = which.max(raw_pdg$spec)
 dfreq = raw_pdg$freq[LOC]
-# using 2* pi * p / N
-dfreq*2*pi / (N)
+dfreq
 ```
 The the Angular Frequency from can be found by converting back to its corresponding Fourier Frequency (in radians.)
 $$
@@ -780,8 +768,7 @@ Then, we recall that the wavelength is found with $1/\phi$, where $\phi$ is the 
 
 ## Part C
 
-Build a function in `R` that generates the Fourier frequency $\omega_p$ for a given time series and
-given constant $p \in \{0, 1, \dots N/2\}$.
+Build a function in `R` that generates the Fourier frequency $\omega_p$ for a given time series and given constant $p \in \{0, 1, \dots N/2\}$.
 
 We will use the equation:
 $$
@@ -833,6 +820,47 @@ What is the output of your function for $p = 10$?
 When $p=10$, the function return $\pi/5$.
 ```{r unit_tests}
 gen_freq(accel_ts, 10) # == (pi / 5)
+```
+
+
+## Part D
+
+Here, we will fit all the fourier frequencies and determine which are significant, do some testing, and fit a finalized model.
+
+
+### Part D.1. 
+In order to do this, we will first compute the set of frequencies for $p \in \{0, 1, \dots N/2\}$ using the function from the previous question.
+
+We will denote this set $\Omega$, where $|\Omega| = \frac{N}{2} + 1$ is defined as follows, where $\omega_p$ is the $p$-th set element:
+$$
+\Omega = \Big\{\frac{2\pi p}{N}: p  \in \mathbb{Z}, \,0 \leq p \leq \frac{N}{2}\Big\}, \text{ hence } \forall \omega_p \in \Omega, \; \omega_p \in [0,\pi] \subseteq \mathbb{R}
+$$
+```{r}
+obsv_w = sapply(0:(N/2), gen_freq, ts = accel_ts)
+```
+
+### Part D.2. 
+
+Then, we will fit a model of the following one-at-a-time $\forall \omega_p \in \Omega$ where $X_t$ is the magnitude of acceleration at index $t$:
+
+$$X_t = a_0 + a_t \cos(\omega_p \cdot t) + b_t \sin(\omega_p \cdot t) + \varepsilon, \text{ where } \varepsilon \overset{\text{iid}}{\sim}N(0, \sigma^2_{\varepsilon}) \text{ and } t \in \{1, 2, \dots, N\}$$
+
+We can equivalently formulate this model as:
+$$
+X^{\,p}_t = a_0 + \sum_{t = 1}^N \Big(a_t \cos(\omega_p \cdot t) + b_t \sin(\omega_p \cdot t) \Big) + \varepsilon, \text{ where } \varepsilon \overset{\text{iid}}{\sim}N(0, \sigma^2_{\varepsilon})
+$$
+Where the superscript $p$ indicates the Fourier Frequency $\omega_p \in \Omega$.
+
+Hence, the $p$-th model fitted will have the form:
+$$
+\widehat{X}^{\,p}_t = \hat{a}_0 + \sum_{t = 1}^N \Big(\hat{a}_t \cos(\omega_p \cdot t) + \widehat{b}_t \sin(\omega_p \cdot t) \Big), \text{ where } \omega_p \in \Omega
+$$
+We hence let ${\mathfrak{X}}$ be the set of all models fitted such that the $p$-th entry of ${\mathfrak{X}}$ is the model fitted $\widehat{X}^{\,p}_t$, i.e.
+$$
+{\mathfrak{X}} = \Big\{\widehat{X}^{\,\underset{0}{}}_t, \widehat{X}^{\,\underset{1}{}}_t, \dots, \widehat{X}^{\,\underset{N/2}{}}_t\Big\}
+$$
+```{r}
+tvals = 1:N
 ```
 <!-- import numpy as np -->
 
