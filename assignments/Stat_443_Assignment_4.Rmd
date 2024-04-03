@@ -843,22 +843,27 @@ obsv_w = sapply(0:(N/2), gen_freq, ts = accel_ts)
 
 Then, we will fit a model of the following one-at-a-time $\forall \omega_p \in \Omega$ where $X_t$ is the magnitude of acceleration at index $t$:
 
-$$X_t = a_0 + a_t \cos(\omega_p \cdot t) + b_t \sin(\omega_p \cdot t) + \varepsilon, \text{ where } \varepsilon \overset{\text{iid}}{\sim}N(0, \sigma^2_{\varepsilon}) \text{ and } t \in \{1, 2, \dots, N\}$$
+$$X_t = a_0 + a_p \cos(\omega_p \cdot t) + b_p \sin(\omega_p \cdot t) + \varepsilon, \text{ where } \varepsilon \overset{\text{iid}}{\sim}N(0, \sigma^2_{\varepsilon}) \text{ and } t \in \{1, 2, \dots, N\}$$
 
 We can equivalently formulate this model as:
 $$
-X^{\,p}_t = a_0 + \sum_{t = 1}^N \Big(a_t \cos(\omega_p \cdot t) + b_t \sin(\omega_p \cdot t) \Big) + \varepsilon, \text{ where } \varepsilon \overset{\text{iid}}{\sim}N(0, \sigma^2_{\varepsilon})
+X^{\,p}_t = a_0 + \sum_{t = 1}^N \Big(a_p \cos(\omega_p \cdot t) + b_p \sin(\omega_p \cdot t) \Big) + \varepsilon, \text{ where } \varepsilon \overset{\text{iid}}{\sim}N(0, \sigma^2_{\varepsilon})
 $$
 Where the superscript $p$ indicates the Fourier Frequency $\omega_p \in \Omega$.
 
 Hence, the $p$-th model fitted will have the form:
 $$
-\widehat{X}^{\,p}_t = \hat{a}_0 + \sum_{t = 1}^N \Big(\hat{a}_t \cos(\omega_p \cdot t) + \widehat{b}_t \sin(\omega_p \cdot t) \Big), \text{ where } \omega_p \in \Omega
+\widehat{X}^{\,p}_t = \hat{a}_0 + \sum_{t = 1}^N \Big(\hat{a}_p \cos(\omega_p \cdot t) + \widehat{b}_p \sin(\omega_p \cdot t) \Big), \text{ where } \omega_p \in \Omega
 $$
 We hence let ${\mathfrak{X}}$ be the set of all models fitted such that the $p$-th entry of ${\mathfrak{X}}$ is the model fitted $\widehat{X}^{\,p}_t$, i.e. ${\mathfrak{X}} = \Big\{\widehat{X}^{\,\underset{0}{}}_t, \widehat{X}^{\,\underset{1}{}}_t, \dots, \widehat{X}^{\,\underset{N/2}{}}_t\Big\}$. Then, finally, we  compute the $F$-statistic for each model in ${\mathfrak{X}}$, creating the following set of statistics, letting $F(\widehat{X})$ be the $F$-statistic of model $\widehat{X}$:
 $$
-\mathcal{F} : \Big\{F\big(\,\widehat{X}^{\,\underset{p}{}}_t\,\big) : \widehat{X}^{\,\underset{p}{}}_t\in {\mathfrak{X}}\Big\}
+\mathcal{F} : \Big\{F\big(\,\widehat{X}^{\,\underset{p}{}}_t\,\big) : \widehat{X}^{\,\underset{p}{}}_t\in {\mathfrak{X}}\Big\}, \text{ where } \forall F \in\mathcal{F},\; F \,{\sim}\; \text{F}_{k-1, N-k}
 $$
+Where $k = 3$ and $N = 100$. In each instance, the $F$-statistic is computed by the standard ratio of sum of squares, i.e. for arbitrary $\widehat{X}^{\,\underset{p}{}}_t$, we have that
+$$
+F: \mathbb{R}^{N}\mapsto \mathbb{R}, \text{ s.t. } F\big(\,\widehat{X}^{\,\underset{p}{}}_t\,\big) = \dfrac{\sum_{t = 1}^N\big(\,\widehat{X}^{\,\underset{p}{}}_t\, - \overline{X} \, \big)^2 / (k -1)}{\sum_{t = 1}^N\big(\,X_t - \,\widehat{X}^{\,\underset{p}{}}_t\,\big)^2 /(N - k)}
+$$
+Where $\widehat{X}^{\,\underset{p}{}}_t$ are the fitted values at time $t$, $\overline{X}$ is the sample mean of the series and $X_t$ is the observed value at time $t$.
 
 Then, after all of this discussion, the whole procedure can be done directly as follows:
 ```{r, part_d2}
@@ -866,8 +871,114 @@ bigF = unlist(sapply(obsv_w, function(w){
   summary(lm(df$Mag ~ cos(w*(1:N)) + sin(w*(1:N))))$fstatistic[[1]]
 }))
 ```
+It should be clarified that each test statistic was against the model fit hypothesis, in other words:
+$$
+H_0: a_p = b_p = 0 \hspace{0.25cm}\text{ against } \hspace{0.25cm} H_A: \text{ at least one of } \{a_p, b_p \} \neq 0
+$$
+Thus, the set of $p$-values can be defined as follows:
+$$
+\mathcal{P} : \Big\{ \mathbb{P}(\,\text{F}_{k-1, N-k} > F_p \big) : F_p \in \mathcal{F}\Big\}, \text{ hence } \forall p \in \mathcal{P},\; p \in (0,1) \subseteq \mathbb{R}
+$$
+We compute and plot the $p$-values in $\mathcal{P}$ below. We omit the code for creating the `ggplot` object. 
+```{r}
+# declare K as noted above
+k = 3
+# compute P set as defined above, in a data frame for plotting
+p6df = data.frame(
+  pval = pf(bigF, k - 1, N - k, lower.tail = FALSE),
+  index = 1:length(bigF))
+```
+```{r, include=FALSE}
+p6 = ggplot(p6df, aes(
+  x = index,
+  y = pval,
+  color = abs(pval - 0.05)
+)) +
+  geom_point() +
+  scale_color_gradient2(
+    low = "black",
+    mid = "#BD1F36",
+    high = "white",
+    midpoint = 0.05,
+    space = "Lab",
+    guide = "none"
+  ) +
+  geom_hline(yintercept = 0.05,
+             lty = 2,
+             col = "#85182A") +
+  theme_bw() +
+  labs(
+    subtitle = TeX(
+      paste(
+        "Colour Indicates Distance from $\\alpha = 0.05$,",
+        "Warmer Closer to $\\alpha$"
+      )
+    ),
+    x = "Fourier Frequency Index",
+    y = "P-Value",
+    title = "Observed P-Values of F-Tests for Model Significance"
+  ) +
+  theme(
+    legend.position = "top",
+    legend.justification = "left",
+    legend.margin = margin(0, 0, 0, 0),
+    panel.grid.minor = element_line(
+      color = "grey90",
+      linetype = "dashed",
+      size = 0.5
+    )
+  )
+```
+```{r}
+print(p6)
+```
+We then extract the index of the significant coefficients. These correspond to $\omega_5$ and $\omega_{10}$ (as shown below) which makes sense given the peaks in the original raw periodogram. We add `1` to the indexing of `signif_ws` to adjust for the list starting from $\omega_0$ (which has an `NA` $p$-value in the regression model.)
+```{r}
+signif_ws = obsv_w[ p6df$index[p6df$pval < 0.05] + 1 ]
+# here, we verify that the significant ones correspond to w_5 and w_10
+signif_ws == sapply(c(5, 10), gen_freq, ts = accel_ts)
+```
+## Part E
+
+Give the estimated coefficients for the linear model that results from using all significant
+frequencies found in part **(d)**
+
+
+We define the unified model using both $\omega_5$ and $\omega_{10}$. We will hence fit a model of the following form:
+$$
+\widehat{X}_{\text{unified}} = \hat{a}_0 + \sum_{t = 1}^N \Big(\hat{a}_5 \cos(\omega_5 \cdot t) + \widehat{b}_5 \sin(\omega_5 \cdot t) \Big) +  \sum_{t = 1}^N \Big(\hat{a}_{10} \cos(\omega_{10} \cdot t) + \widehat{b}_{10} \sin(\omega_{10} \cdot t) \Big)
+$$
+Which can be simplified to:
+$$
+\widehat{X}_{\text{unified}} = \hat{a}_0 + \sum_{t = 1}^N \Big(\hat{a}_5 \cos(\omega_5 \cdot t) + \widehat{b}_5 \sin(\omega_5 \cdot t)  +\hat{a}_{10} \cos(\omega_{10} \cdot t) + \widehat{b}_{10} \sin(\omega_{10} \cdot t) \Big)
+$$
+We compute the unified model using both $\omega_5$ and $\omega_{10}$ below. 
+```{r}
+unified_model = lm(df$Mag ~ (
+    cos(signif_ws[1] * (1:N)) + sin(signif_ws[1] * (1:N)) +
+    cos(signif_ws[2] * (1:N)) + sin(signif_ws[2] * (1:N))
+))
+```
+We then report coefficients $\{\hat{a}_{0}, \hat{a}_{5}, \hat{b}_{5}, \hat{a}_{10}, \widehat{b}_{10}\}$ in the table below, to three decimal places.
+```{r}
+# round and transform
+un_coefs = t(data.frame(as.numeric(round(coefficients(unified_model), 3))))
+rownames(un_coefs) = "Estimate"
+# format in a nice table
+kable(un_coefs, "latex", escape = FALSE,
+      col.names = c("$\\hat{a}_0$", "$\\hat{a}_5$", "$\\hat{b}_5$",
+                    "$\\hat{a}_{10}$", "$\\hat{b}_{10}$"),
+  caption = "Fitted Coefficients for Significant Frequencies")  %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(position = "center")
+```
+
+## Part F
 <!-- import numpy as np -->
 
+<!-- rownames(hw_results_coefs) = NULL -->
+
+  
 <!-- # Define the constants A1, A2, d1, d2, and omega (fixed frequency for comparison) -->
 <!-- A1 = 16 / 11 -->
 <!-- A2 = 5 / 11 -->
