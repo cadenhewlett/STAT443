@@ -835,7 +835,7 @@ We will denote this set $\Omega$, where $|\Omega| = \frac{N}{2} + 1$ is defined 
 $$
 \Omega = \Big\{\frac{2\pi p}{N}: p  \in \mathbb{Z}, \,0 \leq p \leq \frac{N}{2}\Big\}, \text{ hence } \forall \omega_p \in \Omega, \; \omega_p \in [0,\pi] \subseteq \mathbb{R}
 $$
-```{r}
+```{r, part_d1}
 obsv_w = sapply(0:(N/2), gen_freq, ts = accel_ts)
 ```
 
@@ -855,12 +855,16 @@ Hence, the $p$-th model fitted will have the form:
 $$
 \widehat{X}^{\,p}_t = \hat{a}_0 + \sum_{t = 1}^N \Big(\hat{a}_t \cos(\omega_p \cdot t) + \widehat{b}_t \sin(\omega_p \cdot t) \Big), \text{ where } \omega_p \in \Omega
 $$
-We hence let ${\mathfrak{X}}$ be the set of all models fitted such that the $p$-th entry of ${\mathfrak{X}}$ is the model fitted $\widehat{X}^{\,p}_t$, i.e.
+We hence let ${\mathfrak{X}}$ be the set of all models fitted such that the $p$-th entry of ${\mathfrak{X}}$ is the model fitted $\widehat{X}^{\,p}_t$, i.e. ${\mathfrak{X}} = \Big\{\widehat{X}^{\,\underset{0}{}}_t, \widehat{X}^{\,\underset{1}{}}_t, \dots, \widehat{X}^{\,\underset{N/2}{}}_t\Big\}$. Then, finally, we  compute the $F$-statistic for each model in ${\mathfrak{X}}$, creating the following set of statistics, letting $F(\widehat{X})$ be the $F$-statistic of model $\widehat{X}$:
 $$
-{\mathfrak{X}} = \Big\{\widehat{X}^{\,\underset{0}{}}_t, \widehat{X}^{\,\underset{1}{}}_t, \dots, \widehat{X}^{\,\underset{N/2}{}}_t\Big\}
+\mathcal{F} : \Big\{F\big(\,\widehat{X}^{\,\underset{p}{}}_t\,\big) : \widehat{X}^{\,\underset{p}{}}_t\in {\mathfrak{X}}\Big\}
 $$
-```{r}
-tvals = 1:N
+
+Then, after all of this discussion, the whole procedure can be done directly as follows:
+```{r, part_d2}
+bigF = unlist(sapply(obsv_w, function(w){
+  summary(lm(df$Mag ~ cos(w*(1:N)) + sin(w*(1:N))))$fstatistic[[1]]
+}))
 ```
 <!-- import numpy as np -->
 
