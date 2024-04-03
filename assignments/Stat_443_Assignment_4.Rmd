@@ -974,6 +974,47 @@ kable(un_coefs, "latex", escape = FALSE,
 ```
 
 ## Part F
+
+Below, we plot $X_t$ alongside $\widehat{X}_{\text{unified}}$ for the training data. We also add a $95\%$ confidence interval for the in-sample fit, to have a rough quantification of the uncertainty inherent in the fitted unified model.
+```{r}
+model_fit = as.data.frame(predict(unified_model, interval = "confidence"))
+# format as data frame
+p7DF = data.frame(
+  Time = time(accel_ts),
+  Actual = as.numeric(accel_ts),
+  Predicted = as.numeric(model_fit$fit),
+  Lower = as.numeric(model_fit$lwr),
+  Upper = as.numeric(model_fit$lwr)
+)
+# create plot
+p7 = ggplot(data = p7DF, aes(x = Time)) +
+  # lines for obsv, pred and interval bounds
+  geom_line(aes(y = Actual, color = "Actual"),  lwd = 0.8, alpha = 0.7) +
+  geom_line(aes(y = Predicted, color = "Fitted"), lwd = 0.8, alpha = 0.7) +
+  # legend and colour assignment
+  scale_color_manual(name = "",
+    values = c(
+    "Actual" = "#8a817c",
+    "Fitted" = "#8f2d56"
+  )) +
+  # add titles with units
+  labs(
+    title = TeX(paste("Actual vs. Fitted Acceleration Magnitude",
+    "$\\| \\textbf{a} \\|$ of Subject over Time, in $(m / s^2)$")),
+    subtitle = "Test Subject Walking at Steady Pace, Wearing a Biologging watch.",
+    y = TeX("Acceleration Magnitude  $\\| \\textbf{a} \\|$  in $(m / s^2)$"),
+    x = TeX("Elapsed Time (seconds)")
+  ) +
+  scale_x_continuous() +
+  theme_bw() +
+  theme(panel.grid.minor =  element_line(
+    color = "grey90",
+    linewidth  = 0.35,
+    linetype = "dashed"
+  ), legend.position = "top", legend.justification = "left",
+  legend.margin = margin(0,0,0,0))
+print(p7)
+```
 <!-- import numpy as np -->
 
 <!-- rownames(hw_results_coefs) = NULL -->
