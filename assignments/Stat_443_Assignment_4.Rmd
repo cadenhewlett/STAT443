@@ -975,28 +975,33 @@ kable(un_coefs, "latex", escape = FALSE,
 
 ## Part F
 
-Below, we plot $X_t$ alongside $\widehat{X}_{\text{unified}}$ for the training data. We also add a $95\%$ confidence interval for the in-sample fit, to have a rough quantification of the uncertainty inherent in the fitted unified model.
+Below, we plot $X_t$ alongside $\widehat{X}_{\text{unified}}$ for the training data. We also add a $99\%$ confidence interval for the in-sample fit, to have a rough quantification of the uncertainty inherent in the fitted unified model.
 ```{r}
-model_fit = as.data.frame(predict(unified_model, interval = "confidence"))
+model_fit = as.data.frame(predict(unified_model, interval = "confidence",
+                                  level = 0.99))
 # format as data frame
 p7DF = data.frame(
   Time = time(accel_ts),
   Actual = as.numeric(accel_ts),
   Predicted = as.numeric(model_fit$fit),
   Lower = as.numeric(model_fit$lwr),
-  Upper = as.numeric(model_fit$lwr)
+  Upper = as.numeric(model_fit$upr)
 )
 # create plot
 p7 = ggplot(data = p7DF, aes(x = Time)) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "#c97598", alpha = 0.15) +
   # lines for obsv, pred and interval bounds
-  geom_line(aes(y = Actual, color = "Actual"),  lwd = 0.8, alpha = 0.7) +
-  geom_line(aes(y = Predicted, color = "Fitted"), lwd = 0.8, alpha = 0.7) +
+  geom_line(aes(y = Lower, color = "99% Confidence Interval"),  lwd = 0.7, alpha = 0.6) +
+  geom_line(aes(y = Upper, color = "99% Confidence Interval"), lwd = 0.7, alpha = 0.6) +
+  geom_line(aes(y = Actual, color = "Actual"),  lwd = 0.7, alpha = 0.8) +
+  geom_line(aes(y = Predicted, color = "Fitted"), lwd = 0.7, alpha = 0.7) +
   # legend and colour assignment
   scale_color_manual(name = "",
     values = c(
     "Actual" = "#8a817c",
-    "Fitted" = "#8f2d56"
-  )) +
+    "Fitted" = "#8f2d56",
+    "99% Confidence Interval" = "#d1aebc"
+  ),limits = c("Actual", "Fitted", "99% Confidence Interval")) +
   # add titles with units
   labs(
     title = TeX(paste("Actual vs. Fitted Acceleration Magnitude",
