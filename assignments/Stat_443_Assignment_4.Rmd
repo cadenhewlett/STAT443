@@ -121,7 +121,7 @@ $$
 \end{aligned}
 $$
 
-Then, combining the expressions we can get the final expression for the normalized spectral density:
+Then, combining the expressions we can get the final equation for the normalized spectral density:
 $$
 \begin{aligned}
 f^{\star}(\omega) &= \dfrac{1}{\pi}\bigg(1 + 2\sum_{h = 1}^{\infty} \rho(h) \cos(\omega h)\bigg) \\
@@ -129,18 +129,17 @@ f^{\star}(\omega) &= \dfrac{1}{\pi}\bigg(1 + 2\bigg(\Big(\frac{16}{11} \Big)\fra
 f^{\star}(\omega) &= \boxed{\dfrac{1}{\pi} + \frac{32}{11 \pi} \bigg(\frac{2\cos(\omega) - 1}{5 - 4\cos(\omega)}\bigg)- \frac{5}{11 \pi}  \bigg(\dfrac{5\cos(\omega) - 1}{13 - 5\cos(\omega)}\bigg)}
 \end{aligned}
 $$
-We can verify these results below:
+We can verify these results below for a fixed $\omega = \pi/4$.
 ```{r}
 w = pi/4
 # define acf
 rho <- function(h){  (16/11)*((1/2)^h) - (5/11)*((1/5)^h) }
 # define the "infinite sum"
-sum_vals = sum(sapply(1:1000, function(h){
+sum_vals = sum(sapply(1:10000, function(h){
   rho(h)*cos(w*h)
 }))
 # from the equation... 
 eqnval = (1/pi)*(rho(0) + 2*sum_vals)
-
 # from our simplification
 fw1 = 1/pi 
 fw2 = (32/(11*pi)) * ( (2 * cos(w) - 1) / (5 - 4*cos(w)) )
@@ -169,7 +168,7 @@ $$
 f(\omega) = \sigma^2_Xf^{\star}(\omega)  = \gamma(0)f^{\star}(\omega)
 $$
 
-We re-establish the Yule-Walker equations, where $\alpha_1 = 7/10$ and $\alpha_2 = -1/10$ 
+To find $\gamma(0)$ we re-establish the Yule-Walker equations from Assignment 2, letting $\alpha_1 = 7/10$ and $\alpha_2 = -1/10$ 
 
 $$
 \begin{aligned}
@@ -186,14 +185,14 @@ $$
 \gamma(2)  &= \alpha_1\gamma(1) + \alpha_2\gamma(0) \\
 \end{aligned}
 $$
-test area:
+We begin by isolating for $\gamma(1)$ as follows:
 $$
 \begin{aligned}
 \gamma(1) = \alpha_1 \gamma(0) + \alpha_2 \gamma(1) \\
 \gamma(1) = \frac{\alpha_1}{1-\alpha_2} \gamma(0)
 \end{aligned}
 $$
-then
+Then, we express $\gamma(2)$ in terms of $\gamma(0)$ by substitution:
 $$
 \begin{aligned}
 \gamma(2) = \alpha_1 \gamma(1) + \alpha_2 \gamma(0) \\
@@ -201,7 +200,7 @@ $$
 \gamma(2) = \Big(\frac{\alpha_1^2 + \alpha_2 - \alpha_2^2}{1-\alpha_2} \Big)\gamma(0)
 \end{aligned}
 $$
-finally
+Finally, we can simplify to acquire an expression for $\gamma(0)$ in terms of $\sigma^2$, $\alpha_1$ and $\alpha_2$.
 $$
 \begin{aligned}
 &\gamma(0) =\alpha_1 \gamma(1) + \alpha_2 \gamma(2) + \sigma^2 \\
@@ -209,45 +208,56 @@ $$
 &\gamma(0) = \Big(\frac{\alpha_1^2 +\alpha_1^2\alpha_2 + \alpha_2^2 - \alpha_2^3}{1-\alpha_2} \Big)\gamma(0) + \sigma^2 \\
 &\gamma(0)\Big(1 -\frac{\alpha_1^2 +\alpha_1^2\alpha_2 + \alpha_2^2 - \alpha_2^3}{1-\alpha_2} \Big) =   \sigma^2 \\
 &\gamma(0)\Big( \frac{(1 - \alpha_2)-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3}{1-\alpha_2} \Big) =   {\sigma^2}\\
-&\gamma(0) =   \frac{\sigma^2(1-\alpha_2)}{{1 - \alpha_2-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3} }
+&\gamma(0) =   \frac{\sigma^2(1-\alpha_2)}{{1 - \alpha_2-\alpha_1^2 -\alpha_1^2\alpha_2 - \alpha_2^2 + \alpha_2^3} } \hspace{0.65cm} \square
 \end{aligned}
 $$
-Then, we can evaluate at our given $\alpha_1$ and $\alpha_2$, simplifying the fraction using Python to avoid human error.
+\newpage
+Then, substituting $\alpha_1 = 7/10$ and $\alpha_2 = -1/10$ and simplifying, we arrive at $\gamma(0)$ in terms of $\sigma^2$.
 ```{python}
 from sympy import *
-
-alpha_1, alpha_2, sigma_sq = symbols('alpha_1 alpha_2 sigma_sq')
-
+# declare variables that are known
+alpha_1, alpha_2 = symbols('alpha_1 alpha_2')
+# declare unknowns 
+sigma_sq = symbols('sigma_sq', real = True)
+# construct equation derived from above
 gamma_0_expr = ( sigma_sq * (1 - alpha_2) / 
     (1 - alpha_2 - alpha_1**2 - alpha_1**2 * alpha_2 - alpha_2**2 + alpha_2**3))
-
+# declare our values for substitution
 alpha_1_val = Rational(7, 10)
 alpha_2_val = Rational(-1, 10)
-
+# evaluate our derived expression at \alpha_1 = 7/10 and \alpha_2 = -1/10
 gamma_0_eval = gamma_0_expr.subs({alpha_1: alpha_1_val, alpha_2: alpha_2_val})
-
+# then, reduce and report the fraction
 gamma_0_simplified = nsimplify(gamma_0_eval)
-print(gamma_0_simplified)
+# cast to latex and save final variable
+latex_str = latex(gamma_0_simplified).replace('\\sigma_{sq}', '\\sigma^2')  
+latex_obj = f"$$\gamma(0) = {latex_str}$$"
 ```
-Then, we can verify both our results and Python's simplification as follows, assuming $\sigma^2 = 1$. 
+
+```{r, results='asis'}
+cat(py$latex_obj)
+```
+
+Then, we can verify our results and simplification as follows, assuming $\sigma^2 = 1$. 
 ```{r}
 set.seed(3)
+# declare constants
 alpha_1 <- 7/10
 alpha_2 <- -1/10
 sigma_sq <- 1 
-
+# compute gamma(0) according to equation
 gamma_0 <- (sigma_sq * (1 - alpha_2) / 
         (1 - alpha_2 - alpha_1^2 - alpha_1^2 * alpha_2 - alpha_2^2 + alpha_2^3))
-
+# check gamma_0 computation with simplified fraction
+if(!all.equal(gamma_0, 275/162)){print("Simplifcation Doesn't Match.")}
+# simulate many draws from the AR(2) model
 ar_params <- c(alpha_1, alpha_2)
 simulated_data <- arima.sim(n = 5000000, 
                             model = list(ar = c(7/10, -1/10)))
-
+# compute the variance
 simulated_gamma_0 <- var(simulated_data)
 # use both regular and simplified fraction version
-cat("Computed Variance Using Simplified Fraction:", 275/162, "\n")
-cat("Computed Variance Using Computation:", gamma_0, "\n")
-cat("Variance of Simulated AR(2) process:", simulated_gamma_0, "\n")
+round(c((275/162), simulated_gamma_0, abs(275/162 - simulated_gamma_0)), 4)
 ```
 It seems the computation very closely approximates the truth. Hence, we conclude that:
 $$
@@ -302,7 +312,7 @@ p1 <- ggplot(p1df, aes(x = omega, y = f_star_omega)) +
   ))
 print(p1)
 ```
-**Comments**: It appears that the normalized spectral density plot is largely dominated by low frequencies. We can tell this is the case due to the fact that the largest values of $f^{\star}(\omega)$ is for small $\omega \in (0, \pi)$ specifically for $\omega \in (0, \pi/4)$ we see the majority of frequencies with observed normalized density greater than $0.5$. This tells us that a greater proportion of the variance inherent in the process $X_t$ can be attributed to the lower frequencies. As we would expect of a normalized spectral density dominated by low $\omega$ values, we see that $f^{\star}(\omega)$ is strictly decreasing as $\omega \rightarrow \pi$.
+**Comments**: It appears that the normalized spectral density plot is largely dominated by low frequencies. We can tell this is the case due to the fact that the largest values of $f^{\star}(\omega)$ are for small $\omega \in (0, \pi)$. Specifically, for $\omega \in (0, \pi/4)$ we find the majority of frequencies with observed normalized density greater than $0.5$. This tells us that a greater proportion of the variance inherent in the process $X_t$ can be attributed to the lower frequencies. As we would expect of a normalized spectral density dominated by low $\omega$ values, we see that $f^{\star}(\omega)$ is strictly decreasing as $\omega \rightarrow \pi$.
 
 ```{r, include=FALSE}
 #h = -1000:-1
@@ -328,7 +338,7 @@ compute the autocovariance function $\gamma(h)$ and autocorrelation function $\r
 stochastic process, where $h \in \mathbb{Z}$.
 
 
-We will begin with computing the autocovariance function $\gamma(h)$ at lag  $h = 0$, then at $h = 1$, $k = 2$ and finally $h > 2$.
+We will begin with computing the autocovariance function $\gamma(h)$ at lag  $h = 0$, then at $h = 1$, $h = 2$ and finally $h > 2$.
 
 
 Further, for notational simplicity, we let $a = 62$, $b = 70$ and $c = 12$, meaning that:
@@ -463,7 +473,7 @@ $$
 \int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega &= \frac{1}{2(m+n)}\sin\big((m+n)\pi\big) + \frac{1}{2(m - n)} \sin\big((m-n)\pi\big) 
 \end{aligned}
 $$
-We note that $m \in \mathbb{Z}$ and $n \in \mathbb{Z}$. Hence, by properties of integers, we know that $m + n \in \mathbb{Z}$ and $m - n \in \mathbb{Z}$. 
+We note that $m \in \mathbb{Z}$ and $n \in \mathbb{Z}$. Further, by properties of integers, we know that $m + n \in \mathbb{Z}$ and $m - n \in \mathbb{Z}$. 
 
 We can hence note that:
 $$
@@ -476,7 +486,7 @@ Similarly, we have that:
 $$
 (m \in \mathbb{Z} \land n \in \mathbb{Z}) \implies \exists \varrho \in \mathbb{Z} \text{ s.t. } \varrho = m - n
 $$
-Further, since $(m, n) \in \mathbb{Z}^{+}$ and $m \neq n$, we know that $\varrho \neq 0$. We also note by properties of sine that $\forall k \in \mathbb{Z}, \sin(k \cdot \pi) = 0.$
+Further, since $(m, n) \in \mathbb{Z}^{+}$ and $m \neq n$, we know that $\varrho \neq 0$. We also note by properties of sine that $\forall k \in \mathbb{Z}, \sin(k \cdot \pi) = 0.$ This will be used below without proof.
 
 
 
@@ -576,7 +586,7 @@ p2 <- ggplot(p2DF, aes(x = h, y = rh)) +
 print(p2)
 ```
 
-
+\newpage
 # Question 3
 
 
@@ -629,7 +639,7 @@ accel_ts = ts(df$Mag, frequency = 20)
 Plot the resulting time series and its sample acf. (Make sure to properly label the
 axes and provide titles for the plots.)
 
-
+\newpage
 \underline{Time Series Plot}
 
 ```{r, part_a4_1}
@@ -740,9 +750,7 @@ p6 <- ggplot(p6DF, aes(x = Frequency, y = Spectrum)) +
 print(p6)
 ```
 
-**Comments**: Dominated by low frequencies, two peaks in spectrum magnitude at (...) and (...), tails off into noise as $f \uparrow$, for higher frequencies. Thereby we know a (... larger proportion of the total variation in the series is attributed to the lower frequencies in the series (?).) There may also be signs of harmonics, as we can see roughly equidistant peaks at (... values go here for those first three after big peak)
-
-
+**Comments**: The raw periodogram appears to be dominated by low frequencies; we know this is likely the case as we see two peaks in spectrum magnitude at indexes $\omega_5$ and $\omega_{10}$, while $I(\omega)$ tails off towards zero for higher frequencies. Recalling that the periodogram is an unbiased estimator for spectral density, from this plot we can conclude it is likely that a larger proportion of the total variation in the series is attributed to the lower frequencies in the series. Specifically, the two noted earlier ($\omega_5$ and $\omega_{10}$) that have large observed spectrum. It should be noted that while there may also be signs of potential harmonics, as we can see roughly equidistant declining peaks in $I(\omega)$ for $\omega_{5}, \omega_{10}, \omega_{15}$ and $\omega_{20}$.
 
 
 ### Part B.2.
@@ -758,7 +766,7 @@ LOC = which.max(raw_pdg$spec)
 dfreq = raw_pdg$freq[LOC]
 dfreq
 ```
-The the Angular Frequency from can be found by converting back to its corresponding Fourier Frequency (in radians.)
+The Angular Frequency from can be found by converting back to its corresponding Fourier Frequency (in radians.)
 $$
 \varpi_{\otimes} = \frac{2\pi \varpi}{N} = \dfrac{2 \pi (1)}{100} = \frac{\pi}{50}
 $$
@@ -774,10 +782,8 @@ We will use the equation:
 $$
 \omega_p := \frac{2 \pi p}{N}, \hspace{0.25cm} p \in \{0, 1, \dots N/2\}
 $$
+We are tasked to "Document the inputs and outputs of this function so that another person would be able to understand how to use your function." Hence, we define the function below in Roxygen-style `R` function documentation with input validation.
 
-Document the inputs and outputs of this function so that another person would be able to understand how to use your function. 
-
-The full function definition is below:
 ```{r}
 #' @param ts A `ts` object of length `N`, where `N` is even.
 #' @param p A numeric $p \in \{0, 1, \dots N/2\}$
@@ -814,10 +820,11 @@ gen_freq <- function(ts, p){
 }
 ```
 
+
 What is the output of your function for $p = 10$?
 
 
-When $p=10$, the function return $\pi/5$.
+When $p=10$, the function returns $\pi/5$.
 ```{r unit_tests}
 gen_freq(accel_ts, 10) # == (pi / 5)
 ```
@@ -825,11 +832,11 @@ gen_freq(accel_ts, 10) # == (pi / 5)
 
 ## Part D
 
-Here, we will fit all the fourier frequencies and determine which are significant, do some testing, and fit a finalized model.
+In this question, we will fit all the fourier frequencies and determine which are significant, do some testing, and fit a finalized model.
 
 
 ### Part D.1. 
-In order to do this, we will first compute the set of frequencies for $p \in \{0, 1, \dots N/2\}$ using the function from the previous question.
+We will first compute the set of frequencies for $p \in \{0, 1, \dots N/2\}$ using the function from the previous question.
 
 We will denote this set $\Omega$, where $|\Omega| = \frac{N}{2} + 1$ is defined as follows, where $\omega_p$ is the $p$-th set element:
 $$
@@ -1017,9 +1024,21 @@ p7 = ggplot(data = p7DF, aes(x = Time)) +
     linewidth  = 0.35,
     linetype = "dashed"
   ), legend.position = "top", legend.justification = "left",
-  legend.margin = margin(0,0,0,0))
+  legend.margin = margin(0,0,0,0), 
+  plot.title = element_text(size = 12 ))
 print(p7)
 ```
+**Comments**: We see that the fitted model using the significant frequencies does a decent job at capturing the pattern of the original series $X_t$; however, it is far from the performance we would expect from a more formal fit/forecast method such as those discussed in the previous chapters. Considering that the $99\%$ confidence interval does not capture a significant portion of the true series, it is very likely that our fitted $\widehat{X}_t$ is not entirely specified for these data. This makes sense considering that we are only using two frequencies, so it is very unlikely we would fully capture the complexity of the data from this small subset of $\omega$ values. Also, we are fitting the model solely using the deterministic sequence of time indices. This being said, the fact that the general shape and pattern of the data are well-encapsulated by the model fit by $\omega_5$ and $\omega_{10}$ help to support our previous findings (i.e. from the periodogram) of the significance of these frequencies to the variation of the overall time series.
+
+
+## Part G
+
+Approximately how many steps per minute was the subject taking?
+
+
+We can derive a very informal approximation for the steps per minute by observing the number of complete cycles $\phi$ the fitted $\widehat{X}_t$ makes in the 6-second time frame. As commented earlier, the general shape of $\widehat{X}_t$ closely follows $X_t$, so it can serve nicely as an approximation for the number of cycles. We assume that the periodicity in the time series are caused by the steps of the individual changing the magnitude of acceleration in a cyclical pattern. This isn't an egregious assumption, as we know the individual was wearing a biologging watch. Since most people swing their arms while they walk (which forms a sinusoidal pattern as seen in the series) it's not unlikely that the individual's arm completes one "swing" every step they take. In the given time frame of $6$ seconds, we observe approximately $5$ complete cycles. Hence, we can estimate that in $6 \times 10 = 60$ seconds the subject would take roughly $5 \times 10 = 50$ steps, which is in-line with a slow walking pace. 
+
+
 <!-- import numpy as np -->
 
 <!-- rownames(hw_results_coefs) = NULL -->
