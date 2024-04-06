@@ -213,7 +213,7 @@ $$
 $$
 \newpage
 Then, substituting $\alpha_1 = 7/10$ and $\alpha_2 = -1/10$ and simplifying, we arrive at $\gamma(0)$ in terms of $\sigma^2$.
-```{python}
+```{python, include = FALSE}
 from sympy import *
 # declare variables that are known
 alpha_1, alpha_2 = symbols('alpha_1 alpha_2')
@@ -234,7 +234,7 @@ latex_str = latex(gamma_0_simplified).replace('\\sigma_{sq}', '\\sigma^2')
 latex_obj = f"$$\gamma(0) = {latex_str}$$"
 ```
 
-```{r, results='asis'}
+```{r, results='asis', echo = FALSE}
 cat(py$latex_obj)
 ```
 
@@ -453,7 +453,7 @@ Before we evaluate lags $h > 2 \subset \mathbb{Z}$, we will establish the follow
 
 
 
-\textit{\underline{Lemma 1}}: Let $m \in \mathbb{Z}, n \in \mathbb{Z}^{+}$ We will show that:
+\textit{\underline{Lemma 1}}: Let $m, n \in \mathbb{Z}^{+}$. We will show that:
 $$
 \forall (m,n) \in \mathbb{Z}^{+} \text { s.t. } m \neq n, \; \int_0^{\pi} \cos(m \omega)\cos(n \omega)\,\text{d}\omega = 0
 $$
@@ -655,6 +655,7 @@ p3 <- ggplot(p3DF, aes(x = Index, y = accel_ts)) +
     y = TeX("Acceleration Magnitude  $\\| \\textbf{a} \\|$  in $(m / s^2)$"),
     x = TeX("Elapsed Time (seconds)")
   ) + theme_bw() +
+  scale_x_continuous(labels = 0:5, breaks = 1:6) +
   theme(panel.grid.minor = element_line(
     color = "grey90",
     linetype = "dashed",
@@ -694,7 +695,7 @@ p5 <- ggplot(p5DF, aes(x = h, y = rh)) +
    title = TeX(paste("Correlogram of Acceleration Magnitude",
     "$\\| \\textbf{a} \\|$ of Subject")),
   subtitle = paste("Test Subject Walking at Steady Pace for appx.",
-  "Six Seconds, Wearing a Biologging Watch")) +
+  "Five Seconds, Wearing a Biologging Watch")) +
   theme_bw()
 print(p5)
 ```
@@ -736,7 +737,7 @@ p6 <- ggplot(p6DF, aes(x = Frequency, y = Spectrum)) +
     title = "Raw Periodogram of Acceleration Magnitude Time Series",
     subtitle = paste(
       "Test Subject Walking at Steady Pace,",
-      "Wearing a Biologging Watch for appx. 6s."
+      "Wearing a Biologging Watch for appx. 5s."
     ),
     y = TeX("Observed Spectrum"),
     x = TeX("Frequency")
@@ -1017,7 +1018,7 @@ p7 = ggplot(data = p7DF, aes(x = Time)) +
     y = TeX("Acceleration Magnitude  $\\| \\textbf{a} \\|$  in $(m / s^2)$"),
     x = TeX("Elapsed Time (seconds)")
   ) +
-  scale_x_continuous() +
+  scale_x_continuous(labels = 0:5, breaks = 1:6) +
   theme_bw() +
   theme(panel.grid.minor =  element_line(
     color = "grey90",
@@ -1036,7 +1037,7 @@ print(p7)
 Approximately how many steps per minute was the subject taking?
 
 
-We can derive a very informal approximation for the steps per minute by observing the number of complete cycles $\phi$ the fitted $\widehat{X}_t$ makes in the 6-second time frame. As commented earlier, the general shape of $\widehat{X}_t$ closely follows $X_t$, so it can serve nicely as an approximation for the number of cycles. We assume that the periodicity in the time series are caused by the steps of the individual changing the magnitude of acceleration in a cyclical pattern. This isn't an egregious assumption, as we know the individual was wearing a biologging watch. Since most people swing their arms while they walk (which forms a sinusoidal pattern as seen in the series) it's not unlikely that the individual's arm completes one "swing" every step they take. In the given time frame of $6$ seconds, we observe approximately $5$ complete cycles. Hence, we can estimate that in $6 \times 10 = 60$ seconds the subject would take roughly $5 \times 10 = 50$ steps, which is in-line with a slow walking pace. 
+We can derive a very informal approximation for the steps per minute by observing the number of complete cycles $\phi$ the fitted $\widehat{X}_t$ makes in a 1-second time frame. As commented earlier, the general shape of $\widehat{X}_t$ closely follows $X_t$, so it can serve nicely as an approximation for the number of cycles. We assume that the periodicity in the time series are caused by the steps of the individual changing the magnitude of acceleration in a cyclical pattern. This isn't an egregious assumption, as we know the individual was wearing a biologging watch. Since most people swing their arms while they walk (which forms a sinusoidal pattern as seen in the series) it's not unlikely that the individual's arm completes one "swing" every step they take. In the given time frame of $5$ seconds, we observe approximately $5$ complete cycles. Hence, we can estimate that in $6 \times 12 = 60$ seconds the subject would take roughly $6 \times 12 = 60$ steps, which is in-line with a slow walking pace. 
 
 
 <!-- import numpy as np -->
