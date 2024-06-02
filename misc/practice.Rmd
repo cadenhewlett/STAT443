@@ -1,0 +1,80 @@
+---
+author: "Final Exam Practice Questions: STAT 443"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Practice Question 1
+
+Let  $\{X_t\}_{t \in \mathbb{Z}}$ be defined such that $X_t = Z_t + \beta_1 Z_{t - 1} + \beta_2 Z_{t - 2}$, where $Z_t \overset{\text{iid}}\sim \text{WN}(0, \sigma^2)$.
+
+### Part A
+
+Given the model equation definitions discussed in this class, what type of process is $\{X_t\}_{t \in \mathbb{Z}}$?
+ 
+\vspace{0.75cm}
+
+### Part B
+
+Given that $\beta_1 = 0.5$ and $\beta_2 = -0.4$, is $\{X_t\}$ invertible? Is it stationary? Justify your answers. 
+
+\vspace{4cm}
+
+### Part C
+
+Compute the normalized spectral density function $f^{\star}(\omega)$ for $\{X_t\}_{t \in \mathbb{Z}}$ for arbitrary coefficients $\beta_1$ and $\beta_2$.  Assume that the process is stationary and invertible. Show your work. 
+
+
+\newpage 
+## Practice Question 2
+
+Let $\{X_t\}_{t \in \mathbb{Z}}$ be defined as follows, where $Z_t \overset{\text{iid}}\sim \text{WN}(0, \sigma^2)$.
+$$
+X_t =  1.2 X_{t - 1} - 0.4 X_{t - 2} + Z_t
+$$
+
+### Part A
+
+Is $\{X_t\}$ invertible? Is it stationary? Justify your answers. 
+
+\vspace{3cm}
+
+### Part B
+
+Determine the ACF of $\{X_t\}$ up to order $2$.
+
+\vspace{3cm}
+
+### Part C
+
+Suppose that we have the data points $x_1 = 5$, $x_2 = 3$ and $x_3 = 4$. Given the process defined above, compute the $2$-step ahead forecast for $x_3$. 
+
+\newpage
+
+
+### Practice Question 3
+
+
+Consider the following bivariate time series $(\big\{X_t, Y_t \big\})_{t \in \mathbb{Z}}$, assumed to be stationary for well-defined $\alpha, \beta \in \mathbb{R}$ and $Z_t \overset{\text{iid}}\sim \text{WN}(0, \sigma^2)$.
+
+$$
+X_t = Z_t + \alpha Z_{t-1}, \text{ and } Y_t = Z_t + \beta Z_{t-1}
+$$ 
+
+### Part A
+
+Compute the cross-covariance function $\gamma_{XY}(h)$ for this bivariate series.
+
+\vspace{5cm}
+
+
+### Part B
+
+
+For a stationary bivariate time series $(\big\{X_t, Y_t \big\})_{t \in \mathbb{Z}}$, show that $\gamma_{XY}(-h) = \gamma_{YX}(h)$.
+
+\newpage
+

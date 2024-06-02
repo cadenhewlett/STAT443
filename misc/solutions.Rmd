@@ -1,0 +1,198 @@
+---
+author: "Final Exam Practice Soluyions: STAT 443"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Practice Question 1
+
+Let  $\{X_t\}_{t \in \mathbb{Z}}$ be defined such that $X_t = Z_t + \beta_1 Z_{t - 1} + \beta_2 Z_{t - 2}$, where $Z_t \overset{\text{iid}}\sim \text{WN}(0, \sigma^2)$.
+
+### Part A
+
+Given the model equation definitions discussed in this class, what type of process is $\{X_t\}_{t \in \mathbb{Z}}$?
+ 
+ 
+ 
+It is a moving average process of order two, or simply $\boxed{\text{MA(2)}}$
+
+### Part B
+
+Given that $\beta_1 = 0.5$ and $\beta_2 = -0.4$, is $\{X_t\}$ invertible? Is it stationary? Justify your answers. 
+
+
+Since $\beta_1$ and $\beta_2$ are well-defined and finite,$\{X_t\}$ is stationary by definition.
+
+
+To verify invertibility, we see if the roots of the characteristic polynomial $\theta(B)$ have modulus greater than the roots of unity. 
+
+$$
+\begin{aligned}
+X_t &= Z_t + 0.5 Z_{t - 1} -0.4 Z_{t - 2} \\
+X_t &= Z_t(1 + 0.5 B - 0.4 B^2) \\
+\text{So, }& \theta(B) = -0.4B^2 + 0.5B+ 1
+\end{aligned}
+$$
+As an aside, we know by the Fundamental Theorem of Algebra that there will be exactly two roots $\vartheta_1, \vartheta_2 \in \mathbb{C}$ ( not taught in this course. )
+$$
+\begin{aligned}
+\vartheta &= \dfrac{-b \pm \sqrt{b^2 - 4ac}}{2a} \\
+\vartheta &= \dfrac{-(-0.5) \pm \sqrt{(-0.5)^2 - 4(-0.4)(1)}}{2(-0.4)} \\
+\vartheta &= \dfrac{0.5 \pm \sqrt{1.85}}{-0.8} \\
+\text{Hence, }& \vartheta_1 \approx -1.075 \text{ and } \vartheta_2 \approx 2.325
+\end{aligned}
+$$
+Since $\| -1.075 \| > 1$ and $\| 2.325 \| > 1$, we know that both roots have modulus greater than the roots of unity. 
+
+
+Hence, $\{X_t\}_{t\in\mathbb{Z}}$ is invertible as well as stationary. $\square$
+
+
+
+### Part C
+
+Define the normalized spectral density function $f^{\star}(\omega)$ for $\{X_t\}_{t \in \mathbb{Z}}$ for arbitrary coefficients $\beta_1$ and $\beta_2$. Assume that the process is stationary and invertible. Show your work. 
+
+
+We first recall the equation for finding the power spectral density from a given autocovariance function:
+$$
+f(\omega) = \dfrac{1}{\pi}\bigg( \gamma(0) + 2 \sum_{h = 1}^{\infty} \gamma(h) \cos(\omega h)\bigg), \text{ where } h \in \mathbb{Z} \text{ and } \omega \in (0, 1) \subseteq \mathbb{R}
+$$
+We first derive $\gamma(0)$. This is equivalent to computing the variance directly.
+$$
+\begin{aligned}
+\gamma(0) &= \text{cov}(X_t, X_t) \\
+\gamma(0) &= \text{cov}(Z_t + \beta_1 Z_{t - 1} + \beta_2 Z_{t - 2}, Z_t + \beta_1 Z_{t - 1} + \beta_2 Z_{t - 2}) \\
+\gamma(0) &= \text{cov}(Z_t, Z_t) + \text{cov}(\beta_1 Z_{t - 1}, \beta_1 Z_{t - 1}) + \text{cov}(\beta_2 Z_{t - 2}, \beta_2 Z_{t - 2}) + 2\sum_{i < j; \;i, j \in [0,2]}\text{cov}(\beta_iZ_{t+i}, \beta_jZ_{t+j}) \\
+\gamma(0) &= \text{var}(Z_t) + \beta_1^2\text{var}(Z_t) + \beta_2^2\text{var}(Z_t) + 0 \\
+\gamma(0) &= \sigma^2(1 + \beta_1^2 + \beta_2^2)
+\end{aligned}
+$$
+Similarly, we find $\gamma(1)$:
+$$
+\begin{aligned}
+\gamma(1) &= \text{cov}(X_t, X_{t+1}) \\
+\gamma(1) &= \text{cov}(Z_t + \beta_1 Z_{t - 1} + \beta_2 Z_{t - 2}, Z_{t+1} + \beta_1 Z_{t} + \beta_2 Z_{t - 1}) \\
+\gamma(1) &= \text{cov}(Z_t, \beta_1Z_t) + \text{cov}(\beta_1 Z_{t - 1}, \beta_2 Z_{t - 1}) + 0\\
+\gamma(1) &= \sigma^2(\beta_1 + \beta_1\beta_2)
+\end{aligned}
+$$
+And $\gamma(2)$
+$$
+\begin{aligned}
+\gamma(2) &= \text{cov}(X_t, X_{t+2}) \\
+\gamma(2) &= \text{cov}(Z_t + \beta_1 Z_{t - 1} + \beta_2 Z_{t - 2}, Z_{t+2} + \beta_1 Z_{t+1} + \beta_2 Z_{t}) \\
+\gamma(2) &= \sigma^2\beta_2
+\end{aligned}
+$$
+We can directly infer from the pattern above that $\forall h \in \mathbb{Z} \text{ s.t. } |h| > 2, \gamma(h) = 0$.
+
+
+Hence, the Power Spectral Density expression becomes:
+$$
+\begin{aligned}
+f(\omega) &= \dfrac{1}{\pi}\bigg( \gamma(0) + 2 \sum_{h = 1}^{\infty} \gamma(h), \cos(\omega h)\bigg) \\
+f(\omega) &= \dfrac{1}{\pi}\bigg( \gamma(0) + 2 \gamma(1)\cos(\omega) + 2\gamma(2)\cos(2\omega) + \sum_{h = 3}^{\infty} \gamma(h) \cos(\omega h)\bigg) \\
+f(\omega) &= \dfrac{1}{\pi}\bigg(  \sigma^2(1 + \beta_1^2 + \beta_2^2) + 2\sigma^2(\beta_1 + \beta_1\beta_2)\cos(\omega) + 2\sigma^2\beta_2\cos(2\omega) + 0\bigg) \\
+f(\omega) &= \dfrac{\sigma^2}{\pi}\bigg(  1 + \beta_1^2 + \beta_2^2 + 2\beta_1\cos(\omega) + 2\beta_1\beta_2\cos(\omega) + 2\beta_2\cos(2\omega)\bigg) \\
+\end{aligned}
+$$
+Then, finally, the *normalized* spectral density $f^{\star}(\omega)$ is found via the relation:
+$$
+f^{\star}(\omega) = \dfrac{f(\omega)}{\sigma^2_X} = \dfrac{f(\omega)}{\gamma(0)} = \dfrac{  1 + \beta_1^2 + \beta_2^2  + 2\beta_1\cos(\omega) + 2\beta_1\beta_2\cos(\omega) + 2\beta_2\cos(2\omega)}{\pi(1 + \beta_1^2 + \beta_2^2)} \; \square
+$$
+\newpage
+
+
+## Practice Question 2
+
+
+
+### Part A
+
+
+
+For well-defined coefficients, an AR process is always invertible.
+
+
+To check stationarity, we use the roots of the characteristic polynomial:
+$$
+\text{Roots} = \dfrac{1.2 \pm 0.4\mathfrak{i}}{0.8}
+$$
+These have modulus greater than the roots of unity, therefore the process is starionary and invertible.
+
+
+
+### Part B
+
+Use the Yule-Walker Equations (I was too tired to typeset all of my work).
+
+For $h \in [-2, 2] \subseteq \mathbb{Z}$, we have:
+$$\rho(h) = \begin{cases} \rho(-h), & h < 0\\ 
+ 1 & h=0 \\
+5/8, &h = 1 \\
+7/20, &h = 2
+\end{cases}$$
+
+
+### Part C
+
+
+To find $\hat{x}_3(2)$, we do the following, recalling $x_1 = 5$, $x_2 = 3$ and $x_3 = 4$. 
+$$
+\begin{aligned}
+\hat{x}_3(2) &= \mathbb{E}(X_{3+2} \mid X_3, X_2, X_1) \\
+\hat{x}_3(2) &=  \mathbb{E}(1.2 X_{5 - 1} - 0.4 X_{5 - 2} + Z_5 \mid X_3, X_2, X_1) \\ 
+\hat{x}_3(2) &=  1.2 \underbrace{\mathbb{E}(X_{4} \mid X_3, X_2, X_1)}_{\text{1 -step ahead forecast}} - 0.4 x_3   \\ 
+\hat{x}_3(2) &=  1.2 \hat{x}_3(1)  - 0.4 x_3   \\ 
+\hat{x}_3(2) &=  1.2 \Big( \mathbb{E}(1.2X_{4-1} -0.4X_{4-2} + Z_{4} \mid X_{1:3})\Big)  - 0.4 x_3   \\
+\hat{x}_3(2) &=  1.2  (1.2x_{3} -0.4x_{2}) - 0.4 x_3   \\ 
+\hat{x}_3(2) &=  1.2  \big(1.2(4) -0.4(3)\big) - 0.4 (4) = \boxed{2.72} \\
+\end{aligned}
+$$
+
+
+
+\newpage
+
+
+
+## Practice Question 3
+
+
+Consider the following bivariate time series $(\big\{X_t, Y_t \big\})_{t \in \mathbb{Z}}$, assumed to be stationary for well-defined $\alpha, \beta \in \mathbb{R}$ and $Z_t \overset{\text{iid}}\sim \text{WN}(0, \sigma^2)$.
+
+$$
+X_t = Z_t + \alpha Z_{t-1}, \text{ and } Y_t = Z_t + \beta Z_{t-1}
+$$ 
+
+### Part A
+
+Compute the cross-covariance function $\gamma_{XY}(h)$ for this bivariate series.
+
+
+$$\gamma_{XY}(h) = \begin{cases} \alpha\sigma^2, & h = - 1\\ 
+ \sigma^2 + \alpha \beta \sigma^2, & h=0 \\
+\beta\sigma^2, &h = 1 \\
+0, & \text{otherwise}
+\end{cases}$$
+
+
+### Part B
+
+
+For an stationary bivariate time series $(\big\{X_t, Y_t \big\})_{t \in \mathbb{Z}}$, show that $\gamma_{XY}(-h) = \gamma_{YX}(h)$.
+
+$$
+\begin{aligned}
+\gamma_{XY}(-h) &= \text{cov}(X_t, Y_{t-h}) \\
+\text{Let }& s = t-h, \; \therefore t = s+h, \text{ where } t,s,h \in \mathbb{Z} \\
+\gamma_{XY}(-h) &= \text{cov}(X_{s+h}, Y_{(s+h)-h}) \\
+\gamma_{XY}(-h) &= \text{cov}(X_{s+h}, Y_{s}) \\
+\gamma_{XY}(-h) &= \text{cov}(Y_s, X_{s+h}) \\
+\gamma_{XY}(-h) &= \gamma_{YX}(h) \; \;\ \square
+\end{aligned}
+$$
